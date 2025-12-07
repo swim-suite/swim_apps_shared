@@ -15,7 +15,7 @@ class AnalysisRequest {
   // Race fields
   final String? heat;
   final String? lane;
-  final String? distance;
+  final int? distance;
   final Stroke? stroke;
 
   final DateTime createdAt;
@@ -46,6 +46,9 @@ class AnalysisRequest {
   // FROM JSON (Firestore → Model)
   // ---------------------------------------------------------------------------
   factory AnalysisRequest.fromJson(Map<String, dynamic> json, String id) {
+    final int distance = json['distance'] != null && json['distance'] is String
+        ? int.tryParse(json['distance']) ?? 100
+        : json['distance'];
     return AnalysisRequest(
       id: id,
       sessionId: json['sessionId'] as String,
@@ -55,7 +58,7 @@ class AnalysisRequest {
       videoUrl: json['videoUrl'] as String? ?? '',
       heat: json['heat'] as String?,
       lane: json['lane'] as String?,
-      distance: json['distance'] as String?,
+      distance: distance,
       stroke: json['focus'] != null
           ? Stroke.fromString(json['focus'])
           : Stroke.unknown,
