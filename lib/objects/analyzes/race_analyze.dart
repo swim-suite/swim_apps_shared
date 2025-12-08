@@ -10,6 +10,7 @@ import 'analyzed_segment.dart';
 class RaceAnalyze with AnalyzableBase {
   String? eventName;
   String? raceName;
+  String? raceAnalyzeRequestId;
   DateTime? raceDate;
   PoolLength? poolLength;
   Stroke? stroke;
@@ -48,6 +49,7 @@ class RaceAnalyze with AnalyzableBase {
     this.stroke,
     this.distance,
     this.aiInterpretation,
+    this.raceAnalyzeRequestId,
     required this.segments,
     required this.finalTime,
     required this.totalDistance,
@@ -84,15 +86,12 @@ class RaceAnalyze with AnalyzableBase {
     required List<AnalyzedSegment> segments,
   }) {
     // --- Overall Summary Calculations ---
-    final finalTime = segments
-        .map((s) => s.splitTimeMillis)
-        .fold(0, (a, b) => a + b);
-    final totalDistance = segments
-        .map((s) => s.distanceMeters)
-        .fold(0.0, (a, b) => a + b);
-    final totalStrokes = segments
-        .map((s) => s.strokes ?? 0)
-        .fold(0, (a, b) => a + b);
+    final finalTime =
+        segments.map((s) => s.splitTimeMillis).fold(0, (a, b) => a + b);
+    final totalDistance =
+        segments.map((s) => s.distanceMeters).fold(0.0, (a, b) => a + b);
+    final totalStrokes =
+        segments.map((s) => s.strokes ?? 0).fold(0, (a, b) => a + b);
 
     final averageSpeed = (totalDistance > 0 && finalTime > 0)
         ? (totalDistance / (finalTime / 1000.0))
@@ -115,9 +114,8 @@ class RaceAnalyze with AnalyzableBase {
       }
     }
 
-    final avgFreq = (totalTimeForFreq > 0)
-        ? totalWeightedFreq / totalTimeForFreq
-        : 0.0;
+    final avgFreq =
+        (totalTimeForFreq > 0) ? totalWeightedFreq / totalTimeForFreq : 0.0;
     final avgLength = (totalDistForLength > 0)
         ? totalWeightedLength / totalDistForLength
         : 0.0;
@@ -212,9 +210,8 @@ class RaceAnalyze with AnalyzableBase {
     double cumulativeDistance = 0;
     int cumulativeTime = 0;
     int segmentIndex = 0;
-    final double totalRaceDistance = segments
-        .map((s) => s.distanceMeters)
-        .fold(0.0, (a, b) => a + b);
+    final double totalRaceDistance =
+        segments.map((s) => s.distanceMeters).fold(0.0, (a, b) => a + b);
 
     while (targetDistance <= totalRaceDistance + 0.1) {
       while (segmentIndex < segments.length &&
@@ -252,6 +249,7 @@ class RaceAnalyze with AnalyzableBase {
       ...analyzableBaseToJson(),
       'eventName': eventName,
       'raceName': raceName,
+      'raceAnalyzeRequestId': raceAnalyzeRequestId,
       if (raceDate != null) 'raceDate': Timestamp.fromDate(raceDate!),
       if (poolLength != null) 'poolLength': poolLength!.name,
       if (stroke != null) 'stroke': stroke!.name,
@@ -291,6 +289,7 @@ class RaceAnalyze with AnalyzableBase {
     final data = doc.data()!;
     final race = RaceAnalyze(
       id: doc.id,
+      raceAnalyzeRequestId: data['raceAnalyzeRequestId'] as String?,
       eventName: data['eventName'],
       raceName: data['raceName'],
       aiInterpretation: data['aiInterpretation'],
@@ -306,12 +305,12 @@ class RaceAnalyze with AnalyzableBase {
       finalTime: data['finalTime'],
       totalDistance: (data['totalDistance'] as num).toDouble(),
       totalStrokes: data['totalStrokes'],
-      averageSpeedMetersPerSecond: (data['averageSpeedMetersPerSecond'] as num)
-          .toDouble(),
-      averageStrokeFrequency: (data['averageStrokeFrequency'] as num)
-          .toDouble(),
-      averageStrokeLengthMeters: (data['averageStrokeLengthMeters'] as num)
-          .toDouble(),
+      averageSpeedMetersPerSecond:
+          (data['averageSpeedMetersPerSecond'] as num).toDouble(),
+      averageStrokeFrequency:
+          (data['averageStrokeFrequency'] as num).toDouble(),
+      averageStrokeLengthMeters:
+          (data['averageStrokeLengthMeters'] as num).toDouble(),
       splits25m: List<int>.from(data['splits25m']),
       splits50m: List<int>.from(data['splits50m']),
       speedPer25m: List<double>.from(data['speedPer25m']),
@@ -363,27 +362,23 @@ class RaceAnalyze with AnalyzableBase {
       coachId: coachId ?? this.coachId,
       swimmerId: swimmerId ?? this.swimmerId,
       swimmerName: swimmerName ?? this.swimmerName,
-
       eventName: eventName ?? this.eventName,
       raceName: raceName ?? this.raceName,
       raceDate: raceDate ?? this.raceDate,
       poolLength: poolLength ?? this.poolLength,
       stroke: stroke ?? this.stroke,
       distance: distance ?? this.distance,
-
       aiInterpretation: aiInterpretation ?? this.aiInterpretation,
-
       segments: segments ?? this.segments,
       finalTime: finalTime ?? this.finalTime,
       totalDistance: totalDistance ?? this.totalDistance,
       totalStrokes: totalStrokes ?? this.totalStrokes,
       averageSpeedMetersPerSecond:
-      averageSpeedMetersPerSecond ?? this.averageSpeedMetersPerSecond,
+          averageSpeedMetersPerSecond ?? this.averageSpeedMetersPerSecond,
       averageStrokeFrequency:
-      averageStrokeFrequency ?? this.averageStrokeFrequency,
+          averageStrokeFrequency ?? this.averageStrokeFrequency,
       averageStrokeLengthMeters:
-      averageStrokeLengthMeters ?? this.averageStrokeLengthMeters,
-
+          averageStrokeLengthMeters ?? this.averageStrokeLengthMeters,
       splits25m: splits25m ?? this.splits25m,
       splits50m: splits50m ?? this.splits50m,
       speedPer25m: speedPer25m ?? this.speedPer25m,
@@ -394,7 +389,6 @@ class RaceAnalyze with AnalyzableBase {
 
     return copy;
   }
-
 
   // --- CACHE METHODS ---
   void setExtraData(String key, dynamic value) => _extraData[key] = value;
