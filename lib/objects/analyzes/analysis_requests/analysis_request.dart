@@ -43,7 +43,7 @@ class AnalysisRequest {
   });
 
   // ---------------------------------------------------------------------------
-  // FROM JSON (Firestore → Model)
+  // FROM JSON
   // ---------------------------------------------------------------------------
   factory AnalysisRequest.fromJson(Map<String, dynamic> json, String id) {
     final int distance = json['distance'] != null && json['distance'] is String
