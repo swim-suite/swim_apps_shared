@@ -1,23 +1,8 @@
-import 'dart:math';
-
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:provider/provider.dart';
-import 'package:swim_apps_shared/swim_session/events/checkpoint.dart';
 
-import '../objects/analyzes/race_analyze.dart';
-import '../repositories/analyzes_repository.dart';
-import '../repositories/user_repository.dart';
-
-class RaceComparisonPage extends StatefulWidget {
+class RaceComparisonPage extends StatelessWidget {
   final List<String> raceIds;
   final String? brandIconAssetPath; // New optional parameter
-
   const RaceComparisonPage({
     super.key,
     required this.raceIds,
@@ -25,10 +10,27 @@ class RaceComparisonPage extends StatefulWidget {
   });
 
   @override
-  State<RaceComparisonPage> createState() => _RaceComparisonPageState();
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
 }
 
-class _RaceComparisonPageState extends State<RaceComparisonPage> {
+// class RaceComparisonPage extends StatefulWidget {
+//   final List<String> raceIds;
+//   final String? brandIconAssetPath; // New optional parameter
+//
+//   const RaceComparisonPage({
+//     super.key,
+//     required this.raceIds,
+//     required this.brandIconAssetPath, // Parameter added to constructor
+//   });
+//
+//   //@override
+//   //State<RaceComparisonPage> createState() => _RaceComparisonPageState();
+// }
+
+/*class _RaceComparisonPageState extends State<RaceComparisonPage> {
+
   late Future<List<RaceAnalyze>> _racesFuture;
   List<RaceAnalyze>? _loadedRaces;
 
@@ -1275,3 +1277,4 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
     );
   }
 }
+*/
