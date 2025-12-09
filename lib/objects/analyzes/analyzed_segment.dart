@@ -11,6 +11,7 @@ class AnalyzedSegment {
   final int? breaths;
   final double? strokeFrequency;
   final double? strokeLengthMeters;
+  final double? underwaterDistance;
 
   AnalyzedSegment({
     required this.sequence,
@@ -23,7 +24,7 @@ class AnalyzedSegment {
     this.breaths,
     this.strokeFrequency,
     this.strokeLengthMeters,
-  });
+      this.underwaterDistance});
 
   /// Converts this object into a Map for Firestore.
   Map<String, dynamic> toJson() {
@@ -38,6 +39,7 @@ class AnalyzedSegment {
       'breaths': breaths,
       'strokeFrequency': strokeFrequency,
       'strokeLengthMeters': strokeLengthMeters,
+      'underwaterDistance': underwaterDistance
     };
   }
 
@@ -48,6 +50,7 @@ class AnalyzedSegment {
       "distanceMeters": distanceMeters,
       "splitTimeMillis": splitTimeMillis,
       "totalTimeMillis": totalTimeMillis,
+      "underwaterDistance": underwaterDistance,
     };
 
     // Add only SAFE values
@@ -85,7 +88,7 @@ class AnalyzedSegment {
         breaths: map['breaths'] as int?,
         strokeFrequency: (map['strokeFrequency'] as num?)?.toDouble(),
         strokeLengthMeters: (map['strokeLengthMeters'] as num?)?.toDouble(),
-      );
+          underwaterDistance: map['underwaterDistance'] as double?);
     }
 
     // Legacy format: string may contain multiple occurrences of enum names
@@ -102,7 +105,7 @@ class AnalyzedSegment {
       breaths: map['breaths'] as int?,
       strokeFrequency: (map['strokeFrequency'] as num?)?.toDouble(),
       strokeLengthMeters: (map['strokeLengthMeters'] as num?)?.toDouble(),
-    );
+        underwaterDistance: map['underwaterDistance'] as double?);
   }
 }
 
