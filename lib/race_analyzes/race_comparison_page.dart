@@ -116,14 +116,15 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
         .sortedBy<num>((s) => s.sequence);
 
     // Pre-calculate totals to avoid repeated .map().sum calls
-    int totalBreaths = 0;
-    int totalKicks = 0;
+    //int totalBreaths = 0;
+    //int totalKicks = 0;
     for (var segment in race.segments) {
-      totalBreaths += segment.breaths ?? 0;
-      totalKicks += segment.dolphinKicks ?? 0;
+      debugPrint(segment.totalTimeMillis.toString());
+//      totalBreaths += segment.breaths ?? 0;
+      //    totalKicks += segment.dolphinKicks ?? 0;
     }
-    race.setExtraData('totalBreaths', totalBreaths);
-    race.setExtraData('totalKicks', totalKicks);
+    //race.setExtraData('totalBreaths', totalBreaths);
+    //race.setExtraData('totalKicks', totalKicks);
 
     // Pre-calculate average SWOLF
     final List<double> lapSwolfScores = [];
@@ -147,7 +148,7 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
       }
     }
     if (lapSwolfScores.isNotEmpty) {
-      race.setExtraData('averageSwolf', lapSwolfScores.average);
+      //race.setExtraData('averageSwolf', lapSwolfScores.average);
     }
   }
 
@@ -446,24 +447,24 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
       lowerIsBetter: true,
       formatDiff: (v) => signFormatter(v, 0),
     );
-    if (!allBreaststroke) {
-      addPdfStatRow(
-        title: 'Total Breaths',
-        isOverall: true,
-        getValue: (i) => races[i].getExtraData<int>('totalBreaths')?.toString(),
-        getNumericValue: (i) => races[i].getExtraData<int>('totalBreaths'),
-        lowerIsBetter: true,
-        formatDiff: (v) => signFormatter(v, 0),
-      );
-      addPdfStatRow(
-        title: 'Total Kicks',
-        isOverall: true,
-        getValue: (i) => races[i].getExtraData<int>('totalKicks')?.toString(),
-        getNumericValue: (i) => races[i].getExtraData<int>('totalKicks'),
-        lowerIsBetter: false,
-        formatDiff: (v) => signFormatter(v, 0),
-      );
-    }
+    // if (!allBreaststroke) {
+    //   addPdfStatRow(
+    //     title: 'Total Breaths',
+    //     isOverall: true,
+    //     getValue: (i) => races[i].getExtraData<int>('totalBreaths')?.toString(),
+    //     getNumericValue: (i) => races[i].getExtraData<int>('totalBreaths'),
+    //     lowerIsBetter: true,
+    //     formatDiff: (v) => signFormatter(v, 0),
+    //   );
+    //   addPdfStatRow(
+    //     title: 'Total Kicks',
+    //     isOverall: true,
+    //     getValue: (i) => races[i].getExtraData<int>('totalKicks')?.toString(),
+    //     getNumericValue: (i) => races[i].getExtraData<int>('totalKicks'),
+    //     lowerIsBetter: false,
+    //     formatDiff: (v) => signFormatter(v, 0),
+    //   );
+    // }
     addPdfStatRow(
       title: 'Avg. Stroke Freq',
       isOverall: true,
@@ -495,15 +496,15 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
       lowerIsBetter: false,
       formatDiff: (v) => signFormatter(v, 2),
     );
-    addPdfStatRow(
-      title: 'Avg. SWOLF',
-      isOverall: true,
-      getValue: (i) =>
-          races[i].getExtraData<double>('averageSwolf')?.toStringAsFixed(1),
-      getNumericValue: (i) => races[i].getExtraData<double>('averageSwolf'),
-      lowerIsBetter: true,
-      formatDiff: (v) => signFormatter(v, 1),
-    );
+    // addPdfStatRow(
+    //   title: 'Avg. SWOLF',
+    //   isOverall: true,
+    //   getValue: (i) =>
+    //       races[i].getExtraData<double>('averageSwolf')?.toStringAsFixed(1),
+    //   getNumericValue: (i) => races[i].getExtraData<double>('averageSwolf'),
+    //   lowerIsBetter: true,
+    //   formatDiff: (v) => signFormatter(v, 1),
+    // );
 
     // --- PDF Per-Segment Stats ---
     // Optimization: This map is now built once and is much faster.
@@ -969,24 +970,24 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
       lowerIsBetter: true,
       formatDiff: (v) => signFormatter(v, 0),
     );
-    if (!allBreaststroke) {
-      addStatRow(
-        title: 'Total Breaths',
-        isOverall: true,
-        getValue: (i) => races[i].getExtraData<int>('totalBreaths')?.toString(),
-        getNumericValue: (i) => races[i].getExtraData<int>('totalBreaths'),
-        lowerIsBetter: true,
-        formatDiff: (v) => signFormatter(v, 0),
-      );
-      addStatRow(
-        title: 'Total Kicks',
-        isOverall: true,
-        getValue: (i) => races[i].getExtraData<int>('totalKicks')?.toString(),
-        getNumericValue: (i) => races[i].getExtraData<int>('totalKicks'),
-        lowerIsBetter: false,
-        formatDiff: (v) => signFormatter(v, 0),
-      );
-    }
+    // if (!allBreaststroke) {
+    //   addStatRow(
+    //     title: 'Total Breaths',
+    //     isOverall: true,
+    //     getValue: (i) => races[i].getExtraData<int>('totalBreaths')?.toString(),
+    //     getNumericValue: (i) => races[i].getExtraData<int>('totalBreaths'),
+    //     lowerIsBetter: true,
+    //     formatDiff: (v) => signFormatter(v, 0),
+    //   );
+    //   addStatRow(
+    //     title: 'Total Kicks',
+    //     isOverall: true,
+    //     getValue: (i) => races[i].getExtraData<int>('totalKicks')?.toString(),
+    //     getNumericValue: (i) => races[i].getExtraData<int>('totalKicks'),
+    //     lowerIsBetter: false,
+    //     formatDiff: (v) => signFormatter(v, 0),
+    //   );
+    // }
     addStatRow(
       title: 'Avg. Stroke Freq',
       isOverall: true,
@@ -1018,15 +1019,15 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
       lowerIsBetter: false,
       formatDiff: (v) => signFormatter(v, 2),
     );
-    addStatRow(
-      title: 'Avg. SWOLF',
-      isOverall: true,
-      getValue: (i) =>
-          races[i].getExtraData<double>('averageSwolf')?.toStringAsFixed(1),
-      getNumericValue: (i) => races[i].getExtraData<double>('averageSwolf'),
-      lowerIsBetter: true,
-      formatDiff: (v) => signFormatter(v, 1),
-    );
+    // addStatRow(
+    //   title: 'Avg. SWOLF',
+    //   isOverall: true,
+    //   getValue: (i) =>
+    //       races[i].getExtraData<double>('averageSwolf')?.toStringAsFixed(1),
+    //   getNumericValue: (i) => races[i].getExtraData<double>('averageSwolf'),
+    //   lowerIsBetter: true,
+    //   formatDiff: (v) => signFormatter(v, 1),
+    // );
 
     // --- Per-Segment Statistics ---
     // Optimization: Building these maps is faster now.

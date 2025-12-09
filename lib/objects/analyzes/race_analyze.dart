@@ -2,11 +2,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:swim_apps_shared/objects/pool_length.dart';
 import 'package:swim_apps_shared/objects/stroke.dart';
 
+import '../race_segment.dart';
 import 'analyze_base.dart';
 import 'analyzed_segment.dart';
 
-/// Represents a full race analysis, ready to be stored in Firestore.
-/// Contains both high-level summary statistics and standardized per-25m data.
+/// Helper container for 25m metric results
+class Per25mMetrics {
+  final List<int> strokes;
+  final List<double> frequencies;
+  final List<double> lengths;
+
+  Per25mMetrics({
+    required this.strokes,
+    required this.frequencies,
+    required this.lengths,
+  });
+}
+
+/// Full race analysis stored in Firestore.
+/// Uses legacy `AnalyzedSegment` for storage,
+/// but accepts *RaceSegment* in the factory.
 class RaceAnalyze with AnalyzableBase {
   String? eventName;
   String? raceName;
@@ -15,27 +30,27 @@ class RaceAnalyze with AnalyzableBase {
   PoolLength? poolLength;
   Stroke? stroke;
   int? distance;
+
+  /// STORED FORMAT (legacy compatibility)
   List<AnalyzedSegment> segments;
+
   final String? aiInterpretation;
 
-  // --- OVERALL RACE SUMMARY STATS ---
-  int finalTime; // Total race time in milliseconds
-  double totalDistance; // Sum of all segment distances
+  // Summary metrics
+  int finalTime;
+  double totalDistance;
   int totalStrokes;
   double averageSpeedMetersPerSecond;
   double averageStrokeFrequency;
   double averageStrokeLengthMeters;
 
-  // --- STANDARDIZED INTERVAL STATS ---
+  // Standardized metrics
   List<int> splits25m;
   List<int> splits50m;
   List<double> speedPer25m;
   List<int> strokesPer25m;
   List<double> frequencyPer25m;
   List<double> strokeLengthPer25m;
-
-  /// Optimization: cache for expensive computed metrics (not stored in Firestore)
-  final Map<String, dynamic> _extraData = {};
 
   RaceAnalyze({
     String? id,
@@ -44,12 +59,12 @@ class RaceAnalyze with AnalyzableBase {
     String? swimmerName,
     this.eventName,
     this.raceName,
+    this.raceAnalyzeRequestId,
     this.raceDate,
     this.poolLength,
     this.stroke,
     this.distance,
     this.aiInterpretation,
-    this.raceAnalyzeRequestId,
     required this.segments,
     required this.finalTime,
     required this.totalDistance,
@@ -64,14 +79,15 @@ class RaceAnalyze with AnalyzableBase {
     required this.frequencyPer25m,
     required this.strokeLengthPer25m,
   }) {
-    // ✅ Assign mixin fields manually
     this.id = id;
     this.coachId = coachId;
     this.swimmerId = swimmerId;
     this.swimmerName = swimmerName;
   }
 
-  // --- ✅ RESTORED FACTORY ---
+  // ---------------------------------------------------------------------------
+  // 🔥 FACTORY: Build from RaceSegment (computation layer)
+  // ---------------------------------------------------------------------------
   factory RaceAnalyze.fromSegments({
     String? id,
     String? coachId,
@@ -83,48 +99,66 @@ class RaceAnalyze with AnalyzableBase {
     required PoolLength poolLength,
     required Stroke stroke,
     required int distance,
-    required List<AnalyzedSegment> segments,
+    required List<RaceSegment> segments,
   }) {
-    // --- Overall Summary Calculations ---
+    // Convert RaceSegment → AnalyzedSegment (Firestore format)
+    final analyzed = segments.map((s) {
+      return AnalyzedSegment(
+        sequence: s.sequence,
+        checkPoint: s.checkPoint,
+        distanceMeters: s.segmentDistance,
+        totalTimeMillis: s.totalTimeMillis,
+        splitTimeMillis: s.splitTimeMillis,
+        dolphinKicks: s.dolphinKicks,
+        strokes: s.strokes,
+        breaths: s.breaths,
+        strokeFrequency: s.strokeFreq,
+        strokeLengthMeters: s.strokeLength,
+        underwaterDistance: s.underwaterDistance,
+      );
+    }).toList();
+
+    // Summary stats
     final finalTime =
-        segments.map((s) => s.splitTimeMillis).fold(0, (a, b) => a + b);
+    analyzed.fold<int>(0, (int sum, s) => sum + s.splitTimeMillis);
+
     final totalDistance =
-        segments.map((s) => s.distanceMeters).fold(0.0, (a, b) => a + b);
+    analyzed.fold<double>(0.0, (double sum, s) => sum + s.distanceMeters);
+
     final totalStrokes =
-        segments.map((s) => s.strokes ?? 0).fold(0, (a, b) => a + b);
+    analyzed.fold<int>(0, (int sum, s) => sum + (s.strokes ?? 0));
 
-    final averageSpeed = (totalDistance > 0 && finalTime > 0)
-        ? (totalDistance / (finalTime / 1000.0))
-        : 0.0;
+    final averageSpeed =
+    finalTime > 0 ? totalDistance / (finalTime / 1000.0) : 0.0;
 
-    double totalWeightedFreq = 0;
-    double totalWeightedLength = 0;
-    int totalTimeForFreq = 0;
-    double totalDistForLength = 0;
+    // Weighted metrics
+    double weightedFreq = 0;
+    int freqTime = 0;
 
-    for (final segment in segments) {
-      if (segment.strokeFrequency != null) {
-        totalWeightedFreq += segment.strokeFrequency! * segment.splitTimeMillis;
-        totalTimeForFreq += segment.splitTimeMillis;
+    double weightedLength = 0;
+    double totalLengthDist = 0;
+
+    for (final s in analyzed) {
+      if (s.strokeFrequency != null) {
+        weightedFreq += s.strokeFrequency! * s.splitTimeMillis;
+        freqTime += s.splitTimeMillis;
       }
-      if (segment.strokeLengthMeters != null) {
-        totalWeightedLength +=
-            segment.strokeLengthMeters! * segment.distanceMeters;
-        totalDistForLength += segment.distanceMeters;
+      if (s.strokeLengthMeters != null) {
+        weightedLength += s.strokeLengthMeters! * s.distanceMeters;
+        totalLengthDist += s.distanceMeters;
       }
     }
 
-    final avgFreq =
-        (totalTimeForFreq > 0) ? totalWeightedFreq / totalTimeForFreq : 0.0;
-    final avgLength = (totalDistForLength > 0)
-        ? totalWeightedLength / totalDistForLength
-        : 0.0;
+    final avgFreq = freqTime > 0 ? weightedFreq / freqTime : 0.0;
+    final avgLength =
+    totalLengthDist > 0 ? weightedLength / totalLengthDist : 0.0;
 
-    // --- Standardized Interval Calculations ---
+    // Standardized metrics
     final splits25m = _calculateStandardizedSplits(segments, 25);
     final splits50m = _calculateStandardizedSplits(segments, 50);
     final speedPer25m = _calculateSpeedPer25m(splits25m);
-    final otherMetrics = _calculateMetricsPer25m(segments, splits25m.length);
+
+    final metrics25 = _calculateMetricsPer25m(analyzed, splits25m.length);
 
     return RaceAnalyze(
       id: id,
@@ -137,7 +171,7 @@ class RaceAnalyze with AnalyzableBase {
       poolLength: poolLength,
       stroke: stroke,
       distance: distance,
-      segments: segments,
+      segments: analyzed,
       finalTime: finalTime,
       totalDistance: totalDistance,
       totalStrokes: totalStrokes,
@@ -147,149 +181,156 @@ class RaceAnalyze with AnalyzableBase {
       splits25m: splits25m,
       splits50m: splits50m,
       speedPer25m: speedPer25m,
-      strokesPer25m: List<int>.from(otherMetrics['strokes']!),
-      frequencyPer25m: List<double>.from(otherMetrics['frequencies']!),
-      strokeLengthPer25m: List<double>.from(otherMetrics['lengths']!),
+      strokesPer25m: metrics25.strokes,
+      frequencyPer25m: metrics25.frequencies,
+      strokeLengthPer25m: metrics25.lengths,
     );
   }
 
-  // --- 🧮 HELPER METHODS (unchanged) ---
-  static List<double> _calculateSpeedPer25m(List<int> splits25m) {
-    if (splits25m.isEmpty) return [];
-    final List<double> speeds = [];
-    int previousSplitTime = 0;
-    for (final splitTime in splits25m) {
-      final intervalTime = splitTime - previousSplitTime;
-      final speed = (intervalTime > 0) ? (25.0 / (intervalTime / 1000.0)) : 0.0;
-      speeds.add(speed);
-      previousSplitTime = splitTime;
+  // ---------------------------------------------------------------------------
+  // 📊 SPEED PER 25m
+  // ---------------------------------------------------------------------------
+  static List<double> _calculateSpeedPer25m(List<int> splits) {
+    if (splits.isEmpty) return [];
+
+    final speeds = <double>[];
+    int prev = 0;
+
+    for (final t in splits) {
+      final dt = t - prev;
+      speeds.add(dt > 0 ? 25.0 / (dt / 1000.0) : 0.0);
+      prev = t;
     }
+
     return speeds;
   }
 
-  static Map<String, List<dynamic>> _calculateMetricsPer25m(
+  // ---------------------------------------------------------------------------
+  // 📊 PER-25m METRICS (Strokes / Frequency / Stroke Length)
+  // ---------------------------------------------------------------------------
+  static Per25mMetrics _calculateMetricsPer25m(
     List<AnalyzedSegment> segments,
-    int numIntervals,
+      int intervals,
   ) {
     if (segments.isEmpty) {
-      return {'strokes': [], 'frequencies': [], 'lengths': []};
+      return Per25mMetrics(strokes: [], frequencies: [], lengths: []);
     }
 
-    final List<int> strokes = [];
-    final List<double> frequencies = [];
-    final List<double> lengths = [];
+    final strokes = <int>[];
+    final freqs = <double>[];
+    final lengths = <double>[];
 
-    double cumulativeDistance = 0;
-    int segmentIndex = 0;
+    double cumulativeDist = 0;
+    int idx = 0;
 
-    for (int i = 0; i < numIntervals; i++) {
-      final double midpointDistance = (i * 25.0) + 12.5;
-      while (segmentIndex < segments.length - 1 &&
-          (cumulativeDistance + segments[segmentIndex].distanceMeters) <
-              midpointDistance) {
-        cumulativeDistance += segments[segmentIndex].distanceMeters;
-        segmentIndex++;
+    for (int i = 0; i < intervals; i++) {
+      final target = (i * 25.0) + 12.5;
+
+      while (idx < segments.length - 1 &&
+          cumulativeDist + segments[idx].distanceMeters < target) {
+        cumulativeDist += segments[idx].distanceMeters;
+        idx++;
       }
 
-      final segment = segments[segmentIndex];
-      strokes.add(segment.strokes ?? 0);
-      frequencies.add(segment.strokeFrequency ?? 0.0);
-      lengths.add(segment.strokeLengthMeters ?? 0.0);
+      final s = segments[idx];
+
+      strokes.add(s.strokes ?? 0);
+      freqs.add(s.strokeFrequency ?? 0.0);
+      lengths.add(s.strokeLengthMeters ?? 0.0);
     }
-    return {'strokes': strokes, 'frequencies': frequencies, 'lengths': lengths};
+
+    return Per25mMetrics(
+      strokes: strokes,
+      frequencies: freqs,
+      lengths: lengths,
+    );
   }
 
-  static List<int> _calculateStandardizedSplits(
-    List<AnalyzedSegment> segments,
+  // ---------------------------------------------------------------------------
+  // 📊 STANDARDIZED SPLIT CALCULATION
+  // ---------------------------------------------------------------------------
+  static List<int> _calculateStandardizedSplits(List<RaceSegment> segments,
     int intervalDistance,
   ) {
-    if (segments.isEmpty || intervalDistance <= 0) return [];
+    if (segments.isEmpty) return [];
 
-    final List<int> splits = [];
-    double targetDistance = intervalDistance.toDouble();
-    double cumulativeDistance = 0;
+    final splits = <int>[];
+    double cumulativeDist = 0;
     int cumulativeTime = 0;
-    int segmentIndex = 0;
-    final double totalRaceDistance =
-        segments.map((s) => s.distanceMeters).fold(0.0, (a, b) => a + b);
+    int index = 0;
 
-    while (targetDistance <= totalRaceDistance + 0.1) {
-      while (segmentIndex < segments.length &&
-          (cumulativeDistance + segments[segmentIndex].distanceMeters) <
-              targetDistance) {
-        cumulativeDistance += segments[segmentIndex].distanceMeters;
-        cumulativeTime += segments[segmentIndex].splitTimeMillis;
-        segmentIndex++;
+    final totalDistance =
+    segments.fold(0.0, (double sum, s) => sum + s.segmentDistance);
+
+    double target = intervalDistance.toDouble();
+
+    while (target <= totalDistance + 0.1) {
+      while (index < segments.length &&
+          cumulativeDist + segments[index].segmentDistance < target) {
+        cumulativeTime += segments[index].splitTimeMillis;
+        cumulativeDist += segments[index].segmentDistance;
+        index++;
       }
 
-      if (segmentIndex >= segments.length) break;
+      if (index >= segments.length) break;
 
-      final currentSegment = segments[segmentIndex];
-      final double distanceIntoSegment = targetDistance - cumulativeDistance;
+      final seg = segments[index];
+      final distIntoSeg = target - cumulativeDist;
 
-      if (currentSegment.distanceMeters == 0) {
-        if (distanceIntoSegment == 0) splits.add(cumulativeTime);
-        targetDistance += intervalDistance;
-        continue;
+      if (seg.segmentDistance <= 0) {
+        splits.add(cumulativeTime);
+      } else {
+        final frac = distIntoSeg / seg.segmentDistance;
+        final dt = (frac * seg.splitTimeMillis).round();
+        splits.add(cumulativeTime + dt);
       }
 
-      final double fractionOfSegment =
-          distanceIntoSegment / currentSegment.distanceMeters;
-      final int timeForFraction =
-          (fractionOfSegment * currentSegment.splitTimeMillis).round();
-      splits.add(cumulativeTime + timeForFraction);
-      targetDistance += intervalDistance;
+      target += intervalDistance;
     }
+
     return splits;
   }
 
-  // --- FIRESTORE SERIALIZATION ---
-  Map<String, dynamic> toJson() {
-    return {
-      ...analyzableBaseToJson(),
-      'eventName': eventName,
-      'raceName': raceName,
-      'raceAnalyzeRequestId': raceAnalyzeRequestId,
-      if (raceDate != null) 'raceDate': Timestamp.fromDate(raceDate!),
-      if (poolLength != null) 'poolLength': poolLength!.name,
-      if (stroke != null) 'stroke': stroke!.name,
-      'distance': distance,
-      'segments': segments.map((s) => s.toJson()).toList(),
-      'finalTime': finalTime,
-      'totalDistance': totalDistance,
-      'totalStrokes': totalStrokes,
-      'averageSpeedMetersPerSecond': averageSpeedMetersPerSecond,
-      'averageStrokeFrequency': averageStrokeFrequency,
-      'averageStrokeLengthMeters': averageStrokeLengthMeters,
-      'splits25m': splits25m,
-      'splits50m': splits50m,
-      'speedPer25m': speedPer25m,
-      'strokesPer25m': strokesPer25m,
-      'frequencyPer25m': frequencyPer25m,
-      'strokeLengthPer25m': strokeLengthPer25m,
-      'aiInterpretation': aiInterpretation
-    };
-  }
+  // ---------------------------------------------------------------------------
+  // 🔥 FIRESTORE SERIALIZATION
+  // ---------------------------------------------------------------------------
+  Map<String, dynamic> toJson() =>
+      {
+        ...analyzableBaseToJson(),
+        'eventName': eventName,
+        'raceName': raceName,
+        'raceAnalyzeRequestId': raceAnalyzeRequestId,
+        if (raceDate != null) 'raceDate': Timestamp.fromDate(raceDate!),
+        'poolLength': poolLength?.name,
+        'stroke': stroke?.name,
+        'distance': distance,
+        'segments': segments.map((s) => s.toJson()).toList(),
+        'finalTime': finalTime,
+        'totalDistance': totalDistance,
+        'totalStrokes': totalStrokes,
+        'averageSpeedMetersPerSecond': averageSpeedMetersPerSecond,
+        'averageStrokeFrequency': averageStrokeFrequency,
+        'averageStrokeLengthMeters': averageStrokeLengthMeters,
+        'splits25m': splits25m,
+        'splits50m': splits50m,
+        'speedPer25m': speedPer25m,
+        'strokesPer25m': strokesPer25m,
+        'frequencyPer25m': frequencyPer25m,
+        'strokeLengthPer25m': strokeLengthPer25m,
+        'aiInterpretation': aiInterpretation,
+      };
 
-  Map<String, dynamic> toAiJson() {
-    return {
-      "eventName": eventName,
-      "raceName": raceName,
-      "raceDate": raceDate?.toIso8601String(),
-      "poolLength": poolLength?.name,
-      "stroke": stroke?.name,
-      "distance": distance,
-      "segments": segments.map((AnalyzedSegment s) => s.toAiJson()).toList(),
-    };
-  }
-
+  // ---------------------------------------------------------------------------
+  // 🔥 FIRESTORE DESERIALIZATION
+  // ---------------------------------------------------------------------------
   factory RaceAnalyze.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data()!;
+
     final race = RaceAnalyze(
       id: doc.id,
-      raceAnalyzeRequestId: data['raceAnalyzeRequestId'] as String?,
+      raceAnalyzeRequestId: data['raceAnalyzeRequestId'],
       eventName: data['eventName'],
       raceName: data['raceName'],
       aiInterpretation: data['aiInterpretation'],
@@ -300,7 +341,7 @@ class RaceAnalyze with AnalyzableBase {
       stroke: Stroke.values.byName(data['stroke'] ?? 'unknown'),
       distance: data['distance'],
       segments: (data['segments'] as List<dynamic>)
-          .map((s) => AnalyzedSegment.fromMap(s as Map<String, dynamic>))
+          .map((e) => AnalyzedSegment.fromMap(e as Map<String, dynamic>))
           .toList(),
       finalTime: data['finalTime'],
       totalDistance: (data['totalDistance'] as num).toDouble(),
@@ -318,80 +359,8 @@ class RaceAnalyze with AnalyzableBase {
       frequencyPer25m: List<double>.from(data['frequencyPer25m']),
       strokeLengthPer25m: List<double>.from(data['strokeLengthPer25m']),
     );
+
     race.loadAnalyzableBase(data, doc.id);
     return race;
   }
-
-  RaceAnalyze copyWith({
-    // from AnalyzableBase / metadata
-    String? id,
-    String? coachId,
-    String? swimmerId,
-    String? swimmerName,
-
-    // editable metadata
-    String? eventName,
-    String? raceName,
-    DateTime? raceDate,
-    PoolLength? poolLength,
-    Stroke? stroke,
-    int? distance,
-
-    // NEW
-    String? aiInterpretation,
-
-    // core data
-    List<AnalyzedSegment>? segments,
-    int? finalTime,
-    double? totalDistance,
-    int? totalStrokes,
-    double? averageSpeedMetersPerSecond,
-    double? averageStrokeFrequency,
-    double? averageStrokeLengthMeters,
-
-    // standardized metrics
-    List<int>? splits25m,
-    List<int>? splits50m,
-    List<double>? speedPer25m,
-    List<int>? strokesPer25m,
-    List<double>? frequencyPer25m,
-    List<double>? strokeLengthPer25m,
-  }) {
-    final copy = RaceAnalyze(
-      id: id ?? this.id,
-      coachId: coachId ?? this.coachId,
-      swimmerId: swimmerId ?? this.swimmerId,
-      swimmerName: swimmerName ?? this.swimmerName,
-      eventName: eventName ?? this.eventName,
-      raceName: raceName ?? this.raceName,
-      raceDate: raceDate ?? this.raceDate,
-      poolLength: poolLength ?? this.poolLength,
-      stroke: stroke ?? this.stroke,
-      distance: distance ?? this.distance,
-      aiInterpretation: aiInterpretation ?? this.aiInterpretation,
-      segments: segments ?? this.segments,
-      finalTime: finalTime ?? this.finalTime,
-      totalDistance: totalDistance ?? this.totalDistance,
-      totalStrokes: totalStrokes ?? this.totalStrokes,
-      averageSpeedMetersPerSecond:
-          averageSpeedMetersPerSecond ?? this.averageSpeedMetersPerSecond,
-      averageStrokeFrequency:
-          averageStrokeFrequency ?? this.averageStrokeFrequency,
-      averageStrokeLengthMeters:
-          averageStrokeLengthMeters ?? this.averageStrokeLengthMeters,
-      splits25m: splits25m ?? this.splits25m,
-      splits50m: splits50m ?? this.splits50m,
-      speedPer25m: speedPer25m ?? this.speedPer25m,
-      strokesPer25m: strokesPer25m ?? this.strokesPer25m,
-      frequencyPer25m: frequencyPer25m ?? this.frequencyPer25m,
-      strokeLengthPer25m: strokeLengthPer25m ?? this.strokeLengthPer25m,
-    );
-
-    return copy;
-  }
-
-  // --- CACHE METHODS ---
-  void setExtraData(String key, dynamic value) => _extraData[key] = value;
-
-  T? getExtraData<T>(String key) => _extraData[key] as T?;
 }
