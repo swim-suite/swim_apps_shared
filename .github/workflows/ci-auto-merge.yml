@@ -10,11 +10,10 @@ on:
 
 jobs:
   build:
-    name: Validate Build
+    name: Validate, Bump & Merge
     runs-on: ubuntu-latest
 
-    outputs:
-      tag: ${{ steps.version_bump.outputs.tag }}
+    # We will compute the tag/version inside the job steps
 
     permissions:
       contents: write
@@ -27,7 +26,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # Required to get the full history for tagging and finding the latest tag
           fetch-depth: 0
+
+      # ---------------------------------------------------------
+      # INSTALL GH CLI
+      # ---------------------------------------------------------
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh -y
 
       # ---------------------------------------------------------
       # INSTALL FLUTTER
@@ -48,42 +56,39 @@ jobs:
       # ---------------------------------------------------------
       # ANALYZE + TESTS
       # ---------------------------------------------------------
-      # - name: Analyze
-      #   run: flutter analyze
-
       - name: Test
         run: flutter test --no-pub
+
+      # ---------------------------------------------------------
+      # VERSION BUMP (Find latest tag on master for base)
+      # ---------------------------------------------------------
+      - name: Bump version based on latest tag
+        id: version_bump
+        run: |
+          # 1. Find the latest tag on the target branch (master)
+          LATEST_TAG=$(git describe --tags --match "v*.*.*" $(git merge-base HEAD master) --abbrev=0 || echo "v0.0.0")
           
+          echo "📦 Latest tag on master: $LATEST_TAG"
           
-          # ---------------------------------------------------------
-          # VERSION BUMP (clean x.y.z format)
-          # ---------------------------------------------------------
-               - name: Bump version in pubspec.yaml
-               id: version_bump
-               run: |
-                 echo "📦 Current version:"
-                 grep '^version:' pubspec.yaml
-                 
-                 # Extract version: remove 'version: ' prefix then trim after +
-                 RAW_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
-                 SEMVER="${RAW_VERSION%%+*}"   # strip +build if it exists
-                 
-                 echo "Current semver: $SEMVER"
-                 
-                 # Split semver
-                 IFS='.' read -r MAJOR MINOR PATCH <<< "$SEMVER"
-                 
-                 # Increment patch
-                 PATCH=$((PATCH+1))
-                 
-                 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-                 
-                 # Update pubspec.yaml
-                 sed -i "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
-                 
-                 echo "🔼 New version: $NEW_VERSION"
-                 echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-                 echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          # 2. Extract and increment the patch version
+          SEMVER="${LATEST_TAG#v}" # remove 'v' prefix
+          SEMVER_NO_BUILD="${SEMVER%%+*}" # strip +build
+          
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$SEMVER_NO_BUILD"
+          
+          # Increment patch
+          PATCH=$((PATCH+1))
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          NEW_TAG="v$NEW_VERSION"
+          
+          echo "🔼 New version: $NEW_VERSION"
+          
+          # 3. Update pubspec.yaml in the current branch
+          sed -i "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
       # ---------------------------------------------------------
       # CREATE PR (Action handles commit & push)
@@ -92,97 +97,51 @@ jobs:
         id: create_pr
         uses: peter-evans/create-pull-request@v6
         with:
+          # Use the default GITHUB_TOKEN for internal operations
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "CI: Bump version to ${{ steps.version_bump.outputs.new_version }}"
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          branch: ci/version-${{ steps.version_bump.outputs.new_version }}
+          branch: ci/version-bump-${{ steps.version_bump.outputs.new_version }}
           delete-branch: true
           title: "CI Auto-Merge: Version ${{ steps.version_bump.outputs.new_version }}"
           body: |
             Automatic version bump and merge into master.
             Version: **${{ steps.version_bump.outputs.new_version }}**
-          base: master
+          base: master # Target master branch
 
       # ---------------------------------------------------------
-      # MERGE PR (Force merge immediately)
+      # MERGE PR & TAG (CRITICAL: Needs token with 'write' permissions)
       # ---------------------------------------------------------
-      - name: Merge Pull Request
+      - name: Merge PR and Create Tag
         if: steps.create_pr.outputs.pull-request-number != ''
         run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --squash --delete-branch
+          PR_NUMBER=${{ steps.create_pr.outputs.pull-request-number }}
+          NEW_TAG=${{ steps.version_bump.outputs.tag }}
+          
+          # 1. Merge PR using squash to keep history clean
+          gh pr merge "$PR_NUMBER" --squash --delete-branch
+          
+          # 2. Immediately tag the HEAD of the master branch that was just merged
+          git fetch origin master
+          git checkout master
+          
+          echo "🏷 Creating and pushing tag $NEW_TAG"
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
+
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  release:
-    name: Tag + Release
-    runs-on: ubuntu-latest
-    needs: build
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use default token, already has 'contents: write'
 
       # ---------------------------------------------------------
-      # CONFIGURE GIT
-      # ---------------------------------------------------------
-      - name: Configure Git
-        run: |
-          git config --global user.email "ci@github.com"
-          git config --global user.name "GitHub Actions"
-
-      # ---------------------------------------------------------
-      # FIND NEXT AVAILABLE TAG
-      # ---------------------------------------------------------
-      - name: Determine Next Available Tag
-        id: next_tag
-        run: |
-          BASE_TAG="${{ needs.build.outputs.tag }}"
-
-          echo "🔍 Searching for next available tag starting from $BASE_TAG"
-
-          TAG="$BASE_TAG"
-
-          # Loop until a free tag is found
-          while git ls-remote --tags origin | grep -q "refs/tags/$TAG"; do
-            echo "⚠️ Tag $TAG already exists. Incrementing..."
-
-            VERSION="${TAG#v}"
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-
-            PATCH=$((PATCH + 1))
-            TAG="v$MAJOR.$MINOR.$PATCH"
-          done
-
-          echo "✅ Using available tag: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
-      
-
-      # ---------------------------------------------------------
-      # CREATE GIT TAG (guaranteed unique)
-      # ---------------------------------------------------------
-      - name: Create Tag
-        run: |
-          TAG="${{ steps.next_tag.outputs.TAG }}"
-
-          echo "🏷 Creating tag $TAG"
-          git tag "$TAG"
-          git push origin "$TAG"
-      # ---------------------------------------------------------
-      # CREATE RELEASE
+      # CREATE RELEASE (Runs only if the merge/tag succeeded)
       # ---------------------------------------------------------
       - name: Create GitHub Release
+        if: always() # Run even if merge failed, but check for successful tag
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.build.outputs.tag }}
-          name: "Release ${{ needs.build.outputs.tag }}"
+          tag_name: ${{ steps.version_bump.outputs.tag }}
+          name: "Release ${{ steps.version_bump.outputs.tag }}"
           body: |
-            ## SwimSuite Shared Release
-            🎉 Version `${{ needs.build.outputs.tag }}` has been published automatically!
+            ## Automated Release
+            🎉 Version `${{ steps.version_bump.outputs.tag }}` has been published automatically!
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
