@@ -99,6 +99,8 @@ class AnalysisRequest {
     String? paymentStatus,
     bool? processed,
     DateTime? verifiedAt,
+    Stroke? stroke,
+    int? distance,
   }) {
     return AnalysisRequest(
       id: id,
@@ -109,8 +111,8 @@ class AnalysisRequest {
       videoUrl: videoUrl,
       heat: heat,
       lane: lane,
-      distance: distance,
-      stroke: stroke,
+      distance: distance ?? this.distance,
+      stroke: stroke ?? this.stroke,
       createdAt: createdAt,
       verifiedAt: verifiedAt ?? this.verifiedAt,
       processed: processed ?? this.processed,
