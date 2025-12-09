@@ -8,6 +8,7 @@ export 'objects/analyzes/start_analyze.dart';
 export 'objects/analyzes/stroke_analyze.dart';
 export 'objects/analyzes/stroke_segment_matrix.dart';
 export 'objects/analyzes/stroke_under_water_matrix.dart';
+export 'objects/per_25.dart';
 ///OBJECTS
 export 'objects/session_set_configuration_extension.dart';
 export 'objects/user/invites/app_enums.dart';

@@ -2,22 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:swim_apps_shared/objects/pool_length.dart';
 import 'package:swim_apps_shared/objects/stroke.dart';
 
+import '../per_25.dart';
 import '../race_segment.dart';
 import 'analyze_base.dart';
 import 'analyzed_segment.dart';
-
-/// Helper container for 25m metric results
-class Per25mMetrics {
-  final List<int> strokes;
-  final List<double> frequencies;
-  final List<double> lengths;
-
-  Per25mMetrics({
-    required this.strokes,
-    required this.frequencies,
-    required this.lengths,
-  });
-}
 
 /// Full race analysis stored in Firestore.
 /// Uses legacy `AnalyzedSegment` for storage,
