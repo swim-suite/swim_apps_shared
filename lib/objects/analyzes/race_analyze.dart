@@ -306,9 +306,18 @@ class RaceAnalyze with AnalyzableBase {
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // 🔥 FIRESTORE DESERIALIZATION
-  // ---------------------------------------------------------------------------
+  Map<String, dynamic> toAiJson() {
+    return {
+      "eventName": eventName,
+      "raceName": raceName,
+      "raceDate": raceDate?.toIso8601String(),
+      "poolLength": poolLength?.name,
+      "stroke": stroke?.name,
+      "distance": distance,
+      "segments": segments.map((AnalyzedSegment s) => s.toAiJson()).toList(),
+    };
+  }
+
   factory RaceAnalyze.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
