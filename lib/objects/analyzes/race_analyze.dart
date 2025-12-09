@@ -196,10 +196,8 @@ class RaceAnalyze with AnalyzableBase {
   // ---------------------------------------------------------------------------
   // 📊 PER-25m METRICS (Strokes / Frequency / Stroke Length)
   // ---------------------------------------------------------------------------
-  static Per25mMetrics _calculateMetricsPer25m(
-    List<AnalyzedSegment> segments,
-      int intervals,
-  ) {
+  static Per25mMetrics _calculateMetricsPer25m(List<AnalyzedSegment> segments,
+      int intervals,) {
     if (segments.isEmpty) {
       return Per25mMetrics(strokes: [], frequencies: [], lengths: []);
     }
@@ -237,7 +235,8 @@ class RaceAnalyze with AnalyzableBase {
   // ---------------------------------------------------------------------------
   // 📊 STANDARDIZED SPLIT CALCULATION
   // ---------------------------------------------------------------------------
-  static List<int> _calculateStandardizedSplits(List<RaceSegment> segments,
+  static List<int> _calculateStandardizedSplits(
+    List<RaceSegment> segments,
     int intervalDistance,
   ) {
     if (segments.isEmpty) return [];
@@ -303,11 +302,8 @@ class RaceAnalyze with AnalyzableBase {
       'strokesPer25m': strokesPer25m,
       'frequencyPer25m': frequencyPer25m,
       'strokeLengthPer25m': strokeLengthPer25m,
-      'aiInterpretation': aiInterpretation
+      'aiInterpretation': aiInterpretation,
     };
-  }
-
-    return splits;
   }
 
   // ---------------------------------------------------------------------------
@@ -355,24 +351,17 @@ class RaceAnalyze with AnalyzableBase {
   }
 
   RaceAnalyze copyWith({
-    // from AnalyzableBase / metadata
     String? id,
     String? coachId,
     String? swimmerId,
     String? swimmerName,
-
-    // editable metadata
     String? eventName,
     String? raceName,
     DateTime? raceDate,
     PoolLength? poolLength,
     Stroke? stroke,
     int? distance,
-
-    // NEW
     String? aiInterpretation,
-
-    // core data
     List<AnalyzedSegment>? segments,
     int? finalTime,
     double? totalDistance,
@@ -380,8 +369,6 @@ class RaceAnalyze with AnalyzableBase {
     double? averageSpeedMetersPerSecond,
     double? averageStrokeFrequency,
     double? averageStrokeLengthMeters,
-
-    // standardized metrics
     List<int>? splits25m,
     List<int>? splits50m,
     List<double>? speedPer25m,
@@ -391,7 +378,6 @@ class RaceAnalyze with AnalyzableBase {
   }) {
     final copy = RaceAnalyze(
       id: id ?? this.id,
-      //ID
       coachId: coachId ?? this.coachId,
       swimmerId: swimmerId ?? this.swimmerId,
       swimmerName: swimmerName ?? this.swimmerName,
