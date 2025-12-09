@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:swim_apps_shared/swim_session/events/checkpoint.dart';
 
-@immutable
+//@immutable
 class RaceSegment {
   final int sequence;
   final CheckPoint checkPoint;
@@ -22,14 +21,14 @@ class RaceSegment {
 
   // Speed & efficiency
   final double? avgSpeed; // m/s
-  final double? strokeFreq; // strokes/min
+  double? strokeFreq; // strokes/min
   final double? strokeLength; // m/stroke
   final double? strokeIndex; // m^2/s
 
   // Breakout timing
   final Duration? breakoutTime;
 
-  const RaceSegment({
+  RaceSegment({
     required this.sequence,
     required this.checkPoint,
     required this.accumulatedDistance,
