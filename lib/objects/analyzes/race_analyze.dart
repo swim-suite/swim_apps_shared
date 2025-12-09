@@ -412,6 +412,7 @@ class RaceAnalyze with AnalyzableBase {
   }) {
     final copy = RaceAnalyze(
       id: id ?? this.id,
+      //ID
       coachId: coachId ?? this.coachId,
       swimmerId: swimmerId ?? this.swimmerId,
       swimmerName: swimmerName ?? this.swimmerName,
