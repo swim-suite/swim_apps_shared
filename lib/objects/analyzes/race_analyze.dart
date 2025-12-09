@@ -291,34 +291,45 @@ class RaceAnalyze with AnalyzableBase {
     return splits;
   }
 
-  // ---------------------------------------------------------------------------
-  // 🔥 FIRESTORE SERIALIZATION
-  // ---------------------------------------------------------------------------
-  Map<String, dynamic> toJson() =>
-      {
-        ...analyzableBaseToJson(),
-        'eventName': eventName,
-        'raceName': raceName,
-        'raceAnalyzeRequestId': raceAnalyzeRequestId,
-        if (raceDate != null) 'raceDate': Timestamp.fromDate(raceDate!),
-        'poolLength': poolLength?.name,
-        'stroke': stroke?.name,
-        'distance': distance,
-        'segments': segments.map((s) => s.toJson()).toList(),
-        'finalTime': finalTime,
-        'totalDistance': totalDistance,
-        'totalStrokes': totalStrokes,
-        'averageSpeedMetersPerSecond': averageSpeedMetersPerSecond,
-        'averageStrokeFrequency': averageStrokeFrequency,
-        'averageStrokeLengthMeters': averageStrokeLengthMeters,
-        'splits25m': splits25m,
-        'splits50m': splits50m,
-        'speedPer25m': speedPer25m,
-        'strokesPer25m': strokesPer25m,
-        'frequencyPer25m': frequencyPer25m,
-        'strokeLengthPer25m': strokeLengthPer25m,
-        'aiInterpretation': aiInterpretation,
-      };
+  // --- FIRESTORE SERIALIZATION ---
+  Map<String, dynamic> toJson() {
+    return {
+      ...analyzableBaseToJson(),
+      'eventName': eventName,
+      'raceName': raceName,
+      'raceAnalyzeRequestId': raceAnalyzeRequestId,
+      if (raceDate != null) 'raceDate': Timestamp.fromDate(raceDate!),
+      if (poolLength != null) 'poolLength': poolLength!.name,
+      if (stroke != null) 'stroke': stroke!.name,
+      'distance': distance,
+      'segments': segments.map((s) => s.toJson()).toList(),
+      'finalTime': finalTime,
+      'totalDistance': totalDistance,
+      'totalStrokes': totalStrokes,
+      'averageSpeedMetersPerSecond': averageSpeedMetersPerSecond,
+      'averageStrokeFrequency': averageStrokeFrequency,
+      'averageStrokeLengthMeters': averageStrokeLengthMeters,
+      'splits25m': splits25m,
+      'splits50m': splits50m,
+      'speedPer25m': speedPer25m,
+      'strokesPer25m': strokesPer25m,
+      'frequencyPer25m': frequencyPer25m,
+      'strokeLengthPer25m': strokeLengthPer25m,
+      'aiInterpretation': aiInterpretation
+    };
+  }
+
+  Map<String, dynamic> toAiJson() {
+    return {
+      "eventName": eventName,
+      "raceName": raceName,
+      "raceDate": raceDate?.toIso8601String(),
+      "poolLength": poolLength?.name,
+      "stroke": stroke?.name,
+      "distance": distance,
+      "segments": segments.map((AnalyzedSegment s) => s.toAiJson()).toList(),
+    };
+  }
 
   // ---------------------------------------------------------------------------
   // 🔥 FIRESTORE DESERIALIZATION
@@ -362,5 +373,73 @@ class RaceAnalyze with AnalyzableBase {
 
     race.loadAnalyzableBase(data, doc.id);
     return race;
+  }
+
+  RaceAnalyze copyWith({
+    // from AnalyzableBase / metadata
+    String? id,
+    String? coachId,
+    String? swimmerId,
+    String? swimmerName,
+
+    // editable metadata
+    String? eventName,
+    String? raceName,
+    DateTime? raceDate,
+    PoolLength? poolLength,
+    Stroke? stroke,
+    int? distance,
+
+    // NEW
+    String? aiInterpretation,
+
+    // core data
+    List<AnalyzedSegment>? segments,
+    int? finalTime,
+    double? totalDistance,
+    int? totalStrokes,
+    double? averageSpeedMetersPerSecond,
+    double? averageStrokeFrequency,
+    double? averageStrokeLengthMeters,
+
+    // standardized metrics
+    List<int>? splits25m,
+    List<int>? splits50m,
+    List<double>? speedPer25m,
+    List<int>? strokesPer25m,
+    List<double>? frequencyPer25m,
+    List<double>? strokeLengthPer25m,
+  }) {
+    final copy = RaceAnalyze(
+      id: id ?? this.id,
+      coachId: coachId ?? this.coachId,
+      swimmerId: swimmerId ?? this.swimmerId,
+      swimmerName: swimmerName ?? this.swimmerName,
+      eventName: eventName ?? this.eventName,
+      raceName: raceName ?? this.raceName,
+      raceDate: raceDate ?? this.raceDate,
+      poolLength: poolLength ?? this.poolLength,
+      stroke: stroke ?? this.stroke,
+      distance: distance ?? this.distance,
+      aiInterpretation: aiInterpretation ?? this.aiInterpretation,
+      segments: segments ?? this.segments,
+      finalTime: finalTime ?? this.finalTime,
+      totalDistance: totalDistance ?? this.totalDistance,
+      totalStrokes: totalStrokes ?? this.totalStrokes,
+      averageSpeedMetersPerSecond:
+          averageSpeedMetersPerSecond ?? this.averageSpeedMetersPerSecond,
+      averageStrokeFrequency:
+          averageStrokeFrequency ?? this.averageStrokeFrequency,
+      averageStrokeLengthMeters:
+          averageStrokeLengthMeters ?? this.averageStrokeLengthMeters,
+      splits25m: splits25m ?? this.splits25m,
+      splits50m: splits50m ?? this.splits50m,
+      speedPer25m: speedPer25m ?? this.speedPer25m,
+      strokesPer25m: strokesPer25m ?? this.strokesPer25m,
+      frequencyPer25m: frequencyPer25m ?? this.frequencyPer25m,
+      strokeLengthPer25m: strokeLengthPer25m ?? this.strokeLengthPer25m,
+    );
+
+    return copy;
   }
 }
