@@ -70,25 +70,41 @@ class RaceSegment {
       };
 
   factory RaceSegment.fromMap(Map<String, dynamic> map) {
+    // Renamed helpers (no shadowing of built-in types)
+    double parseDouble(dynamic v) => v == null ? 0.0 : (v as num).toDouble();
+
+    int? parseInt(dynamic v) => v == null ? null : (v as num).toInt();
+
+    // Safe checkpoint handling
+    final String? cpName = map['checkPoint'];
+    final checkPoint = CheckPoint.values.firstWhere(
+      (e) => e.name == cpName,
+      orElse: () => CheckPoint.finish, //TODO check
+    );
+
     return RaceSegment(
-      sequence: map['sequence'],
-      checkPoint:
-          CheckPoint.values.firstWhere((e) => e.name == map['checkPoint']),
-      accumulatedDistance: (map['accumulatedDistance'] as num).toDouble(),
-      segmentDistance: (map['segmentDistance'] as num).toDouble(),
-      splitTimeMillis: map['splitTimeMillis'],
-      totalTimeMillis: map['totalTimeMillis'],
-      underwaterDistance: (map['underwaterDistance'] as num?)?.toDouble(),
-      strokes: map['strokes'],
-      dolphinKicks: map['dolphinKicks'],
-      breaths: map['breaths'],
-      avgSpeed: (map['avgSpeed'] as num?)?.toDouble(),
-      strokeFreq: (map['strokeFreq'] as num?)?.toDouble(),
-      strokeLength: (map['strokeLength'] as num?)?.toDouble(),
-      strokeIndex: (map['strokeIndex'] as num?)?.toDouble(),
-      breakoutTime: map['breakoutTime'] != null
-          ? Duration(milliseconds: map['breakoutTime'])
-          : null,
+      sequence: parseInt(map['sequence']) ?? 0,
+      checkPoint: checkPoint,
+      accumulatedDistance: parseDouble(map['accumulatedDistance']),
+      segmentDistance: parseDouble(map['segmentDistance']),
+      underwaterDistance: map['underwaterDistance'] == null
+          ? null
+          : parseDouble(map['underwaterDistance']),
+      splitTimeMillis: parseInt(map['splitTimeMillis']) ?? 0,
+      totalTimeMillis: parseInt(map['totalTimeMillis']) ?? 0,
+      strokes: parseInt(map['strokes']),
+      dolphinKicks: parseInt(map['dolphinKicks']),
+      breaths: parseInt(map['breaths']),
+      avgSpeed: map['avgSpeed'] == null ? null : parseDouble(map['avgSpeed']),
+      strokeFreq:
+          map['strokeFreq'] == null ? null : parseDouble(map['strokeFreq']),
+      strokeLength:
+          map['strokeLength'] == null ? null : parseDouble(map['strokeLength']),
+      strokeIndex:
+          map['strokeIndex'] == null ? null : parseDouble(map['strokeIndex']),
+      breakoutTime: map['breakoutTime'] == null
+          ? null
+          : Duration(milliseconds: parseInt(map['breakoutTime']) ?? 0),
     );
   }
 
