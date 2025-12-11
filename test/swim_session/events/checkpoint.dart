@@ -37,7 +37,7 @@ void main() {
 
     test('thirtyFiveMeterMark returns 35', () {
       expect(
-          call(CheckPoint.thirthyFiveMeterMark,
+          call(CheckPoint.thirtyFiveMeterMark,
               poolLength: 25, raceDistance: 200),
           35);
     });
