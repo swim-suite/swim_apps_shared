@@ -47,7 +47,10 @@ class FiftyMeterRace extends Event {
       CheckPoint.fifteenMeterMark,
     ];
 
-    final second = [CheckPoint.thirthyFiveMeterMark];
+    final second = [
+      CheckPoint.twentyFiveMeterMark,
+      CheckPoint.thirtyFiveMeterMark
+    ];
 
     final finishSeq = [
       CheckPoint.finish,
