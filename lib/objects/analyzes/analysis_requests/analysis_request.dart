@@ -9,6 +9,7 @@ class AnalysisRequest {
 
   final String name;
   final String email;
+  final bool isShortCourse;
 
   final String videoUrl;
 
@@ -34,6 +35,7 @@ class AnalysisRequest {
     required this.videoUrl,
     required this.createdAt,
     this.verifiedAt,
+    this.isShortCourse = true,
     this.processed = false,
     this.heat,
     this.lane,
@@ -55,6 +57,7 @@ class AnalysisRequest {
       analysisType: json['analysisType'] as String? ?? '',
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
+      isShortCourse: json['isShortCourse'] ?? true,
       videoUrl: json['videoUrl'] as String? ?? '',
       heat: json['heat'] as String?,
       lane: json['lane'] as String?,
