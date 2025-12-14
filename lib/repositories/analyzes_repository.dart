@@ -270,4 +270,29 @@ class AnalyzesRepository extends BaseRepository {
       _racesRef.doc(race.id).update(race.toJson());
 
   Future<void> deleteRace(String raceId) => _racesRef.doc(raceId).delete();
+
+  ///
+  ///
+  Future<List<RaceAnalyze>> getRacesByRequestIds(
+    List<String> requestIds,
+  ) async {
+    if (requestIds.isEmpty) return [];
+
+    final chunks = _splitList(requestIds, 30);
+    final List<RaceAnalyze> all = [];
+
+    for (final chunk in chunks) {
+      final query = _racesRef.where(
+        'raceAnalyzeRequestId',
+        whereIn: chunk,
+      );
+
+      final snapshot = await query.get();
+      all.addAll(
+        _parseDocsSafely(snapshot.docs, 'getRacesByRequestIds'),
+      );
+    }
+
+    return all;
+  }
 }
