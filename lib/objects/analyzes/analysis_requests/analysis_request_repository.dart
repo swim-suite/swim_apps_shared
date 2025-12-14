@@ -105,4 +105,28 @@ class AnalysisRequestRepository {
             .map((d) => AnalysisRequest.fromJson(json: d.data(), id: d.id))
             .toList());
   }
+
+  // --- ADD THIS NEW METHOD ---
+  Future<List<AnalysisRequest>> getByEmail(String email) async {
+    // 1. Normalize email to avoid case sensitivity issues
+    final normalizedEmail = email.trim().toLowerCase();
+
+    // 2. Query Firestore
+    // Note: You might need to create an index in Firebase Console for email + createdAt
+    final snapshot = await _col
+        .where('email', isEqualTo: normalizedEmail)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    // 3. Map to your object
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      // Ensure the ID is passed if your fromJson expects it in the map
+      // or if your constructor takes it separately.
+      // Based on your model: required this.id
+      data['id'] = doc.id;
+
+      return AnalysisRequest.fromJson(json: data, id: doc.id);
+    }).toList();
+  }
 }
