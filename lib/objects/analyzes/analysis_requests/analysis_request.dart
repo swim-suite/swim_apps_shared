@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:swim_apps_shared/objects/stroke.dart';
 
+import 'analysis_request_type.dart';
+
 class AnalysisRequest {
   final String id;
 
   final String sessionId;
-  final String analysisType;
+  final AnalysisRequestType analysisType;
 
   final String name;
   final String email;
@@ -47,14 +49,17 @@ class AnalysisRequest {
   // ---------------------------------------------------------------------------
   // FROM JSON
   // ---------------------------------------------------------------------------
-  factory AnalysisRequest.fromJson(Map<String, dynamic> json, String id) {
-    final int distance = json['distance'] != null && json['distance'] is String
-        ? int.tryParse(json['distance']) ?? 100
-        : json['distance'];
+  factory AnalysisRequest.fromJson(
+      {required Map<String, dynamic> json, required String id}) {
+    final int? distance = _parseDistance(json['distance']);
+
     return AnalysisRequest(
       id: id,
       sessionId: json['sessionId'] as String,
-      analysisType: json['analysisType'] as String? ?? '',
+      analysisType: AnalysisRequestType.values.firstWhere(
+        (e) => e.name == json['analysisType'],
+        orElse: () => AnalysisRequestType.raceAnalyze,
+      ),
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       isShortCourse: json['isShortCourse'] ?? true,
@@ -74,13 +79,23 @@ class AnalysisRequest {
     );
   }
 
+  static int _parseDistance(dynamic raw) {
+    if (raw == null) return 100;
+
+    if (raw is int) return raw;
+    if (raw is double) return raw.round();
+    if (raw is String) return int.tryParse(raw) ?? 100;
+
+    return 100;
+  }
+
   // ---------------------------------------------------------------------------
   // TO JSON (Model → Firestore)
   // ---------------------------------------------------------------------------
   Map<String, dynamic> toJson() {
     return {
       "sessionId": sessionId,
-      "analysisType": analysisType,
+      "analysisType": analysisType.name,
       "name": name,
       "email": email,
       "videoUrl": videoUrl,
