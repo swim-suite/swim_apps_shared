@@ -271,14 +271,12 @@ class AnalyzesRepository extends BaseRepository {
 
   Future<void> deleteRace(String raceId) => _racesRef.doc(raceId).delete();
 
-  ///
-  ///
   Future<List<RaceAnalyze>> getRacesByRequestIds(
     List<String> requestIds,
   ) async {
     if (requestIds.isEmpty) return [];
 
-    final chunks = _splitList(requestIds, 30);
+    final chunks = _splitList(requestIds, 10); // 🔥 MUST BE 10
     final List<RaceAnalyze> all = [];
 
     for (final chunk in chunks) {
@@ -288,6 +286,7 @@ class AnalyzesRepository extends BaseRepository {
       );
 
       final snapshot = await query.get();
+
       all.addAll(
         _parseDocsSafely(snapshot.docs, 'getRacesByRequestIds'),
       );
