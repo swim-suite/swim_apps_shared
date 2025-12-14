@@ -62,8 +62,8 @@ class AnalysisRequest {
       heat: json['heat'] as String?,
       lane: json['lane'] as String?,
       distance: distance,
-      stroke: json['focus'] != null
-          ? Stroke.fromString(json['focus'])
+      stroke: json['stroke'] != null
+          ? Stroke.fromString(json['stroke'])
           : Stroke.unknown,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       verifiedAt: json['verifiedAt'] != null
