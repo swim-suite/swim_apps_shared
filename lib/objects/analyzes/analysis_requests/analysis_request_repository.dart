@@ -23,7 +23,7 @@ class AnalysisRequestRepository {
     final snap = await _col.doc(id).get();
     if (!snap.exists) return null;
 
-    return AnalysisRequest.fromJson(snap.data()!, snap.id);
+    return AnalysisRequest.fromJson(json: snap.data()!, id: snap.id);
   }
 
   // --------------------------------------------------------------------------
@@ -36,7 +36,7 @@ class AnalysisRequestRepository {
         .get();
 
     return snap.docs
-        .map((d) => AnalysisRequest.fromJson(d.data(), d.id))
+        .map((d) => AnalysisRequest.fromJson(json: d.data(), id: d.id))
         .toList();
   }
 
@@ -46,7 +46,7 @@ class AnalysisRequestRepository {
   Stream<AnalysisRequest?> streamById(String id) {
     return _col.doc(id).snapshots().map((snap) {
       if (!snap.exists) return null;
-      return AnalysisRequest.fromJson(snap.data()!, snap.id);
+      return AnalysisRequest.fromJson(json: snap.data()!, id: snap.id);
     });
   }
 
@@ -59,7 +59,7 @@ class AnalysisRequestRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => AnalysisRequest.fromJson(d.data(), d.id))
+            .map((d) => AnalysisRequest.fromJson(json: d.data(), id: d.id))
             .toList());
   }
 
@@ -90,7 +90,7 @@ class AnalysisRequestRepository {
         .orderBy('createdAt', descending: false) // oldest first
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => AnalysisRequest.fromJson(d.data(), d.id))
+            .map((d) => AnalysisRequest.fromJson(json: d.data(), id: d.id))
             .toList());
   }
 
@@ -102,7 +102,7 @@ class AnalysisRequestRepository {
         .orderBy('createdAt', descending: false) // oldest first
         .snapshots()
         .map((snap) => snap.docs
-        .map((d) => AnalysisRequest.fromJson(d.data(), d.id))
-        .toList());
+            .map((d) => AnalysisRequest.fromJson(json: d.data(), id: d.id))
+            .toList());
   }
 }
