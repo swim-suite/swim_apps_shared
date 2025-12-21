@@ -133,7 +133,7 @@ void main() {
       // Ensures new enum values cause test failures if not handled
       expect(
         CheckPoint.values.length,
-        11,
+        14,
         reason:
             'New CheckPoint added – update tests, display strings, and distance logic',
       );
