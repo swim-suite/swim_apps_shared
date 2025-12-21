@@ -6,12 +6,11 @@ class FiftyMeterRace extends Event {
   final bool fromDive;
 
   /// true = 25m (short course), false = 50m (long course)
-  final bool isShortCourse;
 
-  const FiftyMeterRace({
+  FiftyMeterRace({
     required super.stroke,
+    required super.isShortCourse,
     this.fromDive = true,
-    this.isShortCourse = true,
   });
 
   @override
@@ -25,31 +24,41 @@ class FiftyMeterRace extends Event {
 
   @override
   List<CheckPoint> get checkPoints {
-    // Common beginning (depends on dive)
+    // --- Start sequence ---
     final startSeq = fromDive
         ? [
             CheckPoint.start,
             CheckPoint.offTheBlock,
+            CheckPoint.waterEntry,
           ]
         : [
             CheckPoint.offTheBlock,
           ];
 
+    // --- First underwater phase ---
     final firstUnderwater = [
-      CheckPoint.breakOut,
-      CheckPoint.fifteenMeterMark,
+      CheckPoint.breakout,
+      CheckPoint.meter10,
+      CheckPoint.meter15,
+      CheckPoint.meter20,
+      CheckPoint.meter25,
     ];
 
-    // If short course → include turn + second breakout
+    // --- Turn sequence (short course only) ---
     final turnSeq = [
       CheckPoint.turn,
-      CheckPoint.breakOut,
-      CheckPoint.fifteenMeterMark,
+      CheckPoint.breakout,
+      CheckPoint.meter10,
+      CheckPoint.meter15,
+      CheckPoint.meter20,
     ];
 
-    final second = [
-      CheckPoint.twentyFiveMeterMark,
-      CheckPoint.thirtyFiveMeterMark
+    // --- Long course mid-pool reference ---
+    final longCourseMarks = [
+      CheckPoint.meter25,
+      CheckPoint.meter35,
+      CheckPoint.meter40,
+      CheckPoint.meter45,
     ];
 
     final finishSeq = [
@@ -66,8 +75,8 @@ class FiftyMeterRace extends Event {
         : [
             ...startSeq,
             ...firstUnderwater,
-            // ⛔ long course = NO turn
-            ...second,
+            // ⛔ No turn in 50m long course
+            ...longCourseMarks,
             ...finishSeq,
           ];
   }

@@ -3,10 +3,13 @@ import 'checkpoint.dart';
 import 'event.dart';
 
 class HundredMetersRace extends Event {
-  const HundredMetersRace({required super.stroke});
+  HundredMetersRace({
+    required super.stroke,
+    required super.isShortCourse,
+  });
 
   @override
-  String get name => '100m $stroke';
+  String get name => '100m ${stroke.description}';
 
   @override
   int get distance => 100;
@@ -15,20 +18,39 @@ class HundredMetersRace extends Event {
   PoolLength get poolLength => PoolLength.m25;
 
   @override
-  List<CheckPoint> get checkPoints => [
-    CheckPoint.start,
-    CheckPoint.offTheBlock,
-    CheckPoint.breakOut,
-    CheckPoint.fifteenMeterMark,
-    CheckPoint.turn, // 25m
-    CheckPoint.breakOut,
-    CheckPoint.fifteenMeterMark,
-    CheckPoint.turn, // 50m
-    CheckPoint.breakOut,
-    CheckPoint.fifteenMeterMark,
-    CheckPoint.turn, // 75m
-    CheckPoint.breakOut,
-    CheckPoint.fifteenMeterMark,
-    CheckPoint.finish, // 100m
-  ];
+  List<CheckPoint> get checkPoints {
+    final checkpoints = <CheckPoint>[
+      // --- Start length ---
+      CheckPoint.start,
+      CheckPoint.offTheBlock,
+      CheckPoint.waterEntry,
+      CheckPoint.breakout,
+      CheckPoint.meter10,
+      CheckPoint.meter15,
+      CheckPoint.meter20,
+      CheckPoint.meter25,
+    ];
+
+    // --- Turns at 25m, 50m, 75m ---
+    for (int i = 0; i < 3; i++) {
+      checkpoints.addAll([
+        CheckPoint.turn,
+        CheckPoint.waterEntry,
+        CheckPoint.breakout,
+        CheckPoint.meter10,
+        CheckPoint.meter15,
+        CheckPoint.meter20,
+      ]);
+    }
+
+    // --- Finish length ---
+    checkpoints.addAll([
+      CheckPoint.meter10,
+      CheckPoint.meter15,
+      CheckPoint.meter20,
+      CheckPoint.finish,
+    ]);
+
+    return checkpoints;
+  }
 }

@@ -1,13 +1,13 @@
-
 import '../../objects/pool_length.dart';
 import '../../objects/stroke.dart';
 import 'checkpoint.dart';
 
-abstract class
-Event {
+abstract class Event {
   final Stroke stroke;
 
-  const Event({required this.stroke});
+  Event({required this.stroke, this.isShortCourse = true});
+
+  bool isShortCourse;
 
   String get name;
 

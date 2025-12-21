@@ -5,7 +5,10 @@ import 'event.dart';
 class TwentyFiveMeterRace extends Event {
   final bool fromDive;
 
-  TwentyFiveMeterRace({required super.stroke, this.fromDive = true});
+  TwentyFiveMeterRace({
+    required super.stroke,
+    this.fromDive = true,
+  });
 
   @override
   String get name => '25m ${stroke.description}';
@@ -17,16 +20,26 @@ class TwentyFiveMeterRace extends Event {
   PoolLength get poolLength => PoolLength.m25;
 
   @override
-  List<CheckPoint> get checkPoints => fromDive ? [
-    CheckPoint.start,
-    CheckPoint.offTheBlock,
-    CheckPoint.breakOut,
-    CheckPoint.fifteenMeterMark,
-    CheckPoint.finish,
-  ]:[
-    CheckPoint.offTheBlock,
-    CheckPoint.breakOut,
-    CheckPoint.fifteenMeterMark,
-    CheckPoint.finish,
-  ];
+  List<CheckPoint> get checkPoints {
+    final checkpoints = <CheckPoint>[];
+
+    // --- Start ---
+    if (fromDive) {
+      checkpoints.add(CheckPoint.start);
+    }
+
+    checkpoints.add(CheckPoint.offTheBlock);
+    checkpoints.add(CheckPoint.waterEntry);
+
+    // --- Underwater & finish ---
+    checkpoints.addAll([
+      CheckPoint.breakout,
+      CheckPoint.meter10,
+      CheckPoint.meter15,
+      CheckPoint.meter15,
+      CheckPoint.finish,
+    ]);
+
+    return checkpoints;
+  }
 }
