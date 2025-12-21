@@ -3,8 +3,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swim_apps_shared/objects/planned/swim_groups.dart';
 import 'package:swim_apps_shared/objects/swim_club.dart';
-
-import '../../../swimify/lib/club/repository/swim_club_repository.dart';
+import 'package:swim_apps_shared/repositories/swim_club_repository.dart';
 
 void main() {
   late FakeFirebaseFirestore fakeFirestore;
