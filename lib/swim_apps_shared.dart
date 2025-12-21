@@ -35,6 +35,7 @@ export 'support/full_page_widget/support_list.dart';
 export 'support/full_page_widget/support_request_detail.dart';
 export 'support/full_page_widget/support_ui.dart';
 export 'support/support_controller.dart';
+export 'swim_session/events/race_event.dart';
 export 'swim_session/generator/config/advanced_generator_config.dart';
 export 'swim_session/generator/config/setconfig_to_text_parser.dart';
 // --- EVENTS ---
