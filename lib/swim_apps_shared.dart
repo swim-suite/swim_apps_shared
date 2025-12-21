@@ -1,5 +1,6 @@
 // --- REPOSITORIES ---
 // Note: Repositories seem to be in the repositories folder based on your example.
+export '../../swimify/lib/club/repository/swim_club_repository.dart';
 export 'design/brand_helper.dart';
 export 'objects/analyzes/analysis_requests/analysis_request.dart';
 export 'objects/analyzes/analysis_requests/analysis_request_repository.dart';
@@ -22,7 +23,6 @@ export 'repositories/analyzes_repository.dart';
 export 'repositories/base_repository.dart';
 export 'repositories/entitlement_repository.dart';
 export 'repositories/firestore_helper.dart';
-export 'repositories/swim_club_repository.dart';
 export 'repositories/swimmer_focus_profile_repository.dart';
 export 'repositories/user_repository.dart';
 export 'results/result_service.dart';

@@ -21,7 +21,7 @@ dependencies:
   collection: ^1.19.0
   rxdart: ^0.28.0
   package_info_plus: ^9.0.0
-  device_info_plus: ^10.0.0
+  device_info_plus: ^12.3.0   # To get the unique Device ID (e.g. androidId)
   url_launcher: ^6.1.12
 
 dev_dependencies:
