@@ -1,6 +1,5 @@
 // --- REPOSITORIES ---
 // Note: Repositories seem to be in the repositories folder based on your example.
-export '../../swimify/lib/club/repository/swim_club_repository.dart';
 export 'design/brand_helper.dart';
 export 'objects/analyzes/analysis_requests/analysis_request.dart';
 export 'objects/analyzes/analysis_requests/analysis_request_repository.dart';
