@@ -15,7 +15,7 @@ class AppInvite {
   final InviteType type;
   final App app;
   final DateTime createdAt;
-  final bool accepted;
+  final bool? accepted;
   final String? acceptedUserId;
   final String? clubId;
   final String? relatedEntityId;
@@ -29,7 +29,7 @@ class AppInvite {
     required this.type,
     required this.app,
     required this.createdAt,
-    required this.accepted,
+    this.accepted,
     this.acceptedUserId,
     this.clubId,
     this.relatedEntityId,

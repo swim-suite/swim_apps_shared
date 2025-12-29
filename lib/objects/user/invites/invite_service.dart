@@ -20,11 +20,11 @@ class InviteService {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
-  }) : _inviteRepository = inviteRepository ?? InviteRepository(),
-       _auth = auth ?? FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance,
-       _functions =
-           functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+  })  : _inviteRepository = inviteRepository ?? InviteRepository(),
+        _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _functions =
+            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   /// 🔍 Fetch a single invite by its Firestore document ID.
   /// Returns an [AppInvite] if found, or `null` if not found.
@@ -87,8 +87,10 @@ class InviteService {
       clubId: clubId,
       relatedEntityId: groupId,
       createdAt: DateTime.now(),
-      accepted: false,
+      accepted: null,
+      // ✅ pending (tri-state)
       acceptedUserId: null,
+      acceptedAt: null,
     );
 
     await _inviteRepository.sendInvite(invite);
@@ -129,18 +131,18 @@ class InviteService {
     return _firestore
         .collection('invites')
         .where('inviteeEmail', isEqualTo: normalized)
-        .where('accepted', isEqualTo: false)
+        .where('accepted', isNull: true) // ✅ pending
         .where('app', isEqualTo: app.name)
         .orderBy('createdAt', descending: true)
         .limit(1)
         .snapshots()
         .map((snapshot) {
-          if (snapshot.docs.isEmpty) return null;
+      if (snapshot.docs.isEmpty) return null;
 
-          final doc = snapshot.docs.first;
-          final data = doc.data();
-          return AppInvite.fromJson(doc.id, data);
-        });
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+      return AppInvite.fromJson(doc.id, data);
+    });
   }
 
   Stream<AppInvite?> streamPendingReceivedInvites({
@@ -152,16 +154,16 @@ class InviteService {
     return _firestore
         .collection('invites')
         .where('inviteeEmail', isEqualTo: email)
-        .where('accepted', isEqualTo: false)
+        .where('accepted', isNull: true) // ✅ pending
         .where('app', isEqualTo: app.name)
         .orderBy('createdAt', descending: true)
         .limit(1)
         .snapshots()
         .map((snap) {
-          if (snap.docs.isEmpty) return null;
-          final doc = snap.docs.first;
-          return AppInvite.fromJson(doc.id, doc.data());
-        });
+      if (snap.docs.isEmpty) return null;
+      final doc = snap.docs.first;
+      return AppInvite.fromJson(doc.id, doc.data());
+    });
   }
 
   Stream<List<AppInvite>> streamActiveLinksForUser({
@@ -180,12 +182,10 @@ class InviteService {
       return snap.docs
           .map((d) => AppInvite.fromJson(d.id, d.data()))
           .where((invite) =>
-      invite.inviteeEmail == email ||
-          invite.inviterId == userId)
+              invite.inviteeEmail == email || invite.inviterId == userId)
           .toList();
     });
   }
-
 
   /// Returns all pending invites sent by a user.
   Stream<List<AppInvite>> streamPendingSentInvites({
@@ -196,15 +196,13 @@ class InviteService {
         .collection('invites')
         .where('inviterId', isEqualTo: userId)
         .where('type', isEqualTo: inviteType.name)
-        .where('accepted', isEqualTo: false)
+        .where('accepted', isNull: true) // ✅ pending
         .where('app', isEqualTo: App.swimAnalyzer.name)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snap) {
-          return snap.docs
-              .map((d) => AppInvite.fromJson(d.id, d.data()))
-              .toList();
-        });
+      return snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList();
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -270,13 +268,11 @@ class InviteService {
     debugPrint('✅ Pending user created locally for $normalizedEmail');
   }
 
-
   // --------------------------------------------------------------------------
-  // ✅ ACCEPT / REVOKE INVITES (via Cloud Functions)
+  // ✅ ACCEPT / DECLINE INVITES
   // --------------------------------------------------------------------------
 
-  /// Accepts an invite by calling the backend `respondToInvite` function.
-  /// This ensures Firestore, user linking, and club membership are updated atomically.
+  /// Accepts an invite.
   Future<void> acceptInvite({
     required AppInvite appInvite,
     required String userId,
@@ -285,25 +281,19 @@ class InviteService {
     if (user == null) throw Exception('No logged-in user.');
 
     try {
-      var updatedAppInvite = appInvite.copyWith(
+      final updatedAppInvite = appInvite.copyWith(
         accepted: true,
         acceptedAt: DateTime.now(),
         acceptedUserId: userId,
       );
-      _firestore
+
+      await _firestore
           .collection('invites')
           .doc(updatedAppInvite.id)
           .update(updatedAppInvite.toJson());
-      // final callable = _functions.httpsCallable('respondToInvite');
-      // final result = await callable.call({
-      //   'inviteId': inviteId,
-      //   'action': 'accept',
-      //   'userId': user.uid,
-      // });
 
       debugPrint(
-        '✅ Invite ${updatedAppInvite.id} accepted successfully by ${user.uid}',
-      );
+          '✅ Invite ${updatedAppInvite.id} accepted successfully by ${user.uid}');
     } on FirebaseFunctionsException catch (e) {
       debugPrint('❌ FirebaseFunctionsException: ${e.code} - ${e.message}');
       rethrow;
@@ -313,18 +303,21 @@ class InviteService {
     }
   }
 
-  /// Revokes (declines) an invite via the same backend function.
-  /// Use this when the user explicitly declines or cancels an invitation.
+  /// Declines (denies) an invite.
+  /// tri-state:
+  /// - pending: accepted == null
+  /// - denied: accepted == false
+  /// - accepted: accepted == true
   Future<void> revokeInvite({required String inviteId}) async {
     try {
       await _inviteRepository.collection.doc(inviteId).update({
-        'accepted': false,
-        'acceptedAt': null,
+        'accepted': false, // ✅ denied
+        'acceptedAt': FieldValue.serverTimestamp(), // ✅ keep decision timestamp
         'acceptedUserId': null,
         'revokedAt': FieldValue.serverTimestamp(),
       });
 
-      debugPrint("🚫 Access revoked for invite $inviteId");
+      debugPrint("🚫 Invite denied for invite $inviteId");
     } catch (e, st) {
       debugPrint("❌ Error revoking invite: $e\n$st");
       rethrow;
@@ -362,6 +355,7 @@ class InviteService {
 
   Future<List<AppInvite>> getPendingInvitesByClub(String clubId) async {
     try {
+      // NOTE: ensure repository uses accepted == null for "pending"
       return await _inviteRepository.getPendingInvitesByClub(clubId);
     } catch (e) {
       debugPrint('❌ Failed to fetch pending invites by club: $e');
@@ -373,12 +367,25 @@ class InviteService {
     try {
       final normalized = email.trim().toLowerCase();
       final invites = await _inviteRepository.getInvitesByEmail(normalized);
+
       if (invites.isEmpty) return null;
+
+      // Always sort newest first
       invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return invites.firstWhere(
-        (i) => !i.accepted,
-        orElse: () => invites.first,
-      );
+
+      // 1️⃣ Prefer pending invites
+      final pending = invites.where((i) => i.accepted == null);
+      if (pending.isNotEmpty) return pending.first;
+
+      // 2️⃣ Otherwise return most recent accepted invite
+      final accepted = invites.where((i) => i.accepted == true);
+      if (accepted.isNotEmpty) return accepted.first;
+
+      // 3️⃣ Otherwise return most recent denied invite
+      final denied = invites.where((i) => i.accepted == false);
+      if (denied.isNotEmpty) return denied.first;
+
+      return null;
     } catch (e, st) {
       debugPrint('❌ Failed to fetch invite by email: $e\n$st');
       rethrow;
@@ -429,11 +436,15 @@ class InviteService {
     required String inviteeEmail,
     required InviteType type,
   }) async {
+    final normalized = inviteeEmail.trim().toLowerCase();
+
+    // ✅ Field names aligned with AppInvite schema:
+    // inviterId, inviteeEmail, type, accepted
     final snap = await _inviteRepository.collection
-        .where('senderId', isEqualTo: senderId)
-        .where('inviteType', isEqualTo: type.name)
-        .where('inviteeEmail', isEqualTo: inviteeEmail)
-        .where('isAccepted', isEqualTo: false)
+        .where('inviterId', isEqualTo: senderId)
+        .where('type', isEqualTo: type.name)
+        .where('inviteeEmail', isEqualTo: normalized)
+        .where('accepted', isNull: true) // ✅ pending
         .limit(1)
         .get();
 
