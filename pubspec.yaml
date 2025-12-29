@@ -1,6 +1,6 @@
 name: swim_apps_shared
 description: "A new Flutter package project."
-version: 0.0.92
+version: 0.0.93
 
 environment:
   sdk: ^3.6.0

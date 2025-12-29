@@ -42,7 +42,7 @@ void main() {
     );
   });
 
-  AppInvite _invite({
+  AppInvite invite0({
     required String id,
     bool? accepted,
     DateTime? createdAt,
@@ -64,9 +64,9 @@ void main() {
   group('getInviteByEmail', () {
     test('returns pending invite if present', () async {
       final invites = [
-        _invite(id: '1', accepted: true),
-        _invite(id: '2', accepted: null),
-        _invite(id: '3', accepted: false),
+        invite0(id: '1', accepted: true),
+        invite0(id: '2', accepted: null),
+        invite0(id: '3', accepted: false),
       ];
 
       when(inviteRepo.getInvitesByEmail(any)).thenAnswer((_) async => invites);
@@ -80,8 +80,8 @@ void main() {
 
     test('returns accepted if no pending exists', () async {
       final invites = [
-        _invite(id: '1', accepted: false),
-        _invite(id: '2', accepted: true),
+        invite0(id: '1', accepted: false),
+        invite0(id: '2', accepted: true),
       ];
 
       when(inviteRepo.getInvitesByEmail(any)).thenAnswer((_) async => invites);
@@ -94,7 +94,7 @@ void main() {
 
     test('returns denied if only denied exists', () async {
       final invites = [
-        _invite(id: '1', accepted: false),
+        invite0(id: '1', accepted: false),
       ];
 
       when(inviteRepo.getInvitesByEmail(any)).thenAnswer((_) async => invites);
@@ -116,7 +116,7 @@ void main() {
 
   group('acceptInvite', () {
     test('updates invite to accepted', () async {
-      final invite = _invite(id: 'invite1', accepted: null);
+      final invite = invite0(id: 'invite1', accepted: null);
       final mockUser = MockUser();
 
       when(auth.currentUser).thenReturn(mockUser);
@@ -137,17 +137,17 @@ void main() {
 
   group('tri-state semantics', () {
     test('pending invite has accepted == null', () {
-      final invite = _invite(id: 'x', accepted: null);
+      final invite = invite0(id: 'x', accepted: null);
       expect(invite.accepted, isNull);
     });
 
     test('accepted invite has accepted == true', () {
-      final invite = _invite(id: 'x', accepted: true);
+      final invite = invite0(id: 'x', accepted: true);
       expect(invite.accepted, isTrue);
     });
 
     test('denied invite has accepted == false', () {
-      final invite = _invite(id: 'x', accepted: false);
+      final invite = invite0(id: 'x', accepted: false);
       expect(invite.accepted, isFalse);
     });
   });

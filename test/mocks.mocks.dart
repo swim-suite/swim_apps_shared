@@ -4,7 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
-import 'dart:typed_data' as _i13;
+import 'dart:typed_data' as _i14;
 
 import 'package:cloud_firestore/cloud_firestore.dart' as _i2;
 import 'package:cloud_functions/cloud_functions.dart' as _i8;
@@ -15,10 +15,13 @@ import 'package:firebase_auth_platform_interface/firebase_auth_platform_interfac
     as _i4;
 import 'package:firebase_core/firebase_core.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i12;
-import 'package:swim_apps_shared/objects/user/invites/app_enums.dart' as _i11;
-import 'package:swim_apps_shared/objects/user/invites/app_invite.dart' as _i10;
-import 'package:swim_apps_shared/repositories/invite_repository.dart' as _i9;
+import 'package:mockito/src/dummies.dart' as _i13;
+import 'package:swim_apps_shared/objects/user/invites/app_enums.dart' as _i12;
+import 'package:swim_apps_shared/objects/user/invites/app_invite.dart' as _i11;
+import 'package:swim_apps_shared/objects/user/swimmer.dart' as _i9;
+import 'package:swim_apps_shared/objects/user/user.dart' as _i16;
+import 'package:swim_apps_shared/repositories/invite_repository.dart' as _i10;
+import 'package:swim_apps_shared/repositories/user_repository.dart' as _i15;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -235,9 +238,19 @@ class _FakeUser_18 extends _i1.SmartFake implements _i5.User {
         );
 }
 
-class _FakeFirebaseFirestore_19 extends _i1.SmartFake
+class _FakeSwimmer_19 extends _i1.SmartFake implements _i9.Swimmer {
+  _FakeSwimmer_19(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeFirebaseFirestore_20 extends _i1.SmartFake
     implements _i2.FirebaseFirestore {
-  _FakeFirebaseFirestore_19(
+  _FakeFirebaseFirestore_20(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -246,9 +259,9 @@ class _FakeFirebaseFirestore_19 extends _i1.SmartFake
         );
 }
 
-class _FakeAggregateQuery_20 extends _i1.SmartFake
+class _FakeAggregateQuery_21 extends _i1.SmartFake
     implements _i2.AggregateQuery {
-  _FakeAggregateQuery_20(
+  _FakeAggregateQuery_21(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -257,9 +270,9 @@ class _FakeAggregateQuery_20 extends _i1.SmartFake
         );
 }
 
-class _FakeDocumentSnapshot_21<T extends Object?> extends _i1.SmartFake
+class _FakeDocumentSnapshot_22<T extends Object?> extends _i1.SmartFake
     implements _i2.DocumentSnapshot<T> {
-  _FakeDocumentSnapshot_21(
+  _FakeDocumentSnapshot_22(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -271,7 +284,7 @@ class _FakeDocumentSnapshot_21<T extends Object?> extends _i1.SmartFake
 /// A class which mocks [InviteRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
+class MockInviteRepository extends _i1.Mock implements _i10.InviteRepository {
   @override
   _i2.CollectionReference<Map<String, dynamic>> get collection =>
       (super.noSuchMethod(
@@ -288,7 +301,7 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
       ) as _i2.CollectionReference<Map<String, dynamic>>);
 
   @override
-  _i6.Future<void> sendInvite(_i10.AppInvite? invite) => (super.noSuchMethod(
+  _i6.Future<void> sendInvite(_i11.AppInvite? invite) => (super.noSuchMethod(
         Invocation.method(
           #sendInvite,
           [invite],
@@ -325,7 +338,7 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
       ) as _i6.Future<void>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getInvitesByInviter(
+  _i6.Future<List<_i11.AppInvite>> getInvitesByInviter(
     String? inviterId, {
     bool? accepted,
   }) =>
@@ -335,13 +348,13 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
           [inviterId],
           {#accepted: accepted},
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getInvitesByInviteeEmail(
+  _i6.Future<List<_i11.AppInvite>> getInvitesByInviteeEmail(
     String? email, {
     bool? isAccepted,
   }) =>
@@ -351,16 +364,16 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
           [email],
           {#isAccepted: isAccepted},
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 
   @override
-  _i6.Stream<List<_i10.AppInvite>> streamActiveViewerLinks({
+  _i6.Stream<List<_i11.AppInvite>> streamActiveViewerLinks({
     required String? userId,
     required String? email,
-    required _i11.App? app,
+    required _i12.App? app,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -372,12 +385,12 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
             #app: app,
           },
         ),
-        returnValue: _i6.Stream<List<_i10.AppInvite>>.empty(),
-        returnValueForMissingStub: _i6.Stream<List<_i10.AppInvite>>.empty(),
-      ) as _i6.Stream<List<_i10.AppInvite>>);
+        returnValue: _i6.Stream<List<_i11.AppInvite>>.empty(),
+        returnValueForMissingStub: _i6.Stream<List<_i11.AppInvite>>.empty(),
+      ) as _i6.Stream<List<_i11.AppInvite>>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getInviteByReceiverEmail(
+  _i6.Future<List<_i11.AppInvite>> getInviteByReceiverEmail(
           {required String? email}) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -385,48 +398,48 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
           [],
           {#email: email},
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getInvitesByEmail(String? email) =>
+  _i6.Future<List<_i11.AppInvite>> getInvitesByEmail(String? email) =>
       (super.noSuchMethod(
         Invocation.method(
           #getInvitesByEmail,
           [email],
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getAcceptedSwimmersForCoach(
+  _i6.Future<List<_i11.AppInvite>> getAcceptedSwimmersForCoach(
           String? coachId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getAcceptedSwimmersForCoach,
           [coachId],
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getAcceptedCoachesForSwimmer(
+  _i6.Future<List<_i11.AppInvite>> getAcceptedCoachesForSwimmer(
           String? swimmerId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getAcceptedCoachesForSwimmer,
           [swimmerId],
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 
   @override
   _i6.Future<bool> isLinked({
@@ -447,28 +460,28 @@ class MockInviteRepository extends _i1.Mock implements _i9.InviteRepository {
       ) as _i6.Future<bool>);
 
   @override
-  _i6.Stream<List<_i10.AppInvite>> streamAcceptedInvitesForCoach(
+  _i6.Stream<List<_i11.AppInvite>> streamAcceptedInvitesForCoach(
           String? coachId) =>
       (super.noSuchMethod(
         Invocation.method(
           #streamAcceptedInvitesForCoach,
           [coachId],
         ),
-        returnValue: _i6.Stream<List<_i10.AppInvite>>.empty(),
-        returnValueForMissingStub: _i6.Stream<List<_i10.AppInvite>>.empty(),
-      ) as _i6.Stream<List<_i10.AppInvite>>);
+        returnValue: _i6.Stream<List<_i11.AppInvite>>.empty(),
+        returnValueForMissingStub: _i6.Stream<List<_i11.AppInvite>>.empty(),
+      ) as _i6.Stream<List<_i11.AppInvite>>);
 
   @override
-  _i6.Future<List<_i10.AppInvite>> getPendingInvitesByClub(String? clubId) =>
+  _i6.Future<List<_i11.AppInvite>> getPendingInvitesByClub(String? clubId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getPendingInvitesByClub,
           [clubId],
         ),
-        returnValue: _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
+        returnValue: _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
         returnValueForMissingStub:
-            _i6.Future<List<_i10.AppInvite>>.value(<_i10.AppInvite>[]),
-      ) as _i6.Future<List<_i10.AppInvite>>);
+            _i6.Future<List<_i11.AppInvite>>.value(<_i11.AppInvite>[]),
+      ) as _i6.Future<List<_i11.AppInvite>>);
 }
 
 /// A class which mocks [FirebaseAuth].
@@ -1031,7 +1044,7 @@ class MockFirebaseAuth extends _i1.Mock implements _i5.FirebaseAuth {
           #verifyPasswordResetCode,
           [code],
         ),
-        returnValue: _i6.Future<String>.value(_i12.dummyValue<String>(
+        returnValue: _i6.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #verifyPasswordResetCode,
@@ -1039,7 +1052,7 @@ class MockFirebaseAuth extends _i1.Mock implements _i5.FirebaseAuth {
           ),
         )),
         returnValueForMissingStub:
-            _i6.Future<String>.value(_i12.dummyValue<String>(
+            _i6.Future<String>.value(_i13.dummyValue<String>(
           this,
           Invocation.method(
             #verifyPasswordResetCode,
@@ -1173,11 +1186,11 @@ class MockFirebaseFirestore extends _i1.Mock implements _i2.FirebaseFirestore {
   @override
   String get databaseId => (super.noSuchMethod(
         Invocation.getter(#databaseId),
-        returnValue: _i12.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.getter(#databaseId),
         ),
-        returnValueForMissingStub: _i12.dummyValue<String>(
+        returnValueForMissingStub: _i13.dummyValue<String>(
           this,
           Invocation.getter(#databaseId),
         ),
@@ -1288,7 +1301,7 @@ class MockFirebaseFirestore extends _i1.Mock implements _i2.FirebaseFirestore {
       ) as _i6.Future<void>);
 
   @override
-  _i2.LoadBundleTask loadBundle(_i13.Uint8List? bundle) => (super.noSuchMethod(
+  _i2.LoadBundleTask loadBundle(_i14.Uint8List? bundle) => (super.noSuchMethod(
         Invocation.method(
           #loadBundle,
           [bundle],
@@ -1500,8 +1513,8 @@ class MockFirebaseFirestore extends _i1.Mock implements _i2.FirebaseFirestore {
             #maxAttempts: maxAttempts,
           },
         ),
-        returnValue: _i12.ifNotNull(
-              _i12.dummyValueOrNull<T>(
+        returnValue: _i13.ifNotNull(
+              _i13.dummyValueOrNull<T>(
                 this,
                 Invocation.method(
                   #runTransaction,
@@ -1525,8 +1538,8 @@ class MockFirebaseFirestore extends _i1.Mock implements _i2.FirebaseFirestore {
                 },
               ),
             ),
-        returnValueForMissingStub: _i12.ifNotNull(
-              _i12.dummyValueOrNull<T>(
+        returnValueForMissingStub: _i13.ifNotNull(
+              _i13.dummyValueOrNull<T>(
                 this,
                 Invocation.method(
                   #runTransaction,
@@ -1768,11 +1781,11 @@ class MockUser extends _i1.Mock implements _i5.User {
   @override
   String get uid => (super.noSuchMethod(
         Invocation.getter(#uid),
-        returnValue: _i12.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.getter(#uid),
         ),
-        returnValueForMissingStub: _i12.dummyValue<String>(
+        returnValueForMissingStub: _i13.dummyValue<String>(
           this,
           Invocation.getter(#uid),
         ),
@@ -2167,20 +2180,239 @@ class MockUser extends _i1.Mock implements _i5.User {
       ) as _i6.Future<void>);
 }
 
+/// A class which mocks [UserRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockUserRepository extends _i1.Mock implements _i15.UserRepository {
+  @override
+  _i2.CollectionReference<Object?> get usersCollection => (super.noSuchMethod(
+        Invocation.getter(#usersCollection),
+        returnValue: _FakeCollectionReference_0<Object?>(
+          this,
+          Invocation.getter(#usersCollection),
+        ),
+        returnValueForMissingStub: _FakeCollectionReference_0<Object?>(
+          this,
+          Invocation.getter(#usersCollection),
+        ),
+      ) as _i2.CollectionReference<Object?>);
+
+  @override
+  _i6.Stream<_i16.AppUser?> myProfileStream() => (super.noSuchMethod(
+        Invocation.method(
+          #myProfileStream,
+          [],
+        ),
+        returnValue: _i6.Stream<_i16.AppUser?>.empty(),
+        returnValueForMissingStub: _i6.Stream<_i16.AppUser?>.empty(),
+      ) as _i6.Stream<_i16.AppUser?>);
+
+  @override
+  _i6.Stream<List<_i16.AppUser>> getUsersByClub(String? clubId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getUsersByClub,
+          [clubId],
+        ),
+        returnValue: _i6.Stream<List<_i16.AppUser>>.empty(),
+        returnValueForMissingStub: _i6.Stream<List<_i16.AppUser>>.empty(),
+      ) as _i6.Stream<List<_i16.AppUser>>);
+
+  @override
+  _i6.Stream<List<_i16.AppUser>> getUsersCreatedByMe() => (super.noSuchMethod(
+        Invocation.method(
+          #getUsersCreatedByMe,
+          [],
+        ),
+        returnValue: _i6.Stream<List<_i16.AppUser>>.empty(),
+        returnValueForMissingStub: _i6.Stream<List<_i16.AppUser>>.empty(),
+      ) as _i6.Stream<List<_i16.AppUser>>);
+
+  @override
+  _i6.Future<_i9.Swimmer> createSwimmer({
+    String? clubId,
+    String? lastName,
+    required String? name,
+    required String? email,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createSwimmer,
+          [],
+          {
+            #clubId: clubId,
+            #lastName: lastName,
+            #name: name,
+            #email: email,
+          },
+        ),
+        returnValue: _i6.Future<_i9.Swimmer>.value(_FakeSwimmer_19(
+          this,
+          Invocation.method(
+            #createSwimmer,
+            [],
+            {
+              #clubId: clubId,
+              #lastName: lastName,
+              #name: name,
+              #email: email,
+            },
+          ),
+        )),
+        returnValueForMissingStub:
+            _i6.Future<_i9.Swimmer>.value(_FakeSwimmer_19(
+          this,
+          Invocation.method(
+            #createSwimmer,
+            [],
+            {
+              #clubId: clubId,
+              #lastName: lastName,
+              #name: name,
+              #email: email,
+            },
+          ),
+        )),
+      ) as _i6.Future<_i9.Swimmer>);
+
+  @override
+  _i6.Future<void> updateMyProfile({required _i16.AppUser? appUser}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateMyProfile,
+          [],
+          {#appUser: appUser},
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<_i16.AppUser?> getUserDocument(String? uid) => (super.noSuchMethod(
+        Invocation.method(
+          #getUserDocument,
+          [uid],
+        ),
+        returnValue: _i6.Future<_i16.AppUser?>.value(),
+        returnValueForMissingStub: _i6.Future<_i16.AppUser?>.value(),
+      ) as _i6.Future<_i16.AppUser?>);
+
+  @override
+  _i6.Future<List<_i16.AppUser>> getUsersByIds(List<String>? userIds) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getUsersByIds,
+          [userIds],
+        ),
+        returnValue: _i6.Future<List<_i16.AppUser>>.value(<_i16.AppUser>[]),
+        returnValueForMissingStub:
+            _i6.Future<List<_i16.AppUser>>.value(<_i16.AppUser>[]),
+      ) as _i6.Future<List<_i16.AppUser>>);
+
+  @override
+  _i6.Future<List<_i9.Swimmer>> getAllSwimmersFromCoach(
+          {required String? coachId}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllSwimmersFromCoach,
+          [],
+          {#coachId: coachId},
+        ),
+        returnValue: _i6.Future<List<_i9.Swimmer>>.value(<_i9.Swimmer>[]),
+        returnValueForMissingStub:
+            _i6.Future<List<_i9.Swimmer>>.value(<_i9.Swimmer>[]),
+      ) as _i6.Future<List<_i9.Swimmer>>);
+
+  @override
+  _i6.Future<void> createOrMergeUserByEmail({required _i16.AppUser? newUser}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createOrMergeUserByEmail,
+          [],
+          {#newUser: newUser},
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> createAppUser({required _i16.AppUser? newUser}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createAppUser,
+          [],
+          {#newUser: newUser},
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> updateUser(_i16.AppUser? updatedUser) => (super.noSuchMethod(
+        Invocation.method(
+          #updateUser,
+          [updatedUser],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<_i16.AppUser?> getCoach(String? coachId) => (super.noSuchMethod(
+        Invocation.method(
+          #getCoach,
+          [coachId],
+        ),
+        returnValue: _i6.Future<_i16.AppUser?>.value(),
+        returnValueForMissingStub: _i6.Future<_i16.AppUser?>.value(),
+      ) as _i6.Future<_i16.AppUser?>);
+
+  @override
+  _i6.Future<_i16.AppUser?> getUserByEmail(String? email) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getUserByEmail,
+          [email],
+        ),
+        returnValue: _i6.Future<_i16.AppUser?>.value(),
+        returnValueForMissingStub: _i6.Future<_i16.AppUser?>.value(),
+      ) as _i6.Future<_i16.AppUser?>);
+
+  @override
+  _i6.Future<_i16.AppUser?> getMyProfile() => (super.noSuchMethod(
+        Invocation.method(
+          #getMyProfile,
+          [],
+        ),
+        returnValue: _i6.Future<_i16.AppUser?>.value(),
+        returnValueForMissingStub: _i6.Future<_i16.AppUser?>.value(),
+      ) as _i6.Future<_i16.AppUser?>);
+
+  @override
+  _i6.Future<bool> userExistsByEmail(String? email) => (super.noSuchMethod(
+        Invocation.method(
+          #userExistsByEmail,
+          [email],
+        ),
+        returnValue: _i6.Future<bool>.value(false),
+        returnValueForMissingStub: _i6.Future<bool>.value(false),
+      ) as _i6.Future<bool>);
+}
+
 /// A class which mocks [CollectionReference].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+// ignore:
 class MockCollectionReference extends _i1.Mock
     implements _i2.CollectionReference<Map<String, dynamic>> {
   @override
   String get id => (super.noSuchMethod(
         Invocation.getter(#id),
-        returnValue: _i12.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.getter(#id),
         ),
-        returnValueForMissingStub: _i12.dummyValue<String>(
+        returnValueForMissingStub: _i13.dummyValue<String>(
           this,
           Invocation.getter(#id),
         ),
@@ -2189,11 +2421,11 @@ class MockCollectionReference extends _i1.Mock
   @override
   String get path => (super.noSuchMethod(
         Invocation.getter(#path),
-        returnValue: _i12.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.getter(#path),
         ),
-        returnValueForMissingStub: _i12.dummyValue<String>(
+        returnValueForMissingStub: _i13.dummyValue<String>(
           this,
           Invocation.getter(#path),
         ),
@@ -2202,11 +2434,11 @@ class MockCollectionReference extends _i1.Mock
   @override
   _i2.FirebaseFirestore get firestore => (super.noSuchMethod(
         Invocation.getter(#firestore),
-        returnValue: _FakeFirebaseFirestore_19(
+        returnValue: _FakeFirebaseFirestore_20(
           this,
           Invocation.getter(#firestore),
         ),
-        returnValueForMissingStub: _FakeFirebaseFirestore_19(
+        returnValueForMissingStub: _FakeFirebaseFirestore_20(
           this,
           Invocation.getter(#firestore),
         ),
@@ -2699,14 +2931,14 @@ class MockCollectionReference extends _i1.Mock
           #count,
           [],
         ),
-        returnValue: _FakeAggregateQuery_20(
+        returnValue: _FakeAggregateQuery_21(
           this,
           Invocation.method(
             #count,
             [],
           ),
         ),
-        returnValueForMissingStub: _FakeAggregateQuery_20(
+        returnValueForMissingStub: _FakeAggregateQuery_21(
           this,
           Invocation.method(
             #count,
@@ -2784,7 +3016,7 @@ class MockCollectionReference extends _i1.Mock
             aggregateField30,
           ],
         ),
-        returnValue: _FakeAggregateQuery_20(
+        returnValue: _FakeAggregateQuery_21(
           this,
           Invocation.method(
             #aggregate,
@@ -2822,7 +3054,7 @@ class MockCollectionReference extends _i1.Mock
             ],
           ),
         ),
-        returnValueForMissingStub: _FakeAggregateQuery_20(
+        returnValueForMissingStub: _FakeAggregateQuery_21(
           this,
           Invocation.method(
             #aggregate,
@@ -2866,17 +3098,17 @@ class MockCollectionReference extends _i1.Mock
 /// A class which mocks [DocumentReference].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+// ignore:
 class MockDocumentReference extends _i1.Mock
     implements _i2.DocumentReference<Map<String, dynamic>> {
   @override
   _i2.FirebaseFirestore get firestore => (super.noSuchMethod(
         Invocation.getter(#firestore),
-        returnValue: _FakeFirebaseFirestore_19(
+        returnValue: _FakeFirebaseFirestore_20(
           this,
           Invocation.getter(#firestore),
         ),
-        returnValueForMissingStub: _FakeFirebaseFirestore_19(
+        returnValueForMissingStub: _FakeFirebaseFirestore_20(
           this,
           Invocation.getter(#firestore),
         ),
@@ -2885,11 +3117,11 @@ class MockDocumentReference extends _i1.Mock
   @override
   String get id => (super.noSuchMethod(
         Invocation.getter(#id),
-        returnValue: _i12.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.getter(#id),
         ),
-        returnValueForMissingStub: _i12.dummyValue<String>(
+        returnValueForMissingStub: _i13.dummyValue<String>(
           this,
           Invocation.getter(#id),
         ),
@@ -2913,11 +3145,11 @@ class MockDocumentReference extends _i1.Mock
   @override
   String get path => (super.noSuchMethod(
         Invocation.getter(#path),
-        returnValue: _i12.dummyValue<String>(
+        returnValue: _i13.dummyValue<String>(
           this,
           Invocation.getter(#path),
         ),
-        returnValueForMissingStub: _i12.dummyValue<String>(
+        returnValueForMissingStub: _i13.dummyValue<String>(
           this,
           Invocation.getter(#path),
         ),
@@ -2978,7 +3210,7 @@ class MockDocumentReference extends _i1.Mock
         ),
         returnValue:
             _i6.Future<_i2.DocumentSnapshot<Map<String, dynamic>>>.value(
-                _FakeDocumentSnapshot_21<Map<String, dynamic>>(
+                _FakeDocumentSnapshot_22<Map<String, dynamic>>(
           this,
           Invocation.method(
             #get,
@@ -2987,7 +3219,7 @@ class MockDocumentReference extends _i1.Mock
         )),
         returnValueForMissingStub:
             _i6.Future<_i2.DocumentSnapshot<Map<String, dynamic>>>.value(
-                _FakeDocumentSnapshot_21<Map<String, dynamic>>(
+                _FakeDocumentSnapshot_22<Map<String, dynamic>>(
           this,
           Invocation.method(
             #get,

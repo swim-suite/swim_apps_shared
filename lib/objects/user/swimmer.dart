@@ -29,8 +29,9 @@ class Swimmer extends AppUser {
     // Defensive cast for list/map variations (web safe)
     List<String> parseStringList(dynamic value) {
       if (value == null) return [];
-      if (value is List)
+      if (value is List) {
         return List<String>.from(value.map((e) => e.toString()));
+      }
       if (value is Map) return value.values.map((e) => e.toString()).toList();
       return [];
     }

@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mockito/annotations.dart';
 import 'package:swim_apps_shared/repositories/invite_repository.dart';
+import 'package:swim_apps_shared/repositories/user_repository.dart';
 
 @GenerateNiceMocks([
   MockSpec<InviteRepository>(),
@@ -10,6 +11,7 @@ import 'package:swim_apps_shared/repositories/invite_repository.dart';
   MockSpec<FirebaseFirestore>(),
   MockSpec<FirebaseFunctions>(),
   MockSpec<User>(),
+  MockSpec<UserRepository>(),
   MockSpec<CollectionReference<Map<String, dynamic>>>(),
   MockSpec<DocumentReference<Map<String, dynamic>>>(),
 ])

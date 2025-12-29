@@ -51,7 +51,7 @@ class AnalysisRequest {
   // ---------------------------------------------------------------------------
   factory AnalysisRequest.fromJson(
       {required Map<String, dynamic> json, required String id}) {
-    final int? distance = _parseDistance(json['distance']);
+    final int distance = _parseDistance(json['distance']);
 
     return AnalysisRequest(
       id: id,

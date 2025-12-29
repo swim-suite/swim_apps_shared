@@ -152,3 +152,14 @@ extension AppInviteOtherPartyUser on AppInvite {
     return userRepo.getUserDocument(otherId);
   }
 }
+
+extension AppInviteStatus on AppInvite {
+  /// Not yet responded to
+  bool get isPending => accepted == null;
+
+  /// Explicitly accepted
+  bool get isAccepted => accepted == true;
+
+  /// Explicitly denied / revoked
+  bool get isDenied => accepted == false;
+}
