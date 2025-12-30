@@ -26,6 +26,44 @@ class InviteService {
         _functions =
             functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
 
+  /// --------------------------------------------------------------------------
+  /// 🙋 REQUEST TO JOIN CLUB (user → club admin)
+  /// --------------------------------------------------------------------------
+  Future<void> requestToJoinClub({
+    required String clubId,
+  }) async {
+    final newUser = _auth.currentUser;
+    if (newUser == null) {
+      throw Exception('No logged-in newUser.');
+    }
+
+    final email = newUser.email;
+    if (email == null || email.isEmpty) {
+      throw Exception('User has no email.');
+    }
+
+    final invite = AppInvite(
+      id: 'join_${DateTime.now().millisecondsSinceEpoch}',
+      inviterId: newUser.uid,
+      inviterEmail: email,
+      inviteeEmail: '',
+      // not email-based
+      type: InviteType.clubInvite,
+      app: App.swimSuite,
+      clubId: clubId,
+      relatedEntityId: null,
+      createdAt: DateTime.now(),
+      accepted: false,
+      acceptedUserId: null,
+    );
+
+    await _inviteRepository.sendInvite(invite);
+
+    debugPrint(
+      '🙋 Join request created for club=$clubId by newUser=${newUser.uid}',
+    );
+  }
+
   /// 🔍 Fetch a single invite by its Firestore document ID.
   /// Returns an [AppInvite] if found, or `null` if not found.
   Future<AppInvite?> getInviteById(String inviteId) async {

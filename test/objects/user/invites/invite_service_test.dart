@@ -61,6 +61,59 @@ void main() {
     );
   }
 
+  group('requestToJoinClub', () {
+    test('throws if no logged-in user', () async {
+      when(auth.currentUser).thenReturn(null);
+
+      expect(
+        () => service.requestToJoinClub(clubId: 'club_123'),
+        throwsException,
+      );
+    });
+
+    test('throws if user has no email', () async {
+      final mockUser = MockUser();
+
+      when(auth.currentUser).thenReturn(mockUser);
+      when(mockUser.uid).thenReturn('user123');
+      when(mockUser.email).thenReturn(null);
+
+      expect(
+        () => service.requestToJoinClub(clubId: 'club_123'),
+        throwsException,
+      );
+    });
+
+    test('creates a pending club invite for the given club', () async {
+      final mockUser = MockUser();
+
+      when(auth.currentUser).thenReturn(mockUser);
+      when(mockUser.uid).thenReturn('user123');
+      when(mockUser.email).thenReturn('user@test.com');
+
+      AppInvite? capturedInvite;
+
+      when(inviteRepo.sendInvite(any)).thenAnswer((invocation) async {
+        capturedInvite = invocation.positionalArguments.first as AppInvite;
+      });
+
+      await service.requestToJoinClub(clubId: 'club_123');
+
+      // Ensure invite was sent
+      verify(inviteRepo.sendInvite(any)).called(1);
+      expect(capturedInvite, isNotNull);
+
+      // Validate invite contents
+      expect(capturedInvite!.type, InviteType.clubInvite);
+      expect(capturedInvite!.app, App.swimSuite);
+      expect(capturedInvite!.clubId, 'club_123');
+      expect(capturedInvite!.accepted, false);
+      expect(capturedInvite!.acceptedUserId, isNull);
+      expect(capturedInvite!.inviterId, 'user123');
+      expect(capturedInvite!.inviterEmail, 'user@test.com');
+    });
+  });
+
   group('getInviteByEmail', () {
     test('returns pending invite if present', () async {
       final invites = [
