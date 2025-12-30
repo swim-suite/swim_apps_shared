@@ -148,18 +148,25 @@ class InviteService {
   Stream<AppInvite?> streamPendingReceivedInvites({
     required AppUser user,
     required App app,
+    InviteType? inviteType,
   }) {
     final email = user.email.trim().toLowerCase();
 
-    return _firestore
+    Query<Map<String, dynamic>> query = _firestore
         .collection('invites')
         .where('inviteeEmail', isEqualTo: email)
-        .where('accepted', isNull: true) // ✅ pending
-        .where('app', isEqualTo: app.name)
+        .where('accepted', isNull: true)
+        .where('app', isEqualTo: app.name);
+
+    if (inviteType != null) {
+      query = query.where('type', isEqualTo: inviteType.name);
+    }
+
+    return query
         .orderBy('createdAt', descending: true)
         .limit(1)
         .snapshots()
-        .map((snap) {
+        .map((QuerySnapshot<Map<String, dynamic>> snap) {
       if (snap.docs.isEmpty) return null;
       final doc = snap.docs.first;
       return AppInvite.fromJson(doc.id, doc.data());
