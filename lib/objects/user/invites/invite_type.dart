@@ -1,1 +1,1 @@
-enum InviteType { coachToSwimmer, swimmerToCoach, clubInvite }
+enum InviteType { coachToSwimmer, swimmerToCoach, clubInvite, seatInvite }
