@@ -17,6 +17,32 @@ class SwimClubRepository {
   // 🏊 CLUB CRUD
   // ---------------------------------------------------------------------------
 
+
+  // ---------------------------------------------------------------------------
+// ✏️ CLUB UPDATES
+// ---------------------------------------------------------------------------
+
+  Future<void> updateClubMetadata({
+    required String clubId,
+    required String city,
+    required String shortCode,
+    required List<String> searchKeywords,
+  }) async {
+    if (clubId.isEmpty) return;
+
+    try {
+      await _clubs.doc(clubId).update({
+        'city': city,
+        'shortCode': shortCode,
+        'searchKeywords': searchKeywords,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e, s) {
+      debugPrint('❌ Error updating club metadata: $e\n$s');
+      rethrow;
+    }
+  }
+
   /// ➕ Creates a new swim club.
   Future<String> addClub({required SwimClub club}) async {
     try {
