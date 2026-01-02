@@ -6,7 +6,6 @@ import '../objects/user/invites/app_enums.dart';
 import '../objects/user/invites/app_invite.dart';
 import '../objects/user/invites/invite_type.dart';
 
-
 class InviteRepository {
   final FirebaseFirestore _firestore;
   static const String _collectionPath = 'invites';
@@ -68,7 +67,8 @@ class InviteRepository {
     try {
       Query<Map<String, dynamic>> query =
           collection.where('inviterId', isEqualTo: inviterId);
-      if (accepted != null) query = query.where('accepted', isEqualTo: accepted);
+      if (accepted != null)
+        query = query.where('accepted', isEqualTo: accepted);
 
       final snapshot = await query.get();
       return snapshot.docs
@@ -132,7 +132,7 @@ class InviteRepository {
     return Rx.combineLatest2(
       incoming,
       outgoing,
-          (QuerySnapshot<Map<String, dynamic>> inc,
+      (QuerySnapshot<Map<String, dynamic>> inc,
           QuerySnapshot<Map<String, dynamic>> out) {
         final allDocs = [...inc.docs, ...out.docs];
 
@@ -144,7 +144,6 @@ class InviteRepository {
     );
   }
 
-
   /// 🔍 Fetch all invites where the receiverEmail matches this email.
   /// Works for invites/{inviteId}
   Future<List<AppInvite>> getInviteByReceiverEmail(
@@ -153,8 +152,7 @@ class InviteRepository {
       final normalized = email.trim().toLowerCase();
 
       final snapshot =
-          await collection.where('receiverEmail', isEqualTo: normalized)
-          .get();
+          await collection.where('receiverEmail', isEqualTo: normalized).get();
 
       return snapshot.docs
           .map((doc) => AppInvite.fromJson(doc.id, doc.data()))
@@ -174,17 +172,29 @@ class InviteRepository {
   /// 🔍 Get all accepted swimmers for a given coach.
   Future<List<AppInvite>> getAcceptedSwimmersForCoach(String coachId) async {
     try {
+      // 1️⃣ Get ALL accepted coach↔swimmer invites
       final snapshot = await collection
-          .where('inviterId', isEqualTo: coachId)
-          .where('type', isEqualTo: InviteType.coachToSwimmer.name)
           .where('accepted', isEqualTo: true)
+          .where(
+        'type',
+        whereIn: [
+          InviteType.coachToSwimmer.name,
+          InviteType.swimmerToCoach.name,
+        ],
+      )
           .get();
 
+      // 2️⃣ Filter in memory for this coach
       return snapshot.docs
           .map((d) => AppInvite.fromJson(d.id, d.data()))
+          .where((invite) =>
+      // Coach invited swimmer
+      invite.inviterId == coachId ||
+          // Swimmer invited coach (and coach accepted)
+          invite.acceptedUserId == coachId)
           .toList();
-    } catch (e) {
-      debugPrint('❌ Failed to get accepted swimmers: $e');
+    } catch (e, st) {
+      debugPrint('❌ Failed to get accepted swimmers for coach: $e\n$st');
       rethrow;
     }
   }
@@ -234,7 +244,7 @@ class InviteRepository {
         .where('accepted', isEqualTo: true)
         .snapshots()
         .map((snap) =>
-        snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList());
+            snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList());
   }
 
   // --------------------------------------------------------------------------
