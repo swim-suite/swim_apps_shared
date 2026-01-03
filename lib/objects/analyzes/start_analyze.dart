@@ -1,7 +1,7 @@
 import 'package:swim_apps_shared/objects/analyzes/analyze_base.dart';
 
 class StartAnalyze with AnalyzableBase {
-  final String title;
+  String title;
   final DateTime date;
   final String clubId;
 
