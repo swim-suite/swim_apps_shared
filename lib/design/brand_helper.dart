@@ -163,6 +163,17 @@ class SwimSuiteTheme {
       ),
     ),
 
+    dialogTheme: DialogThemeData(
+      backgroundColor: SwimSuiteColors.white,
+      surfaceTintColor: Colors.transparent,
+      titleTextStyle: SwimSuiteText.h3.copyWith(
+        color: SwimSuiteColors.grey900,
+      ),
+      contentTextStyle: SwimSuiteText.body.copyWith(
+        color: SwimSuiteColors.grey900,
+      ),
+    ),
+
     // ------------------------------
     // ICON THEME
     // ------------------------------
@@ -271,6 +282,16 @@ class SwimSuiteTheme {
       error: Colors.red,
     ),
 
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFF182233),
+      surfaceTintColor: Colors.transparent,
+      titleTextStyle: SwimSuiteText.h3.copyWith(
+        color: SwimSuiteColors.white,
+      ),
+      contentTextStyle: SwimSuiteText.body.copyWith(
+        color: SwimSuiteColors.grey100,
+      ),
+    ),
     // -----------------------------------------------------------------------
     // GLOBAL TYPOGRAPHY
     // -----------------------------------------------------------------------
@@ -422,8 +443,13 @@ class SwimSuiteTheme {
 
 extension SwimSuiteTextColor on BuildContext {
   Color get textPrimary => Theme.of(this).colorScheme.onSurface;
-  Color get textSecondary => Theme.of(this).colorScheme.onSurface.withValues( alpha: 0.7);
+
+  Color get textSecondary =>
+      Theme.of(this).colorScheme.onSurface.withValues(alpha: 0.7);
+
   Color get textInverse => Theme.of(this).colorScheme.onPrimary;
+
   Color get textAccent => Theme.of(this).colorScheme.primary;
+
   Color get textMuted => Theme.of(this).disabledColor;
 }
