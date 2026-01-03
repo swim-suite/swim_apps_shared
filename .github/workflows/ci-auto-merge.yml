@@ -1,4 +1,4 @@
-name: CI / Test / Auto-Merge + Tag + Release
+name: CI / Validate / Release
 
 on:
   push:
@@ -6,142 +6,158 @@ on:
       - develop
       - feature/**
       - enabler/**
-  #pull_request:
 
 jobs:
-  build:
-    name: Validate, Bump & Merge
+  # =========================================================
+  # 1️⃣ VALIDATE JOB — SAFE & FAST
+  # =========================================================
+  validate:
+    name: Validate (Analyze & Test)
     runs-on: ubuntu-latest
 
-    # We will compute the tag/version inside the job steps
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.5'
+          channel: stable
+          cache: true
+
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      - name: Run Tests
+        run: flutter test --no-pub
+
+  # =========================================================
+  # 2️⃣ RELEASE JOB — ONLY FROM DEVELOP
+  # =========================================================
+  release:
+    name: Release (Version • Tag • Notes)
+    needs: validate
+    runs-on: ubuntu-latest
+
+    # 🚨 Critical: only run on develop
+    if: github.ref == 'refs/heads/develop'
 
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-      # ---------------------------------------------------------
-      # CHECKOUT
-      # ---------------------------------------------------------
-      - name: Checkout code
+      # -----------------------------------------------------
+      # CHECKOUT FULL HISTORY
+      # -----------------------------------------------------
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Required to get the full history for tagging and finding the latest tag
           fetch-depth: 0
 
-      # ---------------------------------------------------------
+      - name: Fetch master
+        run: git fetch origin master
+
+      # -----------------------------------------------------
       # INSTALL GH CLI
-      # ---------------------------------------------------------
+      # -----------------------------------------------------
       - name: Install GitHub CLI
         run: |
           sudo apt-get update
           sudo apt-get install gh -y
 
-      # ---------------------------------------------------------
-      # INSTALL FLUTTER
-      # ---------------------------------------------------------
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.27.1'
-          channel: 'stable'
-          cache: true
-
-      # ---------------------------------------------------------
-      # INSTALL DEPENDENCIES
-      # ---------------------------------------------------------
-      - name: Flutter Pub Get
-        run: flutter pub get
-
-      # ---------------------------------------------------------
-      # ANALYZE + TESTS
-      # ---------------------------------------------------------
-      - name: Test
-        run: flutter test --no-pub
-
-      # ---------------------------------------------------------
-      # VERSION BUMP (Find latest tag on master for base)
-      # ---------------------------------------------------------
-      - name: Bump version based on latest tag
-        id: version_bump
+      # -----------------------------------------------------
+      # AUTO VERSION BUMP (PATCH)
+      # -----------------------------------------------------
+      - name: Compute next version
+        id: version
         run: |
-          # 1. Find the latest tag on the target branch (master)
-          LATEST_TAG=$(git describe --tags --match "v*.*.*" $(git merge-base HEAD master) --abbrev=0 || echo "v0.0.0")
-          
-          echo "📦 Latest tag on master: $LATEST_TAG"
-          
-          # 2. Extract and increment the patch version
-          SEMVER="${LATEST_TAG#v}" # remove 'v' prefix
-          SEMVER_NO_BUILD="${SEMVER%%+*}" # strip +build
-          
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$SEMVER_NO_BUILD"
-          
-          # Increment patch
+          LATEST_TAG=$(git describe --tags --match "v*.*.*" origin/master --abbrev=0 || echo "v0.0.0")
+          echo "📦 Latest tag: $LATEST_TAG"
+
+          SEMVER="${LATEST_TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$SEMVER"
+
           PATCH=$((PATCH+1))
-          
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           NEW_TAG="v$NEW_VERSION"
-          
-          echo "🔼 New version: $NEW_VERSION"
-          
-          # 3. Update pubspec.yaml in the current branch
-          sed -i "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
-          
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
-      # ---------------------------------------------------------
-      # CREATE PR (Action handles commit & push)
-      # ---------------------------------------------------------
-      - name: Create Pull Request
-        id: create_pr
+      - name: Update pubspec.yaml
+        run: |
+          sed -i "s/^version:.*/version: ${{ steps.version.outputs.new_version }}/" pubspec.yaml
+
+      # -----------------------------------------------------
+      # GENERATE RELEASE NOTES
+      # -----------------------------------------------------
+      - name: Generate release notes
+        id: notes
+        run: |
+          LAST_TAG=$(git describe --tags --match "v*.*.*" origin/master --abbrev=0 || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            NOTES=$(git log --pretty=format:"- %s")
+          else
+            NOTES=$(git log "$LAST_TAG"..HEAD --pretty=format:"- %s")
+          fi
+
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # -----------------------------------------------------
+      # CREATE PR → MASTER
+      # -----------------------------------------------------
+      - name: Create Release PR
+        id: pr
         uses: peter-evans/create-pull-request@v6
         with:
-          # Use the default GITHUB_TOKEN for internal operations
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "CI: Bump version to ${{ steps.version_bump.outputs.new_version }}"
-          branch: ci/version-bump-${{ steps.version_bump.outputs.new_version }}
+          branch: ci/release-${{ steps.version.outputs.new_version }}
+          base: master
           delete-branch: true
-          title: "CI Auto-Merge: Version ${{ steps.version_bump.outputs.new_version }}"
+          commit-message: "chore: release v${{ steps.version.outputs.new_version }}"
+          title: "Release v${{ steps.version.outputs.new_version }}"
           body: |
-            Automatic version bump and merge into master.
-            Version: **${{ steps.version_bump.outputs.new_version }}**
-          base: master # Target master branch
+            ## 🚀 Release v${{ steps.version.outputs.new_version }}
 
-      # ---------------------------------------------------------
-      # MERGE PR & TAG (CRITICAL: Needs token with 'write' permissions)
-      # ---------------------------------------------------------
-      - name: Merge PR and Create Tag
-        if: steps.create_pr.outputs.pull-request-number != ''
-        run: |
-          PR_NUMBER=${{ steps.create_pr.outputs.pull-request-number }}
-          NEW_TAG=${{ steps.version_bump.outputs.tag }}
-          
-          # 1. Merge PR using squash to keep history clean
-          gh pr merge "$PR_NUMBER" --squash --delete-branch
-          
-          # 2. Immediately tag the HEAD of the master branch that was just merged
-          git fetch origin master
-          git checkout master
-          
-          echo "🏷 Creating and pushing tag $NEW_TAG"
-          git tag "$NEW_TAG"
-          git push origin "$NEW_TAG"
+            ### Changes
+            ${{ steps.notes.outputs.notes }}
 
+      # -----------------------------------------------------
+      # MERGE + TAG
+      # -----------------------------------------------------
+      - name: Merge PR and Tag
+        if: steps.pr.outputs.pull-request-number != ''
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use default token, already has 'contents: write'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR=${{ steps.pr.outputs.pull-request-number }}
+          TAG=${{ steps.version.outputs.tag }}
 
-      # ---------------------------------------------------------
-      # CREATE RELEASE (Runs only if the merge/tag succeeded)
-      # ---------------------------------------------------------
+          gh pr merge "$PR" --squash --delete-branch
+
+          git checkout master
+          git pull origin master
+
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      # -----------------------------------------------------
+      # CREATE GITHUB RELEASE
+      # -----------------------------------------------------
       - name: Create GitHub Release
-        if: always() # Run even if merge failed, but check for successful tag
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version_bump.outputs.tag }}
-          name: "Release ${{ steps.version_bump.outputs.tag }}"
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Release ${{ steps.version.outputs.tag }}"
           body: |
-            ## Automated Release
-            🎉 Version `${{ steps.version_bump.outputs.tag }}` has been published automatically!
+            ## 🚀 Release ${{ steps.version.outputs.tag }}
+
+            ### What's changed
+            ${{ steps.notes.outputs.notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

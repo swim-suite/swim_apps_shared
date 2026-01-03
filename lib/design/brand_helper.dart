@@ -43,7 +43,6 @@ class SwimSuiteText {
     fontSize: 28,
     fontWeight: FontWeight.w700,
     height: 1.2,
-    color: SwimSuiteColors.white,
   );
 
   static const TextStyle h2 = TextStyle(
@@ -51,7 +50,6 @@ class SwimSuiteText {
     fontSize: 22,
     fontWeight: FontWeight.w700,
     height: 1.25,
-    color: SwimSuiteColors.white,
   );
 
   static const TextStyle h3 = TextStyle(
@@ -59,7 +57,6 @@ class SwimSuiteText {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.3,
-    color: SwimSuiteColors.white,
   );
 
   // BODY
@@ -67,7 +64,6 @@ class SwimSuiteText {
     fontFamily: bodyFont,
     fontSize: 16,
     height: 1.45,
-    color: SwimSuiteColors.grey900,
   );
 
   static const TextStyle bodyBold = TextStyle(
@@ -75,21 +71,18 @@ class SwimSuiteText {
     fontSize: 16,
     fontWeight: FontWeight.bold,
     height: 1.45,
-    color: SwimSuiteColors.grey900,
   );
 
   static const TextStyle small = TextStyle(
     fontFamily: bodyFont,
     fontSize: 14,
     height: 1.4,
-    color: SwimSuiteColors.grey700,
   );
 
   static const TextStyle tiny = TextStyle(
     fontFamily: bodyFont,
     fontSize: 12,
     height: 1.3,
-    color: SwimSuiteColors.grey500,
   );
 }
 
@@ -139,6 +132,9 @@ class SwimSuiteTheme {
       bodyLarge: SwimSuiteText.body,
       bodyMedium: SwimSuiteText.small,
       bodySmall: SwimSuiteText.tiny,
+    ).apply(
+      bodyColor: SwimSuiteColors.grey900,
+      displayColor: SwimSuiteColors.grey900,
     ),
 
     // ------------------------------
@@ -422,4 +418,12 @@ class SwimSuiteTheme {
       indicatorColor: SwimSuiteColors.accent,
     ),
   );
+}
+
+extension SwimSuiteTextColor on BuildContext {
+  Color get textPrimary => Theme.of(this).colorScheme.onSurface;
+  Color get textSecondary => Theme.of(this).colorScheme.onSurface.withValues( alpha: 0.7);
+  Color get textInverse => Theme.of(this).colorScheme.onPrimary;
+  Color get textAccent => Theme.of(this).colorScheme.primary;
+  Color get textMuted => Theme.of(this).disabledColor;
 }
