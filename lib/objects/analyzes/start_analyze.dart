@@ -1,45 +1,44 @@
-class StartAnalyze {
-  final String id;
+import 'package:swim_apps_shared/objects/analyzes/analyze_base.dart';
+
+class StartAnalyze with AnalyzableBase {
   final String title;
   final DateTime date;
-
-  final String? swimmerId;
-  final String? swimmerName;
-
-  final String coachId;
   final String clubId;
 
   final Map<String, int> markedTimestamps;
-
   final double startDistance;
   final double startHeight;
 
   final Map<String, double>? jumpData;
-
   String? aiInterpretation;
 
-  final DateTime createdDate;
-  final DateTime? updatedDate;
+  DateTime? updatedAt;
 
   StartAnalyze({
-    required this.id,
+    String? id,
+    String? coachId,
+    String? swimmerId,
+    String? swimmerName,
+    DateTime? createdAt,
+    this.updatedAt,
     required this.title,
     required this.date,
-    required this.coachId,
     required this.clubId,
     required this.markedTimestamps,
     required this.startDistance,
     required this.startHeight,
-    required this.createdDate,
-    this.updatedDate,
-    this.swimmerId,
-    this.swimmerName,
     this.jumpData,
     this.aiInterpretation,
-  });
+  }) {
+    this.id = id;
+    this.coachId = coachId;
+    this.swimmerId = swimmerId;
+    this.swimmerName = swimmerName;
+    this.createdAt = createdAt;
+  }
 
   // ---------------------------------------------------------------------------
-  // COPYWITH (needed for auto-save)
+  // COPYWITH
   // ---------------------------------------------------------------------------
   StartAnalyze copyWith({
     String? id,
@@ -54,8 +53,8 @@ class StartAnalyze {
     double? startHeight,
     Map<String, double>? jumpData,
     String? aiInterpretation,
-    DateTime? createdDate,
-    DateTime? updatedDate,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return StartAnalyze(
       id: id ?? this.id,
@@ -70,27 +69,20 @@ class StartAnalyze {
       startHeight: startHeight ?? this.startHeight,
       jumpData: jumpData ?? this.jumpData,
       aiInterpretation: aiInterpretation ?? this.aiInterpretation,
-      createdDate: createdDate ?? this.createdDate,
-      updatedDate: updatedDate ?? this.updatedDate,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
   // ---------------------------------------------------------------------------
   // FROM MAP
   // ---------------------------------------------------------------------------
-  factory StartAnalyze.fromMap(Map<String, dynamic> map, String id) {
-    return StartAnalyze(
-      id: id,
+  factory StartAnalyze.fromMap(Map<String, dynamic> map, String docId) {
+    final analyze = StartAnalyze(
+      id: docId,
       title: map['title'] as String,
       date: DateTime.parse(map['date'] as String),
       clubId: map['clubId'] as String,
-      coachId: map['coachId'] as String,
-      createdDate: DateTime.parse(map['createdDate'] as String),
-      updatedDate: map['updatedDate'] != null
-          ? DateTime.parse(map['updatedDate'] as String)
-          : null,
-      swimmerId: map['swimmerId'] as String?,
-      swimmerName: map['swimmerName'] as String?,
       markedTimestamps: Map<String, int>.from(map['markedTimestamps'] as Map),
       startDistance: (map['startDistance'] as num).toDouble(),
       startHeight: (map['startHeight'] as num).toDouble(),
@@ -98,7 +90,13 @@ class StartAnalyze {
       jumpData: map['jumpData'] != null
           ? Map<String, double>.from(map['jumpData'] as Map)
           : null,
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'])
+          : null,
     );
+
+    analyze.loadAnalyzableBase(map, docId);
+    return analyze;
   }
 
   // ---------------------------------------------------------------------------
@@ -106,53 +104,16 @@ class StartAnalyze {
   // ---------------------------------------------------------------------------
   Map<String, dynamic> toMap() {
     return {
+      ...analyzableBaseToJson(),
       'title': title,
       'date': date.toIso8601String(),
-      'swimmerId': swimmerId,
-      'swimmerName': swimmerName,
       'clubId': clubId,
-      'coachId': coachId,
-      'createdDate': createdDate.toIso8601String(),
-      if (updatedDate != null) 'updatedDate': updatedDate!.toIso8601String(),
       'markedTimestamps': markedTimestamps,
       'startDistance': startDistance,
       'startHeight': startHeight,
       'aiInterpretation': aiInterpretation,
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
       if (jumpData != null) 'jumpData': jumpData,
     };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// TABLE ROW DATA MODEL (move this to shared file)
-// ---------------------------------------------------------------------------
-
-class TableRowData {
-  final String label;
-  final double timeSeconds;
-  final double distanceMeters;
-  final double speed;
-
-  TableRowData({
-    required this.label,
-    required this.timeSeconds,
-    required this.distanceMeters,
-    required this.speed,
-  });
-
-  Map<String, dynamic> toMap() => {
-    "label": label,
-    "timeSeconds": timeSeconds,
-    "distanceMeters": distanceMeters,
-    "speed": speed,
-  };
-
-  factory TableRowData.fromMap(Map<String, dynamic> map) {
-    return TableRowData(
-      label: map["label"],
-      timeSeconds: (map["timeSeconds"] as num).toDouble(),
-      distanceMeters: (map["distanceMeters"] as num).toDouble(),
-      speed: (map["speed"] as num).toDouble(),
-    );
   }
 }
