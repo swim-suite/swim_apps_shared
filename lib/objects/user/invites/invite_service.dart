@@ -2,15 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:swim_apps_shared/auth_service.dart';
 import 'package:swim_apps_shared/objects/user/invites/app_enums.dart';
 import 'package:swim_apps_shared/objects/user/invites/app_invite.dart';
 import 'package:swim_apps_shared/objects/user/invites/invite_type.dart';
 import 'package:swim_apps_shared/repositories/invite_repository.dart';
+import 'package:swim_apps_shared/repositories/user_repository.dart';
 
 import '../user.dart';
+import '../user_types.dart';
 
 class InviteService {
   final InviteRepository _inviteRepository;
+  final UserRepository userRepository;
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
@@ -20,15 +24,57 @@ class InviteService {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
+    UserRepository? userRepository,
   })  : _inviteRepository = inviteRepository ?? InviteRepository(),
         _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance,
         _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
+        userRepository = userRepository ??
+            UserRepository(
+              firestore ?? FirebaseFirestore.instance,
+              authService: AuthService(firebaseAuth: auth),
+            );
 
-  /// --------------------------------------------------------------------------
-  /// 🙋 REQUEST TO JOIN CLUB (user → club admin)
-  /// --------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // HELPERS
+  // --------------------------------------------------------------------------
+
+  String _normalizeEmail(String email) => email.trim().toLowerCase();
+
+  /// For an accepted coach<->swimmer invite, resolve the "other" user id,
+  /// given the current coachId.
+  ///
+  /// Returns:
+  /// - swimmerId if the invite represents a valid coach<->swimmer link
+  /// - null if the invite doesn't involve the coach, or is missing fields
+  String? _resolveSwimmerIdForCoach({
+    required AppInvite invite,
+    required String coachId,
+  }) {
+    // Coach invited swimmer => swimmer accepted => acceptedUserId is swimmerId
+    if (invite.inviterId == coachId) {
+      final swimmerId = invite.acceptedUserId;
+      if (swimmerId == null || swimmerId.isEmpty) return null;
+      if (swimmerId == coachId) return null; // safety: no self-link
+      return swimmerId;
+    }
+
+    // Swimmer invited coach => coach accepted => inviterId is swimmerId
+    if (invite.acceptedUserId == coachId) {
+      final swimmerId = invite.inviterId;
+      if (swimmerId.isEmpty) return null;
+      if (swimmerId == coachId) return null; // safety: no self-link
+      return swimmerId;
+    }
+
+    return null;
+  }
+
+  // --------------------------------------------------------------------------
+  // 🙋 REQUEST TO JOIN CLUB (user → club admin)
+  // --------------------------------------------------------------------------
+
   Future<void> requestToJoinClub({
     required String clubId,
   }) async {
@@ -60,22 +106,21 @@ class InviteService {
     await _inviteRepository.sendInvite(invite);
 
     debugPrint(
-      '🙋 Join request created for club=$clubId by newUser=${newUser.uid}',
-    );
+        '🙋 Join request created for club=$clubId by user=${newUser.uid}');
   }
 
-  /// 🔍 Fetch a single invite by its Firestore document ID.
-  /// Returns an [AppInvite] if found, or `null` if not found.
+  // --------------------------------------------------------------------------
+  // 🔍 Fetch invite by Firestore document ID
+  // --------------------------------------------------------------------------
+
   Future<AppInvite?> getInviteById(String inviteId) async {
     try {
       final doc = await _firestore.collection('invites').doc(inviteId).get();
-
       if (!doc.exists) return null;
 
       final data = doc.data();
       if (data == null) return null;
 
-      // ✅ Matches: factory AppInvite.fromJson(String id, Map<String, dynamic> json)
       return AppInvite.fromJson(doc.id, data);
     } catch (e, st) {
       debugPrint('❌ Error fetching invite by ID: $e\n$st');
@@ -86,6 +131,7 @@ class InviteService {
   // --------------------------------------------------------------------------
   // ✉️ SEND INVITE (Firestore first, email optional)
   // --------------------------------------------------------------------------
+
   Future<void> sendInvite({
     required String email,
     required InviteType type,
@@ -95,13 +141,10 @@ class InviteService {
     String? clubName,
   }) async {
     final inviter = _auth.currentUser;
-    if (inviter == null) {
-      throw Exception('No logged-in user.');
-    }
+    if (inviter == null) throw Exception('No logged-in user.');
 
-    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedEmail = _normalizeEmail(email);
 
-    // 🔹 Map Dart enum to backend key
     String inviteTypeKey;
     switch (type) {
       case InviteType.coachToSwimmer:
@@ -114,7 +157,6 @@ class InviteService {
         inviteTypeKey = 'generic_invite';
     }
 
-    // 1️⃣ Create the invite record in Firestore
     final invite = AppInvite(
       id: 'invite_${DateTime.now().millisecondsSinceEpoch}',
       inviterId: inviter.uid,
@@ -126,7 +168,7 @@ class InviteService {
       relatedEntityId: groupId,
       createdAt: DateTime.now(),
       accepted: null,
-      // ✅ pending (tri-state)
+      // pending (tri-state)
       acceptedUserId: null,
       acceptedAt: null,
     );
@@ -134,7 +176,7 @@ class InviteService {
     await _inviteRepository.sendInvite(invite);
     debugPrint('📄 Invite document created in Firestore for $normalizedEmail');
 
-    // 2️⃣ Call Python Cloud Function via URL
+    // Best-effort email
     try {
       final callable = _functions.httpsCallableFromUrl(
         "https://sendinviteemail-dvni7kn54wa-ew.a.run.app",
@@ -154,32 +196,31 @@ class InviteService {
       debugPrint('📧 Invite email sent via Python Cloud Function');
     } catch (e) {
       debugPrint('⚠️ Email sending failed (invite stored anyway): $e');
-      // Do NOT throw — Firestore invite is valid even if email sending fails
     }
   }
 
-  /// Streams the most recent *pending* invite for the user’s email.
-  /// Returns null if none exist.
+  // --------------------------------------------------------------------------
+  // STREAMS
+  // --------------------------------------------------------------------------
+
   Stream<AppInvite?> streamInviteForEmail({
     required String email,
     required App app,
   }) {
-    final normalized = email.trim().toLowerCase();
+    final normalized = _normalizeEmail(email);
 
     return _firestore
         .collection('invites')
         .where('inviteeEmail', isEqualTo: normalized)
-        .where('accepted', isNull: true) // ✅ pending
+        .where('accepted', isNull: true)
         .where('app', isEqualTo: app.name)
         .orderBy('createdAt', descending: true)
         .limit(1)
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) return null;
-
       final doc = snapshot.docs.first;
-      final data = doc.data();
-      return AppInvite.fromJson(doc.id, data);
+      return AppInvite.fromJson(doc.id, doc.data());
     });
   }
 
@@ -188,7 +229,7 @@ class InviteService {
     required App app,
     InviteType? inviteType,
   }) {
-    final email = user.email.trim().toLowerCase();
+    final email = _normalizeEmail(user.email);
 
     Query<Map<String, dynamic>> query = _firestore
         .collection('invites')
@@ -204,7 +245,7 @@ class InviteService {
         .orderBy('createdAt', descending: true)
         .limit(1)
         .snapshots()
-        .map((QuerySnapshot<Map<String, dynamic>> snap) {
+        .map((snap) {
       if (snap.docs.isEmpty) return null;
       final doc = snap.docs.first;
       return AppInvite.fromJson(doc.id, doc.data());
@@ -215,7 +256,7 @@ class InviteService {
     required AppUser user,
     required App app,
   }) {
-    final email = user.email.trim().toLowerCase();
+    final email = _normalizeEmail(user.email);
     final userId = user.id;
 
     return _firestore
@@ -227,12 +268,13 @@ class InviteService {
       return snap.docs
           .map((d) => AppInvite.fromJson(d.id, d.data()))
           .where((invite) =>
-              invite.inviteeEmail == email || invite.inviterId == userId)
+              _normalizeEmail(invite.inviteeEmail) == email ||
+              invite.inviterId == userId ||
+              invite.acceptedUserId == userId)
           .toList();
     });
   }
 
-  /// Returns all pending invites sent by a user.
   Stream<List<AppInvite>> streamPendingSentInvites({
     required String userId,
     required InviteType inviteType,
@@ -241,13 +283,12 @@ class InviteService {
         .collection('invites')
         .where('inviterId', isEqualTo: userId)
         .where('type', isEqualTo: inviteType.name)
-        .where('accepted', isNull: true) // ✅ pending
+        .where('accepted', isNull: true)
         .where('app', isEqualTo: App.swimAnalyzer.name)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) {
-      return snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList();
-    });
+        .map((snap) =>
+            snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList());
   }
 
   // --------------------------------------------------------------------------
@@ -262,11 +303,9 @@ class InviteService {
     required String clubId,
     String? groupId,
   }) async {
-    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedEmail = _normalizeEmail(email);
 
-    // ----------------------------------------------------------------------
-    // 📨 1. SEND EMAIL INVITE VIA CLOUD FUNCTION (best-effort)
-    // ----------------------------------------------------------------------
+    // Best-effort email via callable function name
     try {
       final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
       final sendInvite = functions.httpsCallable('sendInviteEmail');
@@ -287,17 +326,12 @@ class InviteService {
       });
       debugPrint('📨 sendInviteEmail response: ${result.data}');
     } catch (e, st) {
-      debugPrint('❌ Error calling sendInviteEmail: $e');
-      debugPrint('Stack: $st');
-      // Do NOT rethrow — continue with user creation
+      debugPrint('❌ Error calling sendInviteEmail: $e\n$st');
     }
 
-    // ----------------------------------------------------------------------
-    // 👤 2. PRE-CREATE LOCAL PENDING USER IN FIRESTORE
-    // ----------------------------------------------------------------------
+    // Pre-create pending user
     final safeDocId = normalizedEmail.replaceAll('.', ',');
     final ref = _firestore.collection('users').doc(safeDocId);
-
     final role = type == InviteType.clubInvite ? 'coach' : 'swimmer';
 
     await ref.set({
@@ -317,7 +351,6 @@ class InviteService {
   // ✅ ACCEPT / DECLINE INVITES
   // --------------------------------------------------------------------------
 
-  /// Accepts an invite.
   Future<void> acceptInvite({
     required AppInvite appInvite,
     required String userId,
@@ -326,7 +359,7 @@ class InviteService {
     if (user == null) throw Exception('No logged-in user.');
 
     try {
-      final updatedAppInvite = appInvite.copyWith(
+      final updated = appInvite.copyWith(
         accepted: true,
         acceptedAt: DateTime.now(),
         acceptedUserId: userId,
@@ -334,11 +367,10 @@ class InviteService {
 
       await _firestore
           .collection('invites')
-          .doc(updatedAppInvite.id)
-          .update(updatedAppInvite.toJson());
+          .doc(updated.id)
+          .update(updated.toJson());
 
-      debugPrint(
-          '✅ Invite ${updatedAppInvite.id} accepted successfully by ${user.uid}');
+      debugPrint('✅ Invite ${updated.id} accepted successfully by ${user.uid}');
     } on FirebaseFunctionsException catch (e) {
       debugPrint('❌ FirebaseFunctionsException: ${e.code} - ${e.message}');
       rethrow;
@@ -348,16 +380,11 @@ class InviteService {
     }
   }
 
-  /// Declines (denies) an invite.
-  /// tri-state:
-  /// - pending: accepted == null
-  /// - denied: accepted == false
-  /// - accepted: accepted == true
   Future<void> revokeInvite({required String inviteId}) async {
     try {
       await _inviteRepository.collection.doc(inviteId).update({
-        'accepted': false, // ✅ denied
-        'acceptedAt': FieldValue.serverTimestamp(), // ✅ keep decision timestamp
+        'accepted': false,
+        'acceptedAt': FieldValue.serverTimestamp(),
         'acceptedUserId': null,
         'revokedAt': FieldValue.serverTimestamp(),
       });
@@ -373,10 +400,47 @@ class InviteService {
   // 🔍 LOOKUPS
   // --------------------------------------------------------------------------
 
+  @Deprecated('Use getMyAcceptedSwimmerIds() instead.')
   Future<List<AppInvite>> getMyAcceptedSwimmers() async {
     final coach = _auth.currentUser;
     if (coach == null) throw Exception('No logged-in coach.');
     return _inviteRepository.getAcceptedSwimmersForCoach(coach.uid);
+  }
+
+  /// ✅ Preferred: returns unique swimmerIds linked to the *current* coach.
+  Future<Set<String>> getMyAcceptedSwimmerIds() async {
+    final coach = _auth.currentUser;
+    if (coach == null) throw Exception('No logged-in coach.');
+    return getAcceptedSwimmerIdsForCoach(coach.uid);
+  }
+
+  /// ✅ Core: returns unique swimmerIds linked to a coach (accepted, both directions)
+  Future<Set<String>> getAcceptedSwimmerIdsForCoach(String coachId) async {
+    try {
+      final snapshot = await _inviteRepository.collection
+          .where('accepted', isEqualTo: true)
+          .where(
+        'type',
+        whereIn: [
+          InviteType.coachToSwimmer.name,
+          InviteType.swimmerToCoach.name,
+        ],
+      ).get();
+
+      final Set<String> swimmerIds = {};
+
+      for (final doc in snapshot.docs) {
+        final invite = AppInvite.fromJson(doc.id, doc.data());
+        final swimmerId =
+            _resolveSwimmerIdForCoach(invite: invite, coachId: coachId);
+        if (swimmerId != null) swimmerIds.add(swimmerId);
+      }
+
+      return swimmerIds;
+    } catch (e, st) {
+      debugPrint('❌ Failed to get accepted swimmerIds for coach: $e\n$st');
+      rethrow;
+    }
   }
 
   Future<List<AppInvite>> getMyAcceptedCoaches() async {
@@ -388,10 +452,34 @@ class InviteService {
   Future<bool> hasLinkWith(String otherUserId) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No logged-in user.');
+
     return _inviteRepository.isLinked(
       inviterId: user.uid,
       acceptedUserId: otherUserId,
     );
+  }
+
+  /// ✅ Preferred API for UI & controllers
+  /// Returns unique AppUser swimmers linked to the current coach
+  Future<List<AppUser>> getMyAcceptedSwimmerUsers() async {
+    final coach = _auth.currentUser;
+    if (coach == null) {
+      throw Exception('No logged-in coach.');
+    }
+
+    // 1️⃣ Get unique swimmer IDs (direction-safe, deduped)
+    final swimmerIds = await getAcceptedSwimmerIdsForCoach(coach.uid);
+    if (swimmerIds.isEmpty) return [];
+
+    // 2️⃣ Hydrate into AppUser objects
+    final users = await userRepository.getUsersByIds(
+      swimmerIds.toList(),
+    );
+
+    // 3️⃣ Extra safety: only swimmers, never coach
+    return users
+        .where((u) => u.id != coach.uid && u.userType == UserType.swimmer)
+        .toList();
   }
 
   // --------------------------------------------------------------------------
@@ -400,7 +488,6 @@ class InviteService {
 
   Future<List<AppInvite>> getPendingInvitesByClub(String clubId) async {
     try {
-      // NOTE: ensure repository uses accepted == null for "pending"
       return await _inviteRepository.getPendingInvitesByClub(clubId);
     } catch (e) {
       debugPrint('❌ Failed to fetch pending invites by club: $e');
@@ -410,23 +497,19 @@ class InviteService {
 
   Future<AppInvite?> getInviteByEmail(String email) async {
     try {
-      final normalized = email.trim().toLowerCase();
+      final normalized = _normalizeEmail(email);
       final invites = await _inviteRepository.getInvitesByEmail(normalized);
 
       if (invites.isEmpty) return null;
 
-      // Always sort newest first
       invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-      // 1️⃣ Prefer pending invites
       final pending = invites.where((i) => i.accepted == null);
       if (pending.isNotEmpty) return pending.first;
 
-      // 2️⃣ Otherwise return most recent accepted invite
       final accepted = invites.where((i) => i.accepted == true);
       if (accepted.isNotEmpty) return accepted.first;
 
-      // 3️⃣ Otherwise return most recent denied invite
       final denied = invites.where((i) => i.accepted == false);
       if (denied.isNotEmpty) return denied.first;
 
@@ -447,30 +530,24 @@ class InviteService {
     required String otherEmail,
     required App app,
   }) async {
-    final normalized = otherEmail.trim().toLowerCase();
+    final normalized = _normalizeEmail(otherEmail);
 
-    // 1️⃣ Get all accepted invites in this app
     final snap = await _firestore
         .collection('invites')
         .where('accepted', isEqualTo: true)
         .where('app', isEqualTo: app.name)
         .get();
 
-    // 2️⃣ Check BOTH sides of the relationship
     for (final doc in snap.docs) {
       final invite = AppInvite.fromJson(doc.id, doc.data());
 
-      // CASE A: user invited the other person
       final caseA = invite.inviterId == userId &&
-          invite.inviteeEmail.toLowerCase() == normalized;
+          _normalizeEmail(invite.inviteeEmail) == normalized;
 
-      // CASE B: other person invited the user
-      final caseB = invite.inviterEmail.toLowerCase() == normalized &&
+      final caseB = _normalizeEmail(invite.inviterEmail) == normalized &&
           invite.acceptedUserId == userId;
 
-      if (caseA || caseB) {
-        return true;
-      }
+      if (caseA || caseB) return true;
     }
 
     return false;
@@ -481,15 +558,13 @@ class InviteService {
     required String inviteeEmail,
     required InviteType type,
   }) async {
-    final normalized = inviteeEmail.trim().toLowerCase();
+    final normalized = _normalizeEmail(inviteeEmail);
 
-    // ✅ Field names aligned with AppInvite schema:
-    // inviterId, inviteeEmail, type, accepted
     final snap = await _inviteRepository.collection
         .where('inviterId', isEqualTo: senderId)
         .where('type', isEqualTo: type.name)
         .where('inviteeEmail', isEqualTo: normalized)
-        .where('accepted', isNull: true) // ✅ pending
+        .where('accepted', isNull: true)
         .limit(1)
         .get();
 

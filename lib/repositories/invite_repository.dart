@@ -187,7 +187,7 @@ class InviteRepository {
       // 2️⃣ Filter in memory for this coach
       return snapshot.docs
           .map((d) => AppInvite.fromJson(d.id, d.data()))
-          .where((invite) =>
+          .where((AppInvite invite) =>
       // Coach invited swimmer
       invite.inviterId == coachId ||
           // Swimmer invited coach (and coach accepted)

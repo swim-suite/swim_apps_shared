@@ -1,9 +1,15 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseAuth _firebaseAuth;
+
+  /// Default behavior uses FirebaseAuth.instance
+  /// Tests can inject a mock FirebaseAuth
+  AuthService({FirebaseAuth? firebaseAuth})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
   String? get currentUserId => _firebaseAuth.currentUser?.uid;
 
   /// Creates a new user in Firebase Auth and sends them a password reset email.
@@ -26,35 +32,29 @@ class AuthService {
     required String displayName,
   }) async {
     try {
-      // 1. Create the user account in Firebase Auth. This will sign out the coach.
-      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+      // 1. Create the user account in Firebase Auth.
+      final userCredential =
+      await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       final user = userCredential.user;
-      if (user == null) {
-        return null;
-      }
+      if (user == null) return null;
 
       // 2. Update the new user's profile with their display name.
       await user.updateDisplayName(displayName);
 
-      // 3. Send the password reset email, which acts as an invitation for
-      // the swimmer to set their own password and take control of their account.
+      // 3. Send password reset email (invitation flow).
       await _firebaseAuth.sendPasswordResetEmail(email: email);
 
-      // The new user is now signed in. The calling code must now handle
-      // signing the coach back in.
       return user;
     } on FirebaseAuthException catch (e) {
-      // Provide more specific feedback for common errors.
       if (e.code == 'email-already-in-use') {
         throw Exception('This email is already in use by another account.');
       } else if (e.code == 'weak-password') {
         throw Exception('The password is too weak.');
       }
-      // Re-throw for other unexpected errors.
       rethrow;
     }
   }

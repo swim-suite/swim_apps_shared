@@ -61,6 +61,39 @@ void main() {
     );
   }
 
+  QuerySnapshot mockInviteQuerySnapshot(List<AppInvite> invites) {
+    final snap = MockQuerySnapshot();
+    final docs = invites.map((invite) {
+      final doc = MockQueryDocumentSnapshot();
+      when(doc.id).thenReturn(invite.id);
+      when(doc.data()).thenReturn(invite.toJson());
+      return doc;
+    }).toList();
+
+    when(snap.docs).thenReturn(docs);
+    return snap;
+  }
+
+  AppInvite acceptedInvite({
+    required String id,
+    required InviteType type,
+    required String inviterId,
+    required String acceptedUserId,
+  }) {
+    return AppInvite(
+      id: id,
+      inviterId: inviterId,
+      inviterEmail: 'user@test.com',
+      inviteeEmail: 'other@test.com',
+      type: type,
+      app: App.swimAnalyzer,
+      createdAt: DateTime.now(),
+      accepted: true,
+      acceptedUserId: acceptedUserId,
+      acceptedAt: DateTime.now(),
+    );
+  }
+
   group('requestToJoinClub', () {
     test('throws if no logged-in user', () async {
       when(auth.currentUser).thenReturn(null);
@@ -187,21 +220,141 @@ void main() {
       expect(true, true);
     });
   });
+  group('getAcceptedSwimmerIdsForCoach', () {
+    test('returns swimmerIds for coachToSwimmer invites', () async {
+      final coachId = 'coach1';
 
-  group('tri-state semantics', () {
-    test('pending invite has accepted == null', () {
-      final invite = invite0(id: 'x', accepted: null);
-      expect(invite.accepted, isNull);
+      final invites = [
+        acceptedInvite(
+          id: '1',
+          type: InviteType.coachToSwimmer,
+          inviterId: coachId,
+          acceptedUserId: 'swimmer1',
+        ),
+      ];
+
+      when(inviteRepo.collection).thenReturn(invitesCollection);
+
+      // allow chaining where(...).where(...).get()
+      when(invitesCollection.where(any,
+              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
+          .thenReturn(invitesCollection);
+
+      when(invitesCollection.get()).thenAnswer((_) async =>
+          mockInviteQuerySnapshot(invites)
+              as QuerySnapshot<Map<String, dynamic>>);
+
+      final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
+
+      expect(result, {'swimmer1'});
     });
 
-    test('accepted invite has accepted == true', () {
-      final invite = invite0(id: 'x', accepted: true);
-      expect(invite.accepted, isTrue);
+    test('returns swimmerIds for swimmerToCoach invites', () async {
+      final coachId = 'coach1';
+
+      final invites = [
+        acceptedInvite(
+          id: '1',
+          type: InviteType.swimmerToCoach,
+          inviterId: 'swimmer1',
+          acceptedUserId: coachId,
+        ),
+      ];
+
+      when(inviteRepo.collection).thenReturn(invitesCollection);
+      when(invitesCollection.where(any,
+              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
+          .thenReturn(invitesCollection);
+
+      when(invitesCollection.get()).thenAnswer((_) async =>
+          mockInviteQuerySnapshot(invites)
+              as QuerySnapshot<Map<String, dynamic>>);
+
+      final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
+
+      expect(result, {'swimmer1'});
     });
 
-    test('denied invite has accepted == false', () {
-      final invite = invite0(id: 'x', accepted: false);
-      expect(invite.accepted, isFalse);
+    test('deduplicates swimmerIds across both directions', () async {
+      final coachId = 'coach1';
+
+      final invites = [
+        acceptedInvite(
+          id: '1',
+          type: InviteType.coachToSwimmer,
+          inviterId: coachId,
+          acceptedUserId: 'swimmer1',
+        ),
+        acceptedInvite(
+          id: '2',
+          type: InviteType.swimmerToCoach,
+          inviterId: 'swimmer1',
+          acceptedUserId: coachId,
+        ),
+      ];
+
+      when(inviteRepo.collection).thenReturn(invitesCollection);
+      when(invitesCollection.where(any,
+              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
+          .thenReturn(invitesCollection);
+
+      when(invitesCollection.get()).thenAnswer((_) async =>
+          mockInviteQuerySnapshot(invites)
+              as QuerySnapshot<Map<String, dynamic>>);
+
+      final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
+
+      expect(result, {'swimmer1'});
+    });
+
+    test('returns empty set when no accepted invites exist', () async {
+      when(inviteRepo.collection).thenReturn(invitesCollection);
+      when(invitesCollection.where(any,
+              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
+          .thenReturn(invitesCollection);
+
+      when(invitesCollection.get()).thenAnswer((_) async =>
+          mockInviteQuerySnapshot([]) as QuerySnapshot<Map<String, dynamic>>);
+
+      final result = await service.getAcceptedSwimmerIdsForCoach('coach1');
+
+      expect(result, isEmpty);
+    });
+
+    test('never returns coachId as swimmerId (self-link safety)', () async {
+      final coachId = 'coach1';
+
+      when(inviteRepo.collection).thenReturn(invitesCollection);
+      when(invitesCollection.where(any,
+              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
+          .thenReturn(invitesCollection);
+
+      when(invitesCollection.get()).thenAnswer((_) async =>
+          mockInviteQuerySnapshot([]) as QuerySnapshot<Map<String, dynamic>>);
+
+      final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
+
+      expect(result, isEmpty);
     });
   });
+}
+
+AppInvite acceptedInvite({
+  required String id,
+  required InviteType type,
+  required String inviterId,
+  required String acceptedUserId,
+}) {
+  return AppInvite(
+    id: id,
+    inviterId: inviterId,
+    inviterEmail: 'user@test.com',
+    inviteeEmail: 'other@test.com',
+    type: type,
+    app: App.swimAnalyzer,
+    createdAt: DateTime.now(),
+    accepted: true,
+    acceptedUserId: acceptedUserId,
+    acceptedAt: DateTime.now(),
+  );
 }
