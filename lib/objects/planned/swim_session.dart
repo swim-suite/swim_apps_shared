@@ -11,7 +11,6 @@ import '../stroke.dart';
 class SwimSession {
   String? id;
   String? title;
-  DateTime? date;
   String? coachId;
   String? coachName;
   String? clubId;
@@ -23,6 +22,7 @@ class SwimSession {
   List<String> assignedGroupIds;
   String? overallSessionGoal;
   String? sessionNotes;
+  DateTime? startDate;
   DateTime createdAt;
   DateTime? updatedAt;
   DistanceUnit distanceUnit;
@@ -31,7 +31,7 @@ class SwimSession {
   SwimSession({
     this.id,
     this.title,
-    this.date,
+    this.startDate,
     this.coachId,
     this.coachName,
     required this.sessionSlot,
@@ -152,7 +152,7 @@ class SwimSession {
     return SwimSession(
       id: docId,
       title: json['title'],
-      date: parseFirestoreTimestamp(json['date']),
+      startDate: parseFirestoreTimestamp(json['date']),
       coachId: json['coachId'],
       coachName: json['coachName'],
       sessionSlot: getEnumFromString(SessionSlot.values, json['sessionSlot']) ??
@@ -181,7 +181,7 @@ class SwimSession {
     return {
       'id': id,
       'title': title,
-      'date': date != null ? Timestamp.fromDate(date!) : null,
+      'startDate': startDate != null ? Timestamp.fromDate(startDate!) : null,
       'coachId': coachId,
       'coachName': coachName,
       'sessionSlot': sessionSlot.name,
@@ -225,7 +225,7 @@ class SwimSession {
     return SwimSession(
       id: id != null ? id() : this.id,
       title: title != null ? title() : this.title,
-      date: date != null ? date() : this.date,
+      startDate: date != null ? date() : this.startDate,
       coachId: coachId != null ? coachId() : this.coachId,
       coachName: coachName != null ? coachName() : this.coachName,
       sessionSlot: sessionSlot ?? this.sessionSlot,
