@@ -37,6 +37,7 @@ class SwimSession {
     required this.sessionSlot,
     required this.setConfigurations,
     required this.sets,
+    required this.clubId,
     this.trainingFocus,
     this.overallSessionGoal,
     this.sessionNotes,
@@ -111,12 +112,12 @@ class SwimSession {
       _calculateDistanceBy((item) => item.stroke == Stroke.freestyle);
 
   int get totalDistanceWithFins => _calculateDistanceBy(
-    (item) => item.equipment?.contains(EquipmentType.fins) ?? false,
-  );
+        (item) => item.equipment?.contains(EquipmentType.fins) ?? false,
+      );
 
   int get totalDistanceWithPaddles => _calculateDistanceBy(
-    (item) => item.equipment?.contains(EquipmentType.paddles) ?? false,
-  );
+        (item) => item.equipment?.contains(EquipmentType.paddles) ?? false,
+      );
 
   // --- SERIALIZATION ---
 
@@ -134,8 +135,7 @@ class SwimSession {
       return values.firstWhereOrNull((v) => (v as Enum).name == name);
     }
 
-    final setConfigs =
-        (json['setConfigurations'] as List<dynamic>?)
+    final setConfigs = (json['setConfigurations'] as List<dynamic>?)
             ?.map(
               (configJson) => SessionSetConfiguration.fromJson(
                 configJson as Map<String, dynamic>,
@@ -155,13 +155,13 @@ class SwimSession {
       date: parseFirestoreTimestamp(json['date']),
       coachId: json['coachId'],
       coachName: json['coachName'],
-      sessionSlot:
-          getEnumFromString(SessionSlot.values, json['sessionSlot']) ??
+      sessionSlot: getEnumFromString(SessionSlot.values, json['sessionSlot']) ??
           SessionSlot.undefined,
       setConfigurations: setConfigs,
       sets: swimSets,
       // Populate the new `sets` list
       overallSessionGoal: json['overallSessionGoal'],
+      clubId: json['clubId'] ?? 'clubId',
       sessionNotes: json['sessionNotes'],
       createdAt: parseFirestoreTimestamp(json['createdAt']) ?? DateTime.now(),
       updatedAt: parseFirestoreTimestamp(json['updatedAt']),
@@ -170,7 +170,7 @@ class SwimSession {
           : TrainingFocusFactory.fromType(TrainingFocusType.mixed),
       distanceUnit:
           getEnumFromString(DistanceUnit.values, json['distanceUnit']) ??
-          DistanceUnit.meters,
+              DistanceUnit.meters,
       sessionType: getEnumFromString(SessionType.values, json['sessionType']),
       assignedSwimmerIds: List<String>.from(json['assignedSwimmerIds'] ?? []),
       assignedGroupIds: List<String>.from(json['assignedGroupIds'] ?? []),
@@ -190,7 +190,7 @@ class SwimSession {
       'assignedGroupIds': assignedGroupIds,
       'overallSessionGoal': overallSessionGoal,
       'sessionNotes': sessionNotes,
-      if(trainingFocus != null) 'trainingFocus': trainingFocus?.name,
+      if (trainingFocus != null) 'trainingFocus': trainingFocus?.name,
       'createdAt': Timestamp.fromDate(createdAt),
       if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
       'distanceUnit': distanceUnit.name,
@@ -209,6 +209,7 @@ class SwimSession {
     ValueGetter<DateTime?>? date,
     ValueGetter<String?>? coachId,
     ValueGetter<String?>? coachName,
+    ValueGetter<String?>? clubId,
     SessionSlot? sessionSlot,
     List<SessionSetConfiguration>? setConfigurations,
     List<SwimSet>? sets,
@@ -232,6 +233,7 @@ class SwimSession {
       sets: sets ?? this.sets,
       assignedSwimmerIds: assignedSwimmerIds ?? this.assignedSwimmerIds,
       assignedGroupIds: assignedGroupIds ?? this.assignedGroupIds,
+      clubId: clubId != null ? clubId() : this.clubId,
       overallSessionGoal: overallSessionGoal != null
           ? overallSessionGoal()
           : this.overallSessionGoal,
