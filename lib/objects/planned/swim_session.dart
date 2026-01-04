@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:swim_apps_shared/objects/planned/set_item.dart';
 import 'package:swim_apps_shared/objects/planned/swim_set.dart';
 import 'package:swim_apps_shared/objects/planned/swim_set_config.dart';
@@ -22,7 +21,8 @@ class SwimSession {
   List<String> assignedGroupIds;
   String? overallSessionGoal;
   String? sessionNotes;
-  DateTime? startDate;
+  DateTime startTime;
+  DateTime endTime;
   DateTime createdAt;
   DateTime? updatedAt;
   DistanceUnit distanceUnit;
@@ -31,7 +31,8 @@ class SwimSession {
   SwimSession({
     this.id,
     this.title,
-    this.startDate,
+    required this.startTime,
+    required this.endTime,
     this.coachId,
     this.coachName,
     required this.sessionSlot,
@@ -123,10 +124,10 @@ class SwimSession {
 
   factory SwimSession.fromJson(String docId, Map<String, dynamic> json) {
     // Helper to safely parse DateTime from various Firestore types.
-    DateTime? parseFirestoreTimestamp(dynamic value) {
+    DateTime parseFirestoreTimestamp(dynamic value) {
       if (value is Timestamp) return value.toDate();
-      if (value is String) return DateTime.tryParse(value);
-      return null;
+      if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+      return DateTime.now();
     }
 
     // Helper to safely get enum from string name.
@@ -152,7 +153,8 @@ class SwimSession {
     return SwimSession(
       id: docId,
       title: json['title'],
-      startDate: parseFirestoreTimestamp(json['date']),
+      startTime: parseFirestoreTimestamp(json['date']),
+      endTime: parseFirestoreTimestamp(json['endTime']),
       coachId: json['coachId'],
       coachName: json['coachName'],
       sessionSlot: getEnumFromString(SessionSlot.values, json['sessionSlot']) ??
@@ -163,7 +165,7 @@ class SwimSession {
       overallSessionGoal: json['overallSessionGoal'],
       clubId: json['clubId'] ?? 'clubId',
       sessionNotes: json['sessionNotes'],
-      createdAt: parseFirestoreTimestamp(json['createdAt']) ?? DateTime.now(),
+      createdAt: parseFirestoreTimestamp(json['createdAt']),
       updatedAt: parseFirestoreTimestamp(json['updatedAt']),
       trainingFocus: json['trainingFocus'] != null
           ? TrainingFocusFactory.fromName(json['trainingFocus'])
@@ -181,7 +183,7 @@ class SwimSession {
     return {
       'id': id,
       'title': title,
-      'startDate': startDate != null ? Timestamp.fromDate(startDate!) : null,
+      'startDate': Timestamp.fromDate(startTime),
       'coachId': coachId,
       'coachName': coachName,
       'sessionSlot': sessionSlot.name,
@@ -204,47 +206,63 @@ class SwimSession {
   }
 
   SwimSession copyWith({
-    ValueGetter<String?>? id,
-    ValueGetter<String?>? title,
-    ValueGetter<DateTime?>? date,
-    ValueGetter<String?>? coachId,
-    ValueGetter<String?>? coachName,
-    ValueGetter<String?>? clubId,
+    Object? id = _unset,
+    Object? title = _unset,
+    Object? startTime = _unset,
+    Object? endTime = _unset,
+    Object? coachId = _unset,
+    Object? coachName = _unset,
+    Object? clubId = _unset,
     SessionSlot? sessionSlot,
     List<SessionSetConfiguration>? setConfigurations,
     List<SwimSet>? sets,
     List<String>? assignedSwimmerIds,
     List<String>? assignedGroupIds,
-    ValueGetter<String?>? overallSessionGoal,
-    ValueGetter<String?>? sessionNotes,
+    Object? overallSessionGoal = _unset,
+    Object? sessionNotes = _unset,
     DateTime? createdAt,
-    ValueGetter<DateTime?>? updatedAt,
+    Object? updatedAt = _unset,
     DistanceUnit? distanceUnit,
-    ValueGetter<SessionType?>? sessionType,
+    Object? sessionType = _unset,
   }) {
     return SwimSession(
-      id: id != null ? id() : this.id,
-      title: title != null ? title() : this.title,
-      startDate: date != null ? date() : this.startDate,
-      coachId: coachId != null ? coachId() : this.coachId,
-      coachName: coachName != null ? coachName() : this.coachName,
+      id: identical(id, _unset) ? this.id : id as String?,
+      title: identical(title, _unset) ? this.title : title as String?,
+      startTime:
+          identical(startTime, _unset) ? this.startTime : startTime as DateTime,
+      endTime: identical(endTime, _unset) ? this.endTime : endTime as DateTime,
+      coachId: identical(coachId, _unset) ? this.coachId : coachId as String?,
+      coachName:
+          identical(coachName, _unset) ? this.coachName : coachName as String?,
+      clubId: identical(clubId, _unset) ? this.clubId : clubId as String?,
       sessionSlot: sessionSlot ?? this.sessionSlot,
       setConfigurations: setConfigurations ?? this.setConfigurations,
       sets: sets ?? this.sets,
       assignedSwimmerIds: assignedSwimmerIds ?? this.assignedSwimmerIds,
       assignedGroupIds: assignedGroupIds ?? this.assignedGroupIds,
-      clubId: clubId != null ? clubId() : this.clubId,
-      overallSessionGoal: overallSessionGoal != null
-          ? overallSessionGoal()
-          : this.overallSessionGoal,
-      sessionNotes: sessionNotes != null ? sessionNotes() : this.sessionNotes,
+      overallSessionGoal: identical(overallSessionGoal, _unset)
+          ? this.overallSessionGoal
+          : overallSessionGoal as String?,
+      sessionNotes: identical(sessionNotes, _unset)
+          ? this.sessionNotes
+          : sessionNotes as String?,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt != null ? updatedAt() : this.updatedAt,
+      updatedAt: identical(updatedAt, _unset)
+          ? this.updatedAt
+          : updatedAt as DateTime?,
       distanceUnit: distanceUnit ?? this.distanceUnit,
-      sessionType: sessionType != null ? sessionType() : this.sessionType,
+      sessionType: identical(sessionType, _unset)
+          ? this.sessionType
+          : sessionType as SessionType?,
     );
   }
 }
+
+class _Unset {
+  const _Unset();
+}
+
+const _unset = _Unset();
 
 enum SessionType {
   aerobicCapacity,
