@@ -14,6 +14,7 @@ class SwimSession {
   DateTime? date;
   String? coachId;
   String? coachName;
+  String? clubId;
   SessionSlot sessionSlot;
   List<SessionSetConfiguration> setConfigurations;
   List<SwimSet> sets; // Holds all SwimSet objects for this swim_session
