@@ -86,6 +86,7 @@ extension IntensityZoneHeartRate on IntensityZone {
   }
 }
 
+@Deprecated('will be replaced by IntensityTerminology')
 extension IntensityZoneParsingHelper on IntensityZone {
   // Renamed
   String toShortString() {

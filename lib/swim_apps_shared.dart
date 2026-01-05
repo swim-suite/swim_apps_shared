@@ -46,11 +46,8 @@ export 'swim_session/generator/enums/equipment.dart';
 export 'swim_session/generator/enums/session_slot.dart';
 export 'swim_session/generator/enums/set_types.dart';
 export 'swim_session/generator/enums/swim_way.dart';
-export 'swim_session/generator/parsed_summary.dart';
-export 'swim_session/generator/session_syntax_patterns.dart';
-export 'swim_session/generator/session_to_text_parser.dart';
+
 // ---- Swim session ----
-export 'swim_session/generator/text_to_session_parser.dart';
 export 'swim_session/generator/utils/distance_util.dart';
 export 'swim_session/generator/utils/duration_rounding.dart';
 export 'swim_session/generator/utils/duration_util.dart';
