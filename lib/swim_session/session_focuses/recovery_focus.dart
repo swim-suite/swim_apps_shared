@@ -41,7 +41,7 @@ class RecoveryFocus extends TrainingFocus {
   @override
   List<IntensityZone> get preferredIntensityZones => [
     IntensityZone.i1,
-    IntensityZone.drill,
+    IntensityZone.i3,
   ];
 
   @override

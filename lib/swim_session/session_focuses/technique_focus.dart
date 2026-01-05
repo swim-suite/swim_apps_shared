@@ -42,7 +42,6 @@ class TechniqueFocus extends TrainingFocus {
 
   @override
   List<IntensityZone> get preferredIntensityZones => [
-    IntensityZone.drill,
     IntensityZone.i1,
     IntensityZone.i2,
   ];

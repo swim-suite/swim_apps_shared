@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum IntensityZone { max, sp3, sp2, sp1, i4, i3, i2, i1, drill, racePace }
+enum IntensityZone { max, sp3, sp2, sp1, i4, i3, i2, i1, racePace }
 
 extension IntensityZonesColoring on IntensityZone {
   Color intensityColor() {
@@ -21,8 +21,6 @@ extension IntensityZonesColoring on IntensityZone {
         return Colors.cyan;
       case IntensityZone.i1:
         return Colors.blue;
-      case IntensityZone.drill:
-        return Colors.green;
       case IntensityZone.racePace:
         return Colors.orange;
     }
@@ -54,8 +52,6 @@ extension IntensityZoneHeartRate on IntensityZone {
       // For longer races, it might be closer to i3/i4. For sprints, closer to sp2/sp3/max.
       // This is a broad estimate assuming sustained race effort.
         return (85, 100);
-      case IntensityZone.drill: // Highly variable, typically lower intensity for technique
-        return (45, 70);
     }
   }
 
@@ -80,8 +76,6 @@ extension IntensityZoneHeartRate on IntensityZone {
         return "MAX (Maximal Effort): 98-100% HRmax. All-out short bursts.";
       case IntensityZone.racePace:
         return "Race Pace: 85-100% HRmax (varies by distance). Simulates race conditions.";
-      case IntensityZone.drill:
-        return "Drills: 45-70% HRmax (varies). Focus on technique, usually lower intensity.";
     }
   }
 }
@@ -93,8 +87,6 @@ extension IntensityZoneParsingHelper on IntensityZone {
     // Used for output, but parser needs to recognize various inputs
     // This MUST match how you want it displayed AND one of the ways it can be parsed
     switch (this) {
-      case IntensityZone.drill:
-        return "REC";
       case IntensityZone.i1:
         return "EN1";
       case IntensityZone.i2:
@@ -132,8 +124,6 @@ extension IntensityZoneParsingHelper on IntensityZone {
 extension IntensitySorting on IntensityZone {
   int get sortOrder {
     switch (this) {
-      case IntensityZone.drill:
-        return 0;
       case IntensityZone.i1:
         return 1;
       case IntensityZone.i2:
