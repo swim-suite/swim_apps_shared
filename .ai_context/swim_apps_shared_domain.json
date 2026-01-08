@@ -1,0 +1,3173 @@
+{
+  "classes": {
+    "SwimClub": {
+      "path": "objects/swim_club.dart",
+      "fields": {
+        "id": "final String",
+        "name": "final String",
+        "creatorId": "final String",
+        "createdAt": "final DateTime",
+        "updatedAt": "final DateTime?",
+        "planId": "final String?",
+        "isActive": "final bool?",
+        "endDate": "final DateTime?",
+        "groupsCount": "final int?",
+        "maxGroups": "final int?",
+        "groups": "final List<Map<String, dynamic>>?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "name": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "creatorId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "updatedAt": {
+            "required": false,
+            "default": null,
+            "type": "final DateTime?"
+          },
+          "planId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "isActive": {
+            "required": false,
+            "default": null,
+            "type": "final bool?"
+          },
+          "endDate": {
+            "required": false,
+            "default": null,
+            "type": "final DateTime?"
+          },
+          "groupsCount": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "maxGroups": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "groups": {
+            "required": false,
+            "default": null,
+            "type": "final List<Map<String, dynamic>>?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "IndividualItemResult": {
+      "path": "objects/individual_result.dart",
+      "fields": {
+        "setItemId": "String",
+        "repetitionNumber": "int",
+        "timeTaken": "Duration?",
+        "distanceCovered": "int?",
+        "strokeCount": "int?",
+        "heartRateBPM": "double?",
+        "notes": "String?",
+        "null": "return"
+      },
+      "constructor": {
+        "params": {
+          "setItemId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "repetitionNumber": {
+            "required": false,
+            "default": "1",
+            "type": "int"
+          },
+          "timeTaken": {
+            "required": false,
+            "default": null,
+            "type": "Duration?"
+          },
+          "distanceCovered": {
+            "required": false,
+            "default": null,
+            "type": "int?"
+          },
+          "strokeCount": {
+            "required": false,
+            "default": null,
+            "type": "int?"
+          },
+          "heartRateBPM": {
+            "required": false,
+            "default": null,
+            "type": "double?"
+          },
+          "notes": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          }
+        }
+      }
+    },
+    "Per25mMetrics": {
+      "path": "objects/per_25.dart",
+      "fields": {
+        "strokes": "final List<int>",
+        "frequencies": "final List<double>",
+        "lengths": "final List<double>"
+      },
+      "constructor": {
+        "params": {
+          "strokes": {
+            "required": true,
+            "default": null,
+            "type": "final List<int>"
+          },
+          "frequencies": {
+            "required": true,
+            "default": null,
+            "type": "final List<double>"
+          },
+          "lengths": {
+            "required": true,
+            "default": null,
+            "type": "final List<double>"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "strokes,"
+          }
+        }
+      }
+    },
+    "Result": {
+      "path": "objects/result.dart",
+      "fields": {
+        "id": "final String",
+        "swimmerId": "final String",
+        "dateRecorded": "final DateTime",
+        "recordedByCoachId": "final String",
+        "resultNotes": "final String?",
+        "additionalData": "final Map<String, dynamic>?",
+        "createdAt": "final DateTime",
+        "updatedAt": "final DateTime",
+        "displaySummary": "String get"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "swimmerId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "dateRecorded": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "recordedByCoachId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "resultNotes": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "additionalData": {
+            "required": false,
+            "default": null,
+            "type": "final Map<String, dynamic>?"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "updatedAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "RaceSegment": {
+      "path": "objects/race_segment.dart",
+      "fields": {
+        "sequence": "final int",
+        "checkPoint": "final CheckPoint",
+        "splitTimeMillis": "final int",
+        "totalTimeMillis": "final int",
+        "accumulatedDistance": "final double",
+        "segmentDistance": "final double",
+        "underwaterDistance": "final double?",
+        "strokes": "final int?",
+        "dolphinKicks": "final int?",
+        "breaths": "final int?",
+        "avgSpeed": "final double?",
+        "strokeFreq": "double?",
+        "strokeLength": "final double?",
+        "strokeIndex": "final double?",
+        "breakoutTime": "final Duration?",
+        "json": "return"
+      },
+      "constructor": {
+        "params": {
+          "sequence": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "checkPoint": {
+            "required": true,
+            "default": null,
+            "type": "final CheckPoint"
+          },
+          "accumulatedDistance": {
+            "required": true,
+            "default": null,
+            "type": "final double"
+          },
+          "segmentDistance": {
+            "required": true,
+            "default": null,
+            "type": "final double"
+          },
+          "splitTimeMillis": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "totalTimeMillis": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "underwaterDistance": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokes": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "dolphinKicks": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "breaths": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "avgSpeed": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokeFreq": {
+            "required": false,
+            "default": null,
+            "type": "double?"
+          },
+          "strokeLength": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokeIndex": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "breakoutTime": {
+            "required": false,
+            "default": null,
+            "type": "final Duration?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "sequence,"
+          }
+        }
+      }
+    },
+    "CompletedSwimSession": {
+      "path": "objects/completed/completed_swim_session.dart",
+      "fields": {
+        "id": "final String?",
+        "swimmerId": "final String",
+        "plannedSessionId": "final String?",
+        "title": "final String?",
+        "completedSetConfigurations": "final List<CompletedSetConfiguration>",
+        "dateCompleted": "final DateTime",
+        "actualTotalDistance": "final int",
+        "actualTotalDuration": "final Duration",
+        "swimSessionId": "final String",
+        "overallSessionGoalAchieved": "final String?",
+        "swimmerSessionNotes": "final String?",
+        "perceivedExertion": "final PerceivedExertionLevel?",
+        "distanceUnitUsed": "final DistanceUnit",
+        "sessionSlotCompleted": "final SessionSlot",
+        "createdAt": "final DateTime",
+        "updatedAt": "final DateTime"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "swimmerId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "plannedSessionId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "title": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "completedSetConfigurations": {
+            "required": true,
+            "default": null,
+            "type": "final List<CompletedSetConfiguration>"
+          },
+          "swimSessionId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "dateCompleted": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "actualTotalDistance": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "actualTotalDuration": {
+            "required": true,
+            "default": null,
+            "type": "final Duration"
+          },
+          "overallSessionGoalAchieved": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "swimmerSessionNotes": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "perceivedExertion": {
+            "required": false,
+            "default": null,
+            "type": "final PerceivedExertionLevel?"
+          },
+          "distanceUnitUsed": {
+            "required": true,
+            "default": null,
+            "type": "final DistanceUnit"
+          },
+          "sessionSlotCompleted": {
+            "required": true,
+            "default": null,
+            "type": "final SessionSlot"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "updatedAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "CompletedSetItem": {
+      "path": "objects/completed/completed_set_item.dart",
+      "fields": {
+        "id": "final String?",
+        "itemOrder": "final int?",
+        "actualDistance": "final int?",
+        "actualDistanceUnit": "final DistanceUnit?",
+        "actualInterval": "final Duration?",
+        "actualRepetitionInSetItem": "final int?",
+        "actualStroke": "final Stroke?",
+        "actualIntensityZone": "final IntensityZone?",
+        "actualEquipmentUsed": "final List<EquipmentType>?",
+        "swimmerNotesForItem": "final String?",
+        "plannedSetItemIdRef": "final String?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "itemOrder": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "actualDistance": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "actualDistanceUnit": {
+            "required": false,
+            "default": null,
+            "type": "final DistanceUnit?"
+          },
+          "actualInterval": {
+            "required": false,
+            "default": null,
+            "type": "final Duration?"
+          },
+          "actualRepetitionInSetItem": {
+            "required": false,
+            "default": "1",
+            "type": "final int?"
+          },
+          "actualStroke": {
+            "required": false,
+            "default": null,
+            "type": "final Stroke?"
+          },
+          "actualIntensityZone": {
+            "required": false,
+            "default": null,
+            "type": "final IntensityZone?"
+          },
+          "actualEquipmentUsed": {
+            "required": false,
+            "default": null,
+            "type": "final List<EquipmentType>?"
+          },
+          "swimmerNotesForItem": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "plannedSetItemIdRef": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": ""
+          }
+        }
+      }
+    },
+    "ActualSwimSet": {
+      "path": "objects/completed/completed_swim_set.dart",
+      "fields": {
+        "id": "final String?",
+        "actualSetTypeName": "final String?",
+        "items": "final List<CompletedSetItem>",
+        "swimmerNotesForSet": "final String?",
+        "plannedSwimSetIdRef": "final String?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "actualSetTypeName": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "items": {
+            "required": true,
+            "default": null,
+            "type": "final List<CompletedSetItem>"
+          },
+          "swimmerNotesForSet": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "plannedSwimSetIdRef": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "actualSetTypeName,"
+          }
+        }
+      }
+    },
+    "CompletedSetConfiguration": {
+      "path": "objects/completed/completed_set_configuration.dart",
+      "fields": {
+        "sessionSetConfigId": "final String",
+        "originalSetTitle": "final String?",
+        "originalPlannedDistance": "final int?",
+        "originalDistanceUnit": "final DistanceUnit?",
+        "originalStroke": "final Stroke?",
+        "originalEquipment": "final EquipmentType?",
+        "completedSetItems": "final List<CompletedSetItem>",
+        "wasModified": ">",
+        "adjustedDistance": "final double?",
+        "adjustedStroke": "final Stroke?",
+        "adjustedEquipment": "final EquipmentType?",
+        "adjustmentNote": "final String?",
+        "actualRepetitions": "final int?",
+        "actualDuration": "final Duration?",
+        "null": "return"
+      },
+      "constructor": {
+        "params": {
+          "sessionSetConfigId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "originalSetTitle": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "originalPlannedDistance": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "originalDistanceUnit": {
+            "required": false,
+            "default": null,
+            "type": "final DistanceUnit?"
+          },
+          "originalStroke": {
+            "required": false,
+            "default": null,
+            "type": "final Stroke?"
+          },
+          "originalEquipment": {
+            "required": false,
+            "default": null,
+            "type": "final EquipmentType?"
+          },
+          "completedSetItems": {
+            "required": false,
+            "default": "const []",
+            "type": "final List<CompletedSetItem>"
+          },
+          "wasModified": {
+            "required": false,
+            "default": "false",
+            "type": ">"
+          },
+          "adjustedDistance": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "adjustedStroke": {
+            "required": false,
+            "default": null,
+            "type": "final Stroke?"
+          },
+          "adjustedEquipment": {
+            "required": false,
+            "default": null,
+            "type": "final EquipmentType?"
+          },
+          "adjustmentNote": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "actualRepetitions": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "actualDuration": {
+            "required": false,
+            "default": null,
+            "type": "final Duration?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          }
+        }
+      }
+    },
+    "Swimmer": {
+      "path": "objects/user/swimmer.dart",
+      "fields": {
+        "headCoachId": "String?",
+        "secondCoachId": "String?",
+        "thirdCoachId": "String?",
+        "memberOfTeams": "List<String>?",
+        "mainEventIds": "final List<String>",
+        "json": "return",
+        "false": "isBetaUser ??",
+        "swimmer": "return"
+      },
+      "constructor": {
+        "params": {
+          "memberOfTeams": {
+            "required": false,
+            "default": null,
+            "type": "List<String>?"
+          },
+          "secondCoachId": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "thirdCoachId": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "mainEventIds": {
+            "required": false,
+            "default": "const []",
+            "type": "final List<String>"
+          },
+          "super": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "updatedAt,"
+          },
+          "Swimmer": {
+            "required": false,
+            "default": null,
+            "type": "factory"
+          },
+          "json": {
+            "required": false,
+            "default": null,
+            "type": "String docId, Map<String, dynamic>"
+          },
+          "list": {
+            "required": false,
+            "default": null,
+            "type": "Defensive cast for"
+          },
+          "variations": {
+            "required": false,
+            "default": null,
+            "type": "map"
+          },
+          "safe": {
+            "required": false,
+            "default": null,
+            "type": "web"
+          },
+          "parseStringList": {
+            "required": false,
+            "default": null,
+            "type": "List<String>"
+          },
+          "value": {
+            "required": false,
+            "default": null,
+            "type": "dynamic"
+          },
+          "if": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "List": {
+            "required": false,
+            "default": null,
+            "type": "value is"
+          },
+          "e": {
+            "required": false,
+            "default": null,
+            "type": ">"
+          },
+          "Map": {
+            "required": false,
+            "default": null,
+            "type": "value is"
+          },
+          "return": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "id": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "name": {
+            "required": false,
+            "default": null,
+            "type": "docId,"
+          },
+          "String": {
+            "required": false,
+            "default": null,
+            "type": "as"
+          },
+          "lastName": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "email": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "profilePicturePath": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "photoUrl": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "registerDate": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "updatedAt": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "clubId": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "creatorId": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "toJson": {
+            "required": false,
+            "default": null,
+            "type": "<String, dynamic>"
+          }
+        }
+      }
+    },
+    "AppUser": {
+      "path": "objects/user/user.dart",
+      "fields": {
+        "id": "String",
+        "name": "String",
+        "lastName": "String?",
+        "email": "String",
+        "photoUrl": "String?",
+        "userType": "UserType",
+        "profilePicturePath": "String?",
+        "registerDate": "DateTime?",
+        "updatedAt": "DateTime?",
+        "clubId": "String?",
+        "creatorId": "String?",
+        "isBetaUser": "bool",
+        "isReviewer": "bool",
+        "isSwimCoachSupportUser": "bool",
+        "isSwimAnalyzerProUser": "bool",
+        "false": "as bool? ??",
+        "null": "return"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "name": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "email": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "userType": {
+            "required": true,
+            "default": null,
+            "type": "UserType"
+          },
+          "photoUrl": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "lastName": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "profilePicturePath": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "registerDate": {
+            "required": false,
+            "default": null,
+            "type": "DateTime?"
+          },
+          "updatedAt": {
+            "required": false,
+            "default": null,
+            "type": "DateTime?"
+          },
+          "clubId": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "creatorId": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "isSwimCoachSupportUser": {
+            "required": false,
+            "default": "false",
+            "type": "bool"
+          },
+          "isSwimAnalyzerProUser": {
+            "required": false,
+            "default": "false",
+            "type": "bool"
+          },
+          "isBetaUser": {
+            "required": false,
+            "default": "false",
+            "type": "bool"
+          },
+          "isReviewer": {
+            "required": false,
+            "default": "false",
+            "type": "bool"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "Coach": {
+      "path": "objects/user/coach.dart",
+      "fields": {
+        "memberOfTeams": "List<String>",
+        "ownerOfTeams": "List<String>",
+        "isAccountHolder": "bool",
+        "json": "return",
+        "false": "isReviewer ??",
+        "coach": "return"
+      },
+      "constructor": {
+        "params": {
+          "isAccountHolder": {
+            "required": false,
+            "default": "false",
+            "type": "bool"
+          },
+          "super": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          },
+          "List": {
+            "required": false,
+            "default": null,
+            "type": "creatorId,"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "<String>? ownerOfTeams,"
+          },
+          "ownerOfTeams": {
+            "required": false,
+            "default": "ownerOfTeams ?? []",
+            "type": ","
+          },
+          "Coach": {
+            "required": false,
+            "default": null,
+            "type": "factory"
+          },
+          "json": {
+            "required": false,
+            "default": null,
+            "type": "String docId, Map<String, dynamic>"
+          },
+          "parseStringList": {
+            "required": false,
+            "default": null,
+            "type": "List<String>"
+          },
+          "value": {
+            "required": false,
+            "default": null,
+            "type": "dynamic"
+          },
+          "if": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "e": {
+            "required": false,
+            "default": null,
+            "type": ">"
+          },
+          "Map": {
+            "required": false,
+            "default": null,
+            "type": "value is"
+          },
+          "return": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "id": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "name": {
+            "required": false,
+            "default": null,
+            "type": "docId,"
+          },
+          "String": {
+            "required": false,
+            "default": null,
+            "type": "as"
+          },
+          "lastName": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "email": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "profilePicturePath": {
+            "required": false,
+            "default": null,
+            "type": "as bool? ?? false,"
+          },
+          "photoUrl": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "registerDate": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "updatedAt": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "clubId": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "memberOfTeams": {
+            "required": false,
+            "default": null,
+            "type": "as String?,"
+          },
+          "creatorId": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "toJson": {
+            "required": false,
+            "default": null,
+            "type": "<String, dynamic>"
+          }
+        }
+      }
+    },
+    "SwimmerFocusProfile": {
+      "path": "objects/user/swimmer_focus_profile.dart",
+      "fields": {
+        "id": "String",
+        "swimmerId": "String",
+        "clubId": "String",
+        "coachId": "String",
+        "swimmerName": "String",
+        "eventSpecialization": "EventSpecialization",
+        "focusStrokes": "List<Stroke>",
+        "longTermGoal": "String?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "swimmerId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "swimmerName": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "coachId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "clubId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "eventSpecialization": {
+            "required": true,
+            "default": null,
+            "type": "EventSpecialization"
+          },
+          "focusStrokes": {
+            "required": true,
+            "default": null,
+            "type": "List<Stroke>"
+          },
+          "longTermGoal": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "InviteService": {
+      "path": "objects/user/invites/invite_service.dart",
+      "fields": {
+        "_inviteRepository": "final InviteRepository",
+        "userRepository": "final UserRepository",
+        "_auth": "final FirebaseAuth",
+        "_firestore": "final FirebaseFirestore",
+        "_functions": "final FirebaseFunctions",
+        "null": "return",
+        "swimmerId": "return",
+        "inviteTypeKey": "String",
+        "break": "",
+        "rethrow": "",
+        "swimmerIds": "return",
+        "true": "return",
+        "false": "return"
+      },
+      "constructor": {
+        "params": {
+          "FirebaseAuth": {
+            "required": false,
+            "default": null,
+            "type": "InviteRepository? inviteRepository,"
+          },
+          "FirebaseFirestore": {
+            "required": false,
+            "default": null,
+            "type": "? auth,"
+          },
+          "FirebaseFunctions": {
+            "required": false,
+            "default": null,
+            "type": "? firestore,"
+          },
+          "UserRepository": {
+            "required": false,
+            "default": null,
+            "type": "? functions,"
+          },
+          "userRepository": {
+            "required": false,
+            "default": null,
+            "type": "?"
+          },
+          "InviteRepository": {
+            "required": false,
+            "default": null,
+            "type": "inviteRepository ??"
+          },
+          "_auth": {
+            "required": false,
+            "default": "auth ?? FirebaseAuth.instance",
+            "type": ","
+          },
+          "_firestore": {
+            "required": false,
+            "default": "firestore ?? FirebaseFirestore.instance",
+            "type": ""
+          },
+          "_functions": {
+            "required": false,
+            "default": "functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1')",
+            "type": ""
+          },
+          "authService": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "_normalizeEmail": {
+            "required": false,
+            "default": null,
+            "type": "String"
+          },
+          "email": {
+            "required": false,
+            "default": null,
+            "type": "String"
+          },
+          "coach": {
+            "required": false,
+            "default": null,
+            "type": "For an accepted"
+          },
+          "the": {
+            "required": false,
+            "default": null,
+            "type": ">swimmer invite, resolve"
+          },
+          "id": {
+            "required": false,
+            "default": null,
+            "type": "user"
+          },
+          "coachId": {
+            "required": false,
+            "default": null,
+            "type": "given the current"
+          },
+          "link": {
+            "required": false,
+            "default": null,
+            "type": ">swimmer"
+          },
+          "doesn": {
+            "required": false,
+            "default": null,
+            "type": "null if the invite"
+          },
+          "String": {
+            "required": false,
+            "default": null,
+            "type": "t involve the coach, or is missing fields"
+          },
+          "_resolveSwimmerIdForCoach": {
+            "required": false,
+            "default": null,
+            "type": "?"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "required AppInvite invite,"
+          },
+          "swimmer": {
+            "required": false,
+            "default": "> swimmer accepted => acceptedUserId is swimmerId\n    if (invite.inviterId == coachId) {\n      final swimmerId = invite.acceptedUserId;\n      if (swimmerId == null || swimmerId.isEmpty) return null;\n      if (swimmerId == coachId) return null; // safety: no self-link\n      return swimmerId;\n    }\n\n    // Swimmer invited coach => coach accepted => inviterId is swimmerId\n    if (invite.acceptedUserId == coachId) {\n      final swimmerId = invite.inviterId;\n      if (swimmerId.isEmpty) return null;\n      if (swimmerId == coachId) return null; // safety: no self-link\n      return swimmerId;\n    }\n\n    return null;\n  }\n\n  // --------------------------------------------------------------------------\n  // \ud83d\ude4b REQUEST TO JOIN CLUB (user \u2192 club admin)\n  // --------------------------------------------------------------------------\n\n  Future<void> requestToJoinClub({\n    required String clubId",
+            "type": "Coach invited"
+          },
+          "newUser": {
+            "required": false,
+            "default": "_auth.currentUser;\n    if (newUser == null) {\n      throw Exception('No logged-in newUser.');\n    }\n\n    final email = newUser.email;\n    if (email == null || email.isEmpty) {\n      throw Exception('User has no email.');\n    }\n\n    final invite = AppInvite(\n      id: 'join_${DateTime.now().millisecondsSinceEpoch}'",
+            "type": "final"
+          },
+          "inviterId": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "inviterEmail": {
+            "required": false,
+            "default": null,
+            "type": "uid,"
+          },
+          "inviteeEmail": {
+            "required": false,
+            "default": null,
+            "type": "email,"
+          },
+          "type": {
+            "required": false,
+            "default": null,
+            "type": "based"
+          },
+          "app": {
+            "required": false,
+            "default": null,
+            "type": "clubInvite,"
+          },
+          "clubId": {
+            "required": false,
+            "default": null,
+            "type": "swimSuite,"
+          },
+          "relatedEntityId": {
+            "required": false,
+            "default": null,
+            "type": "clubId,"
+          },
+          "createdAt": {
+            "required": false,
+            "default": null,
+            "type": "null,"
+          },
+          "accepted": {
+            "required": false,
+            "default": null,
+            "type": ","
+          },
+          "acceptedUserId": {
+            "required": false,
+            "default": null,
+            "type": "false,"
+          },
+          "_inviteRepository": {
+            "required": false,
+            "default": null,
+            "type": "await"
+          },
+          "debugPrint": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "club": {
+            "required": false,
+            "default": "$clubId by user=${newUser.uid}');\n  }\n\n  // --------------------------------------------------------------------------\n  // \ud83d\udd0d Fetch invite by Firestore document ID\n  // --------------------------------------------------------------------------\n\n  Future<AppInvite?> getInviteById(String inviteId) async {\n    try {\n      final doc = await _firestore.collection('invites').doc(inviteId).get();\n      if (!doc.exists) return null;\n\n      final data = doc.data();\n      if (data == null) return null;\n\n      return AppInvite.fromJson(doc.id",
+            "type": "Join request created for"
+          },
+          "st": {
+            "required": false,
+            "default": null,
+            "type": "e,"
+          },
+          "ID": {
+            "required": false,
+            "default": null,
+            "type": "Error fetching invite by"
+          },
+          "null": {
+            "required": false,
+            "default": null,
+            "type": "return"
+          },
+          "INVITE": {
+            "required": false,
+            "default": null,
+            "type": "SEND"
+          },
+          "optional": {
+            "required": false,
+            "default": null,
+            "type": "Firestore first, email"
+          },
+          "sendInvite": {
+            "required": false,
+            "default": null,
+            "type": "Future<void>"
+          },
+          "clubName": {
+            "required": false,
+            "default": null,
+            "type": "?"
+          },
+          "inviter": {
+            "required": false,
+            "default": "_auth.currentUser;\n    if (inviter == null) throw Exception('No logged-in user.');\n\n    final normalizedEmail = _normalizeEmail(email);\n\n    String inviteTypeKey;\n    switch (type) {\n      case InviteType.coachToSwimmer:\n        inviteTypeKey = 'coach_invite';\n        break;\n      case InviteType.clubInvite:\n        inviteTypeKey = 'club_invite';\n        break;\n      default:\n        inviteTypeKey = 'generic_invite';\n    }\n\n    final invite = AppInvite(\n      id: 'invite_${DateTime.now().millisecondsSinceEpoch}'",
+            "type": "final"
+          },
+          "acceptedAt": {
+            "required": false,
+            "default": null,
+            "type": "null,"
+          },
+          "for": {
+            "required": false,
+            "default": null,
+            "type": "Invite document created in Firestore"
+          },
+          "try": {
+            "required": false,
+            "default": null,
+            "type": "effort email"
+          },
+          "callable": {
+            "required": false,
+            "default": "_functions.httpsCallableFromUrl(\n        \"https://sendinviteemail-dvni7kn54wa-ew.a.run.app\"",
+            "type": "final"
+          }
+        }
+      }
+    },
+    "AppInvite": {
+      "path": "objects/user/invites/app_invite.dart",
+      "fields": {
+        "id": "final String",
+        "inviterId": "final String",
+        "inviterEmail": "final String",
+        "inviteeEmail": "final String",
+        "type": "final InviteType",
+        "app": "final App",
+        "createdAt": "final DateTime",
+        "accepted": "final bool?",
+        "acceptedUserId": "final String?",
+        "clubId": "final String?",
+        "relatedEntityId": "final String?",
+        "acceptedAt": "final DateTime?",
+        "v": "return",
+        "null": "return",
+        "otherId": "String?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "inviterId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "inviterEmail": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "inviteeEmail": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "type": {
+            "required": true,
+            "default": null,
+            "type": "final InviteType"
+          },
+          "app": {
+            "required": true,
+            "default": null,
+            "type": "final App"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "accepted": {
+            "required": false,
+            "default": null,
+            "type": "final bool?"
+          },
+          "acceptedUserId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "clubId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "relatedEntityId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "acceptedAt": {
+            "required": false,
+            "default": null,
+            "type": "final DateTime?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "SwimSession": {
+      "path": "objects/planned/swim_session.dart",
+      "fields": {
+        "id": "String?",
+        "title": "String?",
+        "coachId": "String?",
+        "coachName": "String?",
+        "clubId": "String?",
+        "sessionSlot": "SessionSlot",
+        "setConfigurations": "List<SessionSetConfiguration>",
+        "sets": "List<SwimSet>",
+        "trainingFocus": "TrainingFocus?",
+        "assignedSwimmerIds": "List<String>",
+        "assignedGroupIds": "List<String>",
+        "overallSessionGoal": "String?",
+        "sessionNotes": "String?",
+        "startTime": "DateTime",
+        "endTime": "DateTime",
+        "createdAt": "DateTime",
+        "updatedAt": "DateTime?",
+        "distanceUnit": "DistanceUnit",
+        "sessionType": "SessionType?",
+        "0": "itemDistance ??",
+        "null": "return"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "title": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "startTime": {
+            "required": true,
+            "default": null,
+            "type": "DateTime"
+          },
+          "endTime": {
+            "required": true,
+            "default": null,
+            "type": "DateTime"
+          },
+          "coachId": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "coachName": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "sessionSlot": {
+            "required": true,
+            "default": null,
+            "type": "SessionSlot"
+          },
+          "setConfigurations": {
+            "required": true,
+            "default": null,
+            "type": "List<SessionSetConfiguration>"
+          },
+          "sets": {
+            "required": true,
+            "default": null,
+            "type": "List<SwimSet>"
+          },
+          "clubId": {
+            "required": true,
+            "default": null,
+            "type": "String?"
+          },
+          "trainingFocus": {
+            "required": false,
+            "default": null,
+            "type": "TrainingFocus?"
+          },
+          "overallSessionGoal": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "sessionNotes": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "DateTime"
+          },
+          "updatedAt": {
+            "required": false,
+            "default": null,
+            "type": "DateTime?"
+          },
+          "distanceUnit": {
+            "required": false,
+            "default": "DistanceUnit.meters",
+            "type": "DistanceUnit"
+          },
+          "sessionType": {
+            "required": false,
+            "default": null,
+            "type": "SessionType?"
+          },
+          "assignedSwimmerIds": {
+            "required": false,
+            "default": "const []",
+            "type": "List<String>"
+          },
+          "assignedGroupIds": {
+            "required": false,
+            "default": "const []",
+            "type": "List<String>"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "title,"
+          }
+        }
+      }
+    },
+    "SessionSetConfiguration": {
+      "path": "objects/planned/swim_set_config.dart",
+      "fields": {
+        "sessionSetConfigId": "String",
+        "swimSetId": "String",
+        "order": "int",
+        "repetitions": "int",
+        "notesForThisInstanceOfSet": "String?",
+        "storedSet": "bool",
+        "swimSet": "SwimSet?",
+        "coachId": "String",
+        "rawSetTypeHeaderFromText": "String?",
+        "unparsedTextLines": "List<String>",
+        "specificSwimmerIds": "List<String>",
+        "specificGroupIds": "List<String>"
+      },
+      "constructor": {
+        "params": {
+          "sessionSetConfigId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "swimSetId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "order": {
+            "required": true,
+            "default": null,
+            "type": "int"
+          },
+          "repetitions": {
+            "required": true,
+            "default": null,
+            "type": "int"
+          },
+          "storedSet": {
+            "required": true,
+            "default": null,
+            "type": "bool"
+          },
+          "coachId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "notesForThisInstanceOfSet": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "swimSet": {
+            "required": false,
+            "default": null,
+            "type": "SwimSet?"
+          },
+          "rawSetTypeHeaderFromText": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "unparsedTextLines": {
+            "required": false,
+            "default": "const []",
+            "type": "List<String>"
+          },
+          "specificSwimmerIds": {
+            "required": false,
+            "default": "const []",
+            "type": "List<String>"
+          },
+          "specificGroupIds": {
+            "required": false,
+            "default": "const []",
+            "type": "List<String>"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "sessionSetConfigId,"
+          }
+        }
+      }
+    },
+    "SubItem": {
+      "path": "objects/planned/sub_item.dart",
+      "fields": {
+        "subItemDistance": "final int?",
+        "distanceUnit": "final DistanceUnit",
+        "swimWay": "final SwimWay",
+        "stroke": "final Stroke?",
+        "intensityZone": "final IntensityZone?",
+        "equipment": "final List<EquipmentType>",
+        "itemNotes": "final String?",
+        "safeStroke": "Stroke?",
+        "safeIntensityZone": "IntensityZone?"
+      },
+      "constructor": {
+        "params": {
+          "subItemDistance": {
+            "required": true,
+            "default": null,
+            "type": "final int?"
+          },
+          "distanceUnit": {
+            "required": false,
+            "default": "DistanceUnit.meters",
+            "type": "final DistanceUnit"
+          },
+          "swimWay": {
+            "required": false,
+            "default": "SwimWay.swim",
+            "type": "final SwimWay"
+          },
+          "stroke": {
+            "required": false,
+            "default": null,
+            "type": "final Stroke?"
+          },
+          "intensityZone": {
+            "required": false,
+            "default": null,
+            "type": "final IntensityZone?"
+          },
+          "equipment": {
+            "required": false,
+            "default": "const []",
+            "type": "final List<EquipmentType>"
+          },
+          "itemNotes": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          }
+        }
+      }
+    },
+    "SwimSet": {
+      "path": "objects/planned/swim_set.dart",
+      "fields": {
+        "setId": "String",
+        "type": "SetType?",
+        "customTypeName": "String?",
+        "items": "List<SetItem>",
+        "setNotes": "String?",
+        "totalSetDistance": "int?",
+        "totalSetDurationEstimated": "Duration?",
+        "rawTextLine": "String?",
+        "createdAt": "DateTime?",
+        "updatedAt": "DateTime?",
+        "coachId": "String?",
+        "assignedGroupNames": "List<String>?",
+        "safeType": "SetType?"
+      },
+      "constructor": {
+        "params": {
+          "setId": {
+            "required": true,
+            "default": null,
+            "type": "String"
+          },
+          "type": {
+            "required": false,
+            "default": null,
+            "type": "SetType?"
+          },
+          "customTypeName": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "items": {
+            "required": true,
+            "default": null,
+            "type": "List<SetItem>"
+          },
+          "setNotes": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "totalSetDistance": {
+            "required": false,
+            "default": null,
+            "type": "int?"
+          },
+          "totalSetDurationEstimated": {
+            "required": false,
+            "default": null,
+            "type": "Duration?"
+          },
+          "rawTextLine": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "createdAt": {
+            "required": false,
+            "default": null,
+            "type": "DateTime?"
+          },
+          "updatedAt": {
+            "required": false,
+            "default": null,
+            "type": "DateTime?"
+          },
+          "coachId": {
+            "required": false,
+            "default": null,
+            "type": "String?"
+          },
+          "assignedGroupNames": {
+            "required": false,
+            "default": null,
+            "type": "List<String>?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "customTypeName,"
+          }
+        }
+      }
+    },
+    "SetItem": {
+      "path": "objects/planned/set_item.dart",
+      "fields": {
+        "id": "final String",
+        "order": "final int",
+        "itemRepetition": "final int?",
+        "itemDistance": "final int?",
+        "stroke": "final Stroke?",
+        "drillName": "final String?",
+        "interval": "final Duration?",
+        "targetPaceOrTime": "final String?",
+        "equipment": "final List<EquipmentType>?",
+        "itemNotes": "final String?",
+        "rawTextLine": "final String?",
+        "intensityZone": "final IntensityZone?",
+        "distanceUnit": "final DistanceUnit?",
+        "swimWay": "final SwimWay",
+        "subItems": "final List<SubItem>?",
+        "requiresResult": "final bool",
+        "resultTags": "final List<String>?",
+        "resultSchema": "final Map<String, dynamic>?",
+        "safeStroke": "Stroke?",
+        "safeIntensityZone": "IntensityZone?",
+        "safeDistanceUnit": "DistanceUnit?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "order": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "swimWay": {
+            "required": false,
+            "default": "SwimWay.swim",
+            "type": "final SwimWay"
+          },
+          "itemRepetition": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "itemDistance": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "stroke": {
+            "required": false,
+            "default": null,
+            "type": "final Stroke?"
+          },
+          "drillName": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "interval": {
+            "required": false,
+            "default": null,
+            "type": "final Duration?"
+          },
+          "targetPaceOrTime": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "equipment": {
+            "required": false,
+            "default": null,
+            "type": "final List<EquipmentType>?"
+          },
+          "itemNotes": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "intensityZone": {
+            "required": false,
+            "default": null,
+            "type": "final IntensityZone?"
+          },
+          "distanceUnit": {
+            "required": false,
+            "default": null,
+            "type": "final DistanceUnit?"
+          },
+          "subItems": {
+            "required": false,
+            "default": null,
+            "type": "final List<SubItem>?"
+          },
+          "rawTextLine": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "requiresResult": {
+            "required": false,
+            "default": "false",
+            "type": "final bool"
+          },
+          "resultTags": {
+            "required": false,
+            "default": null,
+            "type": "final List<String>?"
+          },
+          "resultSchema": {
+            "required": false,
+            "default": null,
+            "type": "final Map<String, dynamic>?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "UnderwaterMetrics": {
+      "path": "objects/analyzes/stroke_under_water_matrix.dart",
+      "fields": {
+        "timeToBreakout": "final double?",
+        "breakoutDistance": "final double?",
+        "underwaterSpeed": "final double?"
+      },
+      "constructor": {
+        "params": {
+          "timeToBreakout": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "breakoutDistance": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "underwaterSpeed": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": ""
+          }
+        }
+      }
+    },
+    "AnalyzedSegment": {
+      "path": "objects/analyzes/analyzed_segment.dart",
+      "fields": {
+        "sequence": "final int",
+        "checkPoint": "final CheckPoint",
+        "distanceMeters": "final double",
+        "totalTimeMillis": "final int",
+        "splitTimeMillis": "final int",
+        "dolphinKicks": "final int?",
+        "strokes": "final int?",
+        "breaths": "final int?",
+        "strokeFrequency": "final double?",
+        "strokeLengthMeters": "final double?",
+        "underwaterDistance": "final double?",
+        "json": "return",
+        "lastMatch": "CheckPoint?"
+      },
+      "constructor": {
+        "params": {
+          "sequence": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "checkPoint": {
+            "required": true,
+            "default": null,
+            "type": "final CheckPoint"
+          },
+          "distanceMeters": {
+            "required": true,
+            "default": null,
+            "type": "final double"
+          },
+          "totalTimeMillis": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "splitTimeMillis": {
+            "required": true,
+            "default": null,
+            "type": "final int"
+          },
+          "dolphinKicks": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "strokes": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "breaths": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "strokeFrequency": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokeLengthMeters": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "underwaterDistance": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "sequence,"
+          }
+        }
+      }
+    },
+    "SegmentMetrics": {
+      "path": "objects/analyzes/stroke_segment_matrix.dart",
+      "fields": {
+        "time": "final double?",
+        "speed": "final double?",
+        "strokeCount": "final int?",
+        "frequency": "final double?",
+        "strokeLength": "final double?",
+        "strokeIndex": "final double?",
+        "phase1Time": "final double?",
+        "phase1Distance": "final double?",
+        "phase2Time": "final double?",
+        "phase2Distance": "final double?"
+      },
+      "constructor": {
+        "params": {
+          "time": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "speed": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokeCount": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "frequency": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokeLength": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "strokeIndex": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "phase1Time": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "phase1Distance": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "phase2Time": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "phase2Distance": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": ""
+          }
+        }
+      }
+    },
+    "AnalysisRequest": {
+      "path": "objects/analyzes/analysis_requests/analysis_request.dart",
+      "fields": {
+        "id": "final String",
+        "sessionId": "final String",
+        "analysisType": "final AnalysisRequestType",
+        "name": "final String",
+        "email": "final String",
+        "isShortCourse": "final bool",
+        "videoUrl": "final String",
+        "heat": "final String?",
+        "lane": "final String?",
+        "distance": "final int?",
+        "stroke": "final Stroke?",
+        "createdAt": "final DateTime",
+        "verifiedAt": "final DateTime?",
+        "processed": "final bool",
+        "productId": "final String?",
+        "100": "return",
+        "raw": "return"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "sessionId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "analysisType": {
+            "required": true,
+            "default": null,
+            "type": "final AnalysisRequestType"
+          },
+          "name": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "email": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "videoUrl": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "verifiedAt": {
+            "required": false,
+            "default": null,
+            "type": "final DateTime?"
+          },
+          "isShortCourse": {
+            "required": false,
+            "default": "true",
+            "type": "final bool"
+          },
+          "processed": {
+            "required": false,
+            "default": "false",
+            "type": "final bool"
+          },
+          "heat": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "lane": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "distance": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "stroke": {
+            "required": false,
+            "default": null,
+            "type": "final Stroke?"
+          },
+          "productId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
+    "InviteRepository": {
+      "path": "repositories/invite_repository.dart",
+      "fields": {
+        "_firestore": "final FirebaseFirestore",
+        "rethrow": ""
+      },
+      "constructor": {
+        "params": {
+          "firestore": {
+            "required": false,
+            "default": null,
+            "type": "FirebaseFirestore?"
+          },
+          "FirebaseFirestore": {
+            "required": false,
+            "default": null,
+            "type": "firestore ??"
+          },
+          "collection": {
+            "required": false,
+            "default": ">\n      _firestore.collection(_collectionPath);\n\n  // --------------------------------------------------------------------------\n  // \u2709\ufe0f BASIC CRUD\n  // --------------------------------------------------------------------------\n\n  /// \ud83d\udce9 Send (create) an invite.\n  Future<void> sendInvite(AppInvite invite) async {\n    try {\n      await collection.doc(invite.id).set(invite.toJson());\n      debugPrint('\u2705 Invite sent: ${invite.id}');\n    } on FirebaseException catch (e) {\n      debugPrint('\ud83d\udd25 Firestore error sending invite: ${e.message}');\n      rethrow;\n    }\n  }\n\n  /// \u2705 Accept an invite.\n  Future<void> acceptInvite(String inviteId",
+            "type": "CollectionReference<Map<String, dynamic>> get"
+          },
+          "acceptedUserId": {
+            "required": false,
+            "default": null,
+            "type": "String"
+          },
+          "try": {
+            "required": false,
+            "default": null,
+            "type": ""
+          }
+        }
+      }
+    },
+    "SetItemResult": {
+      "path": "results/set_item_result.dart",
+      "fields": {
+        "resultId": "final String",
+        "sessionId": "final String",
+        "setItemId": "final String",
+        "swimmerId": "final String",
+        "recordedAt": "final DateTime",
+        "testKey": "final String?",
+        "time": "final Duration?",
+        "repTimes": "final List<Duration>?",
+        "repStrokeCounts": "final List<int>?",
+        "repUnderwaters": "final List<double>?",
+        "splits": "final List<Duration>?",
+        "heartRate": "final int?",
+        "rpe": "final double?",
+        "success": "final bool?",
+        "poolLength": "final int?",
+        "equipmentUsed": "final List<String>?",
+        "lane": "final String?",
+        "environment": "final Map<String, dynamic>?",
+        "metrics": "final Map<String, dynamic>?",
+        "notes": "final String?",
+        "schemaVersion": "final int"
+      },
+      "constructor": {
+        "params": {
+          "resultId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "sessionId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "setItemId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "swimmerId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "recordedAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "testKey": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "time": {
+            "required": false,
+            "default": null,
+            "type": "final Duration?"
+          },
+          "repTimes": {
+            "required": false,
+            "default": null,
+            "type": "final List<Duration>?"
+          },
+          "repStrokeCounts": {
+            "required": false,
+            "default": null,
+            "type": "final List<int>?"
+          },
+          "repUnderwaters": {
+            "required": false,
+            "default": null,
+            "type": "final List<double>?"
+          },
+          "splits": {
+            "required": false,
+            "default": null,
+            "type": "final List<Duration>?"
+          },
+          "heartRate": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "rpe": {
+            "required": false,
+            "default": null,
+            "type": "final double?"
+          },
+          "success": {
+            "required": false,
+            "default": null,
+            "type": "final bool?"
+          },
+          "poolLength": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "equipmentUsed": {
+            "required": false,
+            "default": null,
+            "type": "final List<String>?"
+          },
+          "lane": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "environment": {
+            "required": false,
+            "default": null,
+            "type": "final Map<String, dynamic>?"
+          },
+          "metrics": {
+            "required": false,
+            "default": null,
+            "type": "final Map<String, dynamic>?"
+          },
+          "notes": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "schemaVersion": {
+            "required": false,
+            "default": "1",
+            "type": "final int"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "resultId,"
+          }
+        }
+      }
+    },
+    "SupportController": {
+      "path": "support/support_controller.dart",
+      "fields": {
+        "user": "final AppUser",
+        "isAccountHolder": "final bool",
+        "coaches": "final List<Coach>",
+        "_reportedForUserId": ">",
+        "_reportedForName": ">",
+        "null": "return"
+      },
+      "constructor": {
+        "params": {
+          "user": {
+            "required": true,
+            "default": null,
+            "type": "final AppUser"
+          },
+          "isAccountHolder": {
+            "required": true,
+            "default": null,
+            "type": "final bool"
+          },
+          "coaches": {
+            "required": true,
+            "default": null,
+            "type": "final List<Coach>"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "user,"
+          },
+          "_reportedForUserId": {
+            "required": false,
+            "default": "user.id;\n    _reportedForName = user.name;\n    loadClientMeta();\n  }\n\n  // ------------------------------------------------------------\n  // STATE\n  // ------------------------------------------------------------\n\n  final TextEditingController messageController = TextEditingController();\n\n  bool loading = false;\n\n  final List<String> categories = const [\n    'Bug / Technical Issue'",
+            "type": ""
+          },
+          "Request": {
+            "required": false,
+            "default": null,
+            "type": "Feature"
+          },
+          "Management": {
+            "required": false,
+            "default": null,
+            "type": "Club"
+          },
+          "selectedCategory": {
+            "required": false,
+            "default": "'Bug / Technical Issue';\n\n  String? _reportedForUserId;\n  String? _reportedForName;\n\n  Map<String",
+            "type": "String"
+          },
+          "clientMeta": {
+            "required": false,
+            "default": "{};\n\n  String? get reportedForUserId => _reportedForUserId;\n\n  String? get reportedForUserName => _reportedForName;\n\n  bool get canReportForOthers => isAccountHolder && coaches.isNotEmpty;\n\n  // ------------------------------------------------------------\n  // CLIENT META\n  // ------------------------------------------------------------\n\n  Future<void> loadClientMeta() async {\n    final packageInfo = await PackageInfo.fromPlatform();\n    final deviceInfo = DeviceInfoPlugin();\n\n    String platform = 'unknown';\n    String deviceModel = 'unknown';\n    String osVersion = 'unknown';\n\n    if (kIsWeb) {\n      platform = 'web';\n      final info = await deviceInfo.webBrowserInfo;\n      deviceModel = info.userAgent ?? 'browser';\n      osVersion = info.appVersion ?? '';\n    } else if (Platform.isAndroid) {\n      platform = 'android';\n      final info = await deviceInfo.androidInfo;\n      deviceModel = '${info.manufacturer} ${info.model}';\n      osVersion = 'Android ${info.version.release}';\n    } else if (Platform.isIOS) {\n      platform = 'ios';\n      final info = await deviceInfo.iosInfo;\n      deviceModel = info.utsname.machine;\n      osVersion = '${info.systemName} ${info.systemVersion}';\n    } else if (Platform.isMacOS) {\n      platform = 'macos';\n      final info = await deviceInfo.macOsInfo;\n      deviceModel = info.model;\n      osVersion = 'macOS ${info.osRelease}';\n    }\n\n    clientMeta = {\n      'appVersion': packageInfo.version",
+            "type": "dynamic>"
+          },
+          "notifyListeners": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "HELPERS": {
+            "required": false,
+            "default": null,
+            "type": "RICH TEXT"
+          },
+          "wrapSelection": {
+            "required": false,
+            "default": null,
+            "type": "void"
+          },
+          "suffix": {
+            "required": false,
+            "default": null,
+            "type": "String prefix, String"
+          },
+          "text": {
+            "required": false,
+            "default": "messageController.text;\n    final selection = messageController.selection;\n\n    if (!selection.isValid) return;\n\n    final before = selection.textBefore(text);\n    final selected = selection.textInside(text);\n    final after = selection.textAfter(text);\n\n    final newText = '$before$prefix$selected$suffix$after';\n    final newSelectionStart = (before + prefix + selected + suffix).length;\n\n    messageController.value = TextEditingValue(\n      text: newText",
+            "type": "final"
+          },
+          "selection": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "insertBullet": {
+            "required": false,
+            "default": null,
+            "type": "void"
+          },
+          "OF": {
+            "required": false,
+            "default": null,
+            "type": "ON BEHALF"
+          },
+          "selectReportedUser": {
+            "required": false,
+            "default": null,
+            "type": "void"
+          },
+          "userId": {
+            "required": false,
+            "default": null,
+            "type": "String"
+          },
+          "if": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "result": {
+            "required": false,
+            "default": "await callable.call({\n        \"userId\": user.id",
+            "type": "final"
+          }
+        }
+      }
+    },
+    "SupportListPage": {
+      "path": "support/full_page_widget/support_list.dart",
+      "fields": {
+        "userId": "final String"
+      },
+      "constructor": {
+        "params": {
+          "userId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "key, required"
+          }
+        }
+      }
+    },
+    "SupportRequestDetailPage": {
+      "path": "support/full_page_widget/support_request_detail.dart",
+      "fields": {
+        "requestId": "final String",
+        "data": "final Map<String, dynamic>"
+      },
+      "constructor": {
+        "params": {
+          "requestId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "data": {
+            "required": true,
+            "default": null,
+            "type": "final Map<String, dynamic>"
+          },
+          "super": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "key,"
+          }
+        }
+      }
+    },
+    "SupportDetailPage": {
+      "path": "support/full_page_widget/support_detail.dart",
+      "fields": {
+        "id": "final String",
+        "data": "final Map<String, dynamic>"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "data": {
+            "required": true,
+            "default": null,
+            "type": "final Map<String, dynamic>"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "key, required"
+          }
+        }
+      }
+    },
+    "MySupportRequestsPage": {
+      "path": "support/full_page_widget/my_support_requests.dart",
+      "fields": {
+        "user": "final AppUser",
+        "String": "as",
+        "status": "final String"
+      },
+      "constructor": {
+        "params": {
+          "user": {
+            "required": true,
+            "default": null,
+            "type": "final AppUser"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "key, required"
+          }
+        }
+      }
+    },
+    "_StatusChip": {
+      "path": "support/full_page_widget/my_support_requests.dart",
+      "fields": {
+        "user": "final AppUser",
+        "String": "as",
+        "status": "final String"
+      },
+      "constructor": {
+        "params": {
+          "status": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          }
+        }
+      }
+    },
+    "SupportPage": {
+      "path": "support/full_page_widget/support_ui.dart",
+      "fields": {
+        "user": "final AppUser",
+        "isAccountHolder": "final bool",
+        "coaches": "final List<Coach>"
+      },
+      "constructor": {
+        "params": {
+          "user": {
+            "required": true,
+            "default": null,
+            "type": "final AppUser"
+          },
+          "isAccountHolder": {
+            "required": false,
+            "default": "false",
+            "type": "final bool"
+          },
+          "coaches": {
+            "required": false,
+            "default": "const []",
+            "type": "final List<Coach>"
+          },
+          "super": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "key,"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "user,"
+          }
+        }
+      }
+    },
+    "RaceHistoryPage": {
+      "path": "race_analyzes/race_history_page.dart",
+      "fields": {
+        "brandIconAssetPath": "final String?",
+        "swimmerId": "final String?",
+        "_currentUser": "AppUser?",
+        "_selectedSwimmerId": "String?",
+        "_swimmerName": "String?",
+        "swimmers": "return",
+        "return": "",
+        "length": "i <",
+        "chunks": "return"
+      },
+      "constructor": {
+        "params": {
+          "brandIconAssetPath": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "swimmerId": {
+            "required": false,
+            "default": null,
+            "type": "final String?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "key,"
+          }
+        }
+      }
+    },
+    "RaceComparisonPage": {
+      "path": "race_analyzes/race_comparison_page.dart",
+      "fields": {
+        "raceIds": "final List<String>",
+        "brandIconAssetPath": "final String?",
+        "_racesFuture": "late Future<List<RaceAnalyze>>",
+        "_loadedRaces": "List<RaceAnalyze>?",
+        "race": "return",
+        "racesWithNames": "return",
+        "0": "diff >",
+        "icon": "MemoryImage?",
+        "return": "",
+        "null": "return",
+        "titleWidget": "Widget",
+        "rows": "return"
+      },
+      "constructor": {
+        "params": {
+          "raceIds": {
+            "required": true,
+            "default": null,
+            "type": "final List<String>"
+          },
+          "brandIconAssetPath": {
+            "required": true,
+            "default": null,
+            "type": "final String?"
+          },
+          "super": {
+            "required": false,
+            "default": null,
+            "type": ""
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "key,"
+          },
+          "constructor": {
+            "required": false,
+            "default": null,
+            "type": "Parameter added to"
+          }
+        }
+      }
+    }
+  },
+  "enums": {
+    "PoolLength": {
+      "path": "objects/pool_length.dart",
+      "values": [
+        "m25(25",
+        "DistanceUnit.meters)",
+        "m50(50",
+        "DistanceUnit.meters)",
+        "y25(25",
+        "DistanceUnit.yards)",
+        "unknown(0",
+        "DistanceUnit.meters); // Default/fallback case\n\n  const PoolLength(this.distance",
+        "this.distanceUnit);\n  final int distance;\n  final DistanceUnit distanceUnit;\n\n  /// Returns a user-friendly display string (e.g.",
+        "\"25m\"",
+        "\"25y\").\n  String get toDisplayString {\n    switch (this) {\n      case PoolLength.m25:\n        return '25m';\n      case PoolLength.m50:\n        return '50m';\n      case PoolLength.y25:\n        return '25y';\n      case PoolLength.unknown:\n        return 'N/A';"
+      ]
+    },
+    "PerceivedExertionLevel": {
+      "path": "objects/perceived_exertion_level.dart",
+      "values": [
+        "veryLight"
+      ]
+    },
+    "Stroke": {
+      "path": "objects/stroke.dart",
+      "values": [
+        "butterfly('Butterfly'",
+        "'bu')",
+        "freestyle('Freestyle'",
+        "'fr')",
+        "backstroke('Backstroke'",
+        "'ba')",
+        "breaststroke('Breaststroke'",
+        "'br')",
+        "medley('Medley'",
+        "'IM')",
+        "choice('Choice'",
+        "'c')",
+        "unknown('Unknown'",
+        "'unknown');\n\n  final String description;\n  final String short;\n\n  const Stroke(this.description",
+        "this.short);\n\n  // Helper to get Stroke from string name (for fromJson)\n  static Stroke? fromString(String? name) {\n    if (name == null) return null;\n    try {\n      return Stroke.values.firstWhere((e) => e.name == name);"
+      ]
+    },
+    "IntensityZone": {
+      "path": "objects/intensity_zones.dart",
+      "values": [
+        "max",
+        "sp3",
+        "sp2",
+        "sp1",
+        "i4",
+        "i3",
+        "i2",
+        "i1",
+        "racePace"
+      ]
+    },
+    "UserType": {
+      "path": "objects/user/user_types.dart",
+      "values": [
+        "coach",
+        "swimmer"
+      ]
+    },
+    "UserRole": {
+      "path": "objects/user/user_role.dart",
+      "values": [
+        "coach",
+        "swimmer"
+      ]
+    },
+    "EventSpecialization": {
+      "path": "objects/user/event_specialization.dart",
+      "values": [
+        "sprint"
+      ]
+    },
+    "InviteType": {
+      "path": "objects/user/invites/invite_type.dart",
+      "values": [
+        "coachToSwimmer",
+        "swimmerToCoach",
+        "clubInvite",
+        "seatInvite"
+      ]
+    },
+    "App": {
+      "path": "objects/user/invites/app_enums.dart",
+      "values": [
+        "swimAnalyzer",
+        "swimSuite"
+      ]
+    },
+    "SessionType": {
+      "path": "objects/planned/swim_session.dart",
+      "values": [
+        "aerobicCapacity",
+        "endurance",
+        "speed",
+        "speedEndurance",
+        "recovery",
+        "technique",
+        "racePace",
+        "fixed",
+        "mix"
+      ]
+    },
+    "AnalysisRequestType": {
+      "path": "objects/analyzes/analysis_requests/analysis_request_type.dart",
+      "values": [
+        "raceAnalyze",
+        "startAnalyze",
+        "strokeAnalyze"
+      ]
+    },
+    "TrainingFocusType": {
+      "path": "swim_session/training_focus_factory.dart",
+      "values": [
+        "endurance",
+        "technique",
+        "speed",
+        "racePace",
+        "mixed",
+        "recovery",
+        "medley",
+        "sprint"
+      ]
+    },
+    "SessionDifficulty": {
+      "path": "swim_session/generator/config/advanced_generator_config.dart",
+      "values": [
+        "easy",
+        "medium",
+        "hard"
+      ]
+    },
+    "EquipmentType": {
+      "path": "swim_session/generator/enums/equipment.dart",
+      "values": [
+        "none('No equipment')",
+        "kickboard('Kickboard')",
+        "fins('Fins')",
+        "paddles('Large paddles')",
+        "largePaddles('Large paddles')",
+        "mediumPaddles('Medium paddles')",
+        "smallPaddles('Small paddles')",
+        "fingerPaddles('Finger paddles')",
+        "pullBuoy('Pullbouy')",
+        "snorkel('Snorch')",
+        "tempoTrainer('Tempo trainer')",
+        "resistanceBand('Resistance band')",
+        "parachute('Parachute')",
+        "wristWeights('Wrist weight')",
+        "ankleWeights(\n    'Ankle weight'",
+        ")",
+        "vest is more common term\n  weightBelt(\n    'Weighted belt'",
+        ")",
+        "often for diving or resistance\n  other('Other')",
+        "band('Band')",
+        "powerRack('Power Rack')",
+        "sponge('Sponge');\n\n  final String description;\n\n  const EquipmentType(this.description);"
+      ]
+    },
+    "SkillLevel": {
+      "path": "swim_session/generator/enums/equipment.dart",
+      "values": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "allLevels"
+      ]
+    },
+    "SetType": {
+      "path": "swim_session/generator/enums/set_types.dart",
+      "values": [
+        "warmUp",
+        "preSet",
+        "drillSet",
+        "kickSet",
+        "pullSet",
+        "postSet",
+        "recovery",
+        "custom"
+      ]
+    },
+    "SessionSlot": {
+      "path": "swim_session/generator/enums/session_slot.dart",
+      "values": [
+        "morning('AM'",
+        "'Morning')",
+        "afternoon('PM'",
+        "'Evening')",
+        "undefined(''",
+        "'');\n\n  final String short;\n  final String description;\n\n  const SessionSlot(this.short",
+        "this.description);"
+      ]
+    },
+    "SwimWay": {
+      "path": "swim_session/generator/enums/swim_way.dart",
+      "values": [
+        "pull",
+        "kick",
+        "drill",
+        "swim",
+        "uw",
+        "rest"
+      ]
+    },
+    "DistanceUnit": {
+      "path": "swim_session/generator/enums/distance_units.dart",
+      "values": [
+        "meters('m')",
+        "yards('y')",
+        "laps('laps')",
+        "kilometers('km');\n\n  final String short;\n\n  const DistanceUnit(this.short);"
+      ]
+    },
+    "Gender": {
+      "path": "swim_session/events/race_event.dart",
+      "values": [
+        "male",
+        "female",
+        "mixed",
+        "unknown"
+      ]
+    },
+    "RaceRound": {
+      "path": "swim_session/events/race_event.dart",
+      "values": [
+        "heatEvent",
+        "semifinalEvent",
+        "finalEvent",
+        "timeTrial"
+      ]
+    },
+    "CheckPoint": {
+      "path": "swim_session/events/checkpoint.dart",
+      "values": [
+        "offTheBlock",
+        "waterEntry",
+        "breakout",
+        "turn",
+        "finish",
+        "meter10",
+        "meter15",
+        "meter20",
+        "meter25",
+        "meter35",
+        "meter40",
+        "meter45"
+      ]
+    }
+  },
+  "generated_from": "swim_apps_shared",
+  "schema_version": 2
+}
