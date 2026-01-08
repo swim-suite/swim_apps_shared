@@ -1,11 +1,30 @@
-// In your swim_session.dart or a common enums file
+// swim_session.dart (or common enums file)
 enum SessionSlot {
-  morning('AM', 'Morning'),
-  afternoon('PM', 'Evening'),
-  undefined('', '');
+  morning,
+  afternoon,
+  undefined,
+}
+// session_slot_extensions.dart
+extension SessionSlotX on SessionSlot {
+  String get short {
+    switch (this) {
+      case SessionSlot.morning:
+        return 'AM';
+      case SessionSlot.afternoon:
+        return 'PM';
+      case SessionSlot.undefined:
+        return '';
+    }
+  }
 
-  final String short;
-  final String description;
-
-  const SessionSlot(this.short, this.description);
+  String get description {
+    switch (this) {
+      case SessionSlot.morning:
+        return 'Morning';
+      case SessionSlot.afternoon:
+        return 'Evening';
+      case SessionSlot.undefined:
+        return '';
+    }
+  }
 }
