@@ -3103,13 +3103,9 @@
     "SessionSlot": {
       "path": "swim_session/generator/enums/session_slot.dart",
       "values": [
-        "morning('AM'",
-        "'Morning')",
-        "afternoon('PM'",
-        "'Evening')",
-        "undefined(''",
-        "'');\n\n  final String short;\n  final String description;\n\n  const SessionSlot(this.short",
-        "this.description);"
+        "morning",
+        "afternoon",
+        "undefined"
       ]
     },
     "SwimWay": {
