@@ -231,6 +231,15 @@ class AnalyzesRepository extends BaseRepository {
         .map((snapshot) => _parseDocsSafely(snapshot.docs, 'race stream for user $userId'));
   }
 
+  Stream<List<RaceAnalyze>> getStreamOfRacesForClub(String clubId) {
+    return _racesRef
+        .where('clubId', isEqualTo: clubId)
+        .orderBy('raceDate', descending: true)
+        .snapshots()
+        .map((s) => _parseDocsSafely(s.docs, 'club race stream'));
+  }
+
+
   Future<RaceAnalyze?> getRace(String raceId) async {
     try {
       final DocumentSnapshot<RaceAnalyze> doc = await _racesRef
