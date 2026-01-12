@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'swim_analyzer_plan_type.dart';
+
 
 class SwimAnalyzerSubscription {
   final String id;

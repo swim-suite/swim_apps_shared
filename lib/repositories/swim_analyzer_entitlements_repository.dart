@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../objects/analyzer_entitlement_plan.dart';
-import '../objects/completed/swim_analyzer_subscription.dart';
+import '../objects/swim_analyzer_subscription.dart';
 
 class SwimAnalyzerEntitlementsRepository {
   final FirebaseFirestore _db;
