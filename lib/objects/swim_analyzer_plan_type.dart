@@ -1,0 +1,1 @@
+enum SwimAnalyzerSubscriptionPlanType { solo, team }

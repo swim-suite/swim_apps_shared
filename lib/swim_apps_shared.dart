@@ -47,6 +47,8 @@ export 'swim_session/generator/enums/session_slot.dart';
 export 'swim_session/generator/enums/set_types.dart';
 export 'swim_session/generator/enums/swim_way.dart';
 
+export 'package:swim_apps_shared/objects/swim_analyzer_plan_type.dart';
+
 // ---- Swim session ----
 export 'swim_session/generator/utils/distance_util.dart';
 export 'swim_session/generator/utils/duration_rounding.dart';
