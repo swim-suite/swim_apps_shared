@@ -17,8 +17,8 @@ abstract class AppUser {
   DateTime? updatedAt;
   String? clubId;
   String? creatorId;
-  bool isBetaUser;
 
+  bool isBetaUser;
   bool isReviewer;
 
   /// ✅ New app flags

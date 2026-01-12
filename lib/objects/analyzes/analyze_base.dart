@@ -5,6 +5,7 @@ mixin AnalyzableBase {
   String? coachId;         // creator
   String? swimmerId;       // optional linked profile
   String? swimmerName;     // optional tagged name (when swimmerId == null)
+  String? clubId;
   DateTime? createdAt;
 
   Map<String, dynamic> analyzableBaseToJson() => {
