@@ -1,0 +1,23 @@
+{
+  "design": [
+    "lib/design/"
+  ],
+  "objects": [
+    "lib/objects/"
+  ],
+  "race_analyzes": [
+    "lib/race_analyzes/"
+  ],
+  "repositories": [
+    "lib/repositories/"
+  ],
+  "results": [
+    "lib/results/"
+  ],
+  "session": [
+    "lib/swim_session/"
+  ],
+  "support": [
+    "lib/support/"
+  ]
+}

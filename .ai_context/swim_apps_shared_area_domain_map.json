@@ -1,0 +1,119 @@
+{
+  "design": {
+    "paths": [
+      "lib/design/"
+    ],
+    "allowed_classes": [],
+    "allowed_enums": []
+  },
+  "objects": {
+    "paths": [
+      "lib/objects/"
+    ],
+    "allowed_classes": [
+      "ActualSwimSet",
+      "AnalysisRequest",
+      "AnalyzedSegment",
+      "AnalyzerEntitlementPlan",
+      "AppInvite",
+      "AppUser",
+      "Coach",
+      "CompletedSetConfiguration",
+      "CompletedSetItem",
+      "CompletedSwimSession",
+      "IndividualItemResult",
+      "InviteService",
+      "Per25mMetrics",
+      "RaceSegment",
+      "Result",
+      "SegmentMetrics",
+      "SessionSetConfiguration",
+      "SetItem",
+      "SubItem",
+      "SwimAnalyzerSubscription",
+      "SwimClub",
+      "SwimSession",
+      "SwimSet",
+      "Swimmer",
+      "SwimmerFocusProfile",
+      "UnderwaterMetrics"
+    ],
+    "allowed_enums": [
+      "AnalysisRequestType",
+      "App",
+      "EventSpecialization",
+      "IntensityZone",
+      "InviteType",
+      "PerceivedExertionLevel",
+      "PoolLength",
+      "SessionType",
+      "Stroke",
+      "SwimAnalyzerSubscriptionPlanType",
+      "UserRole",
+      "UserType"
+    ]
+  },
+  "race_analyzes": {
+    "paths": [
+      "lib/race_analyzes/"
+    ],
+    "allowed_classes": [
+      "RaceComparisonPage",
+      "RaceHistoryPage"
+    ],
+    "allowed_enums": []
+  },
+  "repositories": {
+    "paths": [
+      "lib/repositories/"
+    ],
+    "allowed_classes": [
+      "InviteRepository",
+      "SwimAnalyzerEntitlementsRepository"
+    ],
+    "allowed_enums": []
+  },
+  "results": {
+    "paths": [
+      "lib/results/"
+    ],
+    "allowed_classes": [
+      "SetItemResult"
+    ],
+    "allowed_enums": []
+  },
+  "session": {
+    "paths": [
+      "lib/swim_session/"
+    ],
+    "allowed_classes": [],
+    "allowed_enums": [
+      "CheckPoint",
+      "DistanceUnit",
+      "EquipmentType",
+      "Gender",
+      "RaceRound",
+      "SessionDifficulty",
+      "SessionSlot",
+      "SetType",
+      "SkillLevel",
+      "SwimWay",
+      "TrainingFocusType"
+    ]
+  },
+  "support": {
+    "paths": [
+      "lib/support/"
+    ],
+    "allowed_classes": [
+      "MySupportRequestsPage",
+      "SupportController",
+      "SupportDetailPage",
+      "SupportListPage",
+      "SupportPage",
+      "SupportRequestDetailPage",
+      "_StatusChip"
+    ],
+    "allowed_enums": []
+  }
+}
