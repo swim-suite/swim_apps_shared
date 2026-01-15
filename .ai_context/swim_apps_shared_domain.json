@@ -85,6 +85,61 @@
         }
       }
     },
+    "AnalyzerEntitlementPlan": {
+      "path": "objects/analyzer_entitlement_plan.dart",
+      "fields": {
+        "id": "final String",
+        "name": "final String",
+        "description": "final String",
+        "planType": "final String",
+        "stripePriceId": "final String",
+        "maxInvitedSwimmers": "final int?"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "name": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "description": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "planType": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "stripePriceId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "maxInvitedSwimmers": {
+            "required": false,
+            "default": null,
+            "type": "final int?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
     "IndividualItemResult": {
       "path": "objects/individual_result.dart",
       "fields": {
@@ -138,6 +193,91 @@
             "required": false,
             "default": null,
             "type": "required"
+          }
+        }
+      }
+    },
+    "SwimAnalyzerSubscription": {
+      "path": "objects/swim_analyzer_subscription.dart",
+      "fields": {
+        "id": "final String",
+        "owner": "final String",
+        "memberUids": "final List<String>",
+        "planId": "final String",
+        "swimAnalyzerSubscriptionPlanType": "final SwimAnalyzerSubscriptionPlanType",
+        "stripeCustomerId": "final String",
+        "stripePriceId": "final String",
+        "status": "final String",
+        "cancelAtPeriodEnd": "final bool",
+        "currentPeriodEnd": "final DateTime?",
+        "createdAt": "final DateTime"
+      },
+      "constructor": {
+        "params": {
+          "id": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "owner": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "memberUids": {
+            "required": true,
+            "default": null,
+            "type": "final List<String>"
+          },
+          "planId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "stripeCustomerId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "stripePriceId": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "status": {
+            "required": true,
+            "default": null,
+            "type": "final String"
+          },
+          "cancelAtPeriodEnd": {
+            "required": true,
+            "default": null,
+            "type": "final bool"
+          },
+          "createdAt": {
+            "required": true,
+            "default": null,
+            "type": "final DateTime"
+          },
+          "swimAnalyzerSubscriptionPlanType": {
+            "required": true,
+            "default": null,
+            "type": "final SwimAnalyzerSubscriptionPlanType"
+          },
+          "currentPeriodEnd": {
+            "required": false,
+            "default": null,
+            "type": "final DateTime?"
+          },
+          "this": {
+            "required": false,
+            "default": null,
+            "type": "required"
+          },
+          "required": {
+            "required": false,
+            "default": null,
+            "type": "id,"
           }
         }
       }
@@ -2402,6 +2542,52 @@
         }
       }
     },
+    "SwimAnalyzerEntitlementsRepository": {
+      "path": "repositories/swim_analyzer_entitlements_repository.dart",
+      "fields": {
+        "_db": "final FirebaseFirestore",
+        "null": "return"
+      },
+      "constructor": {
+        "params": {
+          "db": {
+            "required": false,
+            "default": null,
+            "type": "FirebaseFirestore?"
+          },
+          "FirebaseFirestore": {
+            "required": false,
+            "default": null,
+            "type": "db ??"
+          },
+          "watchPlans": {
+            "required": false,
+            "default": null,
+            "type": "Stream<List<AnalyzerEntitlementPlan>>"
+          },
+          "_db": {
+            "required": false,
+            "default": null,
+            "type": "return"
+          },
+          "snapshot": {
+            "required": false,
+            "default": null,
+            "type": "return"
+          },
+          "AnalyzerEntitlementPlan": {
+            "required": false,
+            "default": null,
+            "type": ">"
+          },
+          "doc": {
+            "required": false,
+            "default": null,
+            "type": "id,"
+          }
+        }
+      }
+    },
     "SetItemResult": {
       "path": "results/set_item_result.dart",
       "fields": {
@@ -2970,6 +3156,13 @@
         "i2",
         "i1",
         "racePace"
+      ]
+    },
+    "SwimAnalyzerSubscriptionPlanType": {
+      "path": "objects/swim_analyzer_plan_type.dart",
+      "values": [
+        "solo",
+        "team"
       ]
     },
     "UserType": {
