@@ -3,7 +3,6 @@ import 'package:swim_apps_shared/objects/analyzes/analyze_base.dart';
 class StartAnalyze with AnalyzableBase {
   String title;
   final DateTime date;
-  final String clubId;
 
   final Map<String, int> markedTimestamps;
   final double startDistance;
@@ -23,7 +22,6 @@ class StartAnalyze with AnalyzableBase {
     this.updatedAt,
     required this.title,
     required this.date,
-    required this.clubId,
     required this.markedTimestamps,
     required this.startDistance,
     required this.startHeight,
@@ -63,7 +61,6 @@ class StartAnalyze with AnalyzableBase {
       swimmerId: swimmerId ?? this.swimmerId,
       swimmerName: swimmerName ?? this.swimmerName,
       coachId: coachId ?? this.coachId,
-      clubId: clubId ?? this.clubId,
       markedTimestamps: markedTimestamps ?? this.markedTimestamps,
       startDistance: startDistance ?? this.startDistance,
       startHeight: startHeight ?? this.startHeight,
@@ -82,7 +79,6 @@ class StartAnalyze with AnalyzableBase {
       id: docId,
       title: map['title'] as String,
       date: DateTime.parse(map['date'] as String),
-      clubId: map['clubId'] as String,
       markedTimestamps: Map<String, int>.from(map['markedTimestamps'] as Map),
       startDistance: (map['startDistance'] as num).toDouble(),
       startHeight: (map['startHeight'] as num).toDouble(),

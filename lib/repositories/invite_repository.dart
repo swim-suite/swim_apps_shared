@@ -67,8 +67,9 @@ class InviteRepository {
     try {
       Query<Map<String, dynamic>> query =
           collection.where('inviterId', isEqualTo: inviterId);
-      if (accepted != null)
+      if (accepted != null) {
         query = query.where('accepted', isEqualTo: accepted);
+      }
 
       final snapshot = await query.get();
       return snapshot.docs
@@ -173,25 +174,23 @@ class InviteRepository {
   Future<List<AppInvite>> getAcceptedSwimmersForCoach(String coachId) async {
     try {
       // 1️⃣ Get ALL accepted coach↔swimmer invites
-      final snapshot = await collection
-          .where('accepted', isEqualTo: true)
-          .where(
+      final snapshot =
+          await collection.where('accepted', isEqualTo: true).where(
         'type',
         whereIn: [
           InviteType.coachToSwimmer.name,
           InviteType.swimmerToCoach.name,
         ],
-      )
-          .get();
+      ).get();
 
       // 2️⃣ Filter in memory for this coach
       return snapshot.docs
           .map((d) => AppInvite.fromJson(d.id, d.data()))
           .where((AppInvite invite) =>
-      // Coach invited swimmer
-      invite.inviterId == coachId ||
-          // Swimmer invited coach (and coach accepted)
-          invite.acceptedUserId == coachId)
+              // Coach invited swimmer
+              invite.inviterId == coachId ||
+              // Swimmer invited coach (and coach accepted)
+              invite.acceptedUserId == coachId)
           .toList();
     } catch (e, st) {
       debugPrint('❌ Failed to get accepted swimmers for coach: $e\n$st');

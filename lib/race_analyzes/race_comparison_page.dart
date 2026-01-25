@@ -1,8 +1,24 @@
-import 'package:flutter/material.dart';
+import 'dart:math'; // Required for min() and max() functions
 
-class RaceComparisonPage extends StatelessWidget {
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Required for rootBundle
+import 'package:intl/intl.dart'; // Required for DateFormat
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart'
+    as pw; // Aliased to 'pw' to match your code usage
+import 'package:printing/printing.dart'; // Required for Printing.sharePdf and PdfGoogleFonts
+import 'package:provider/provider.dart';
+
+import '../objects/analyzes/race_analyze.dart';
+import '../repositories/analyzes_repository.dart';
+import '../repositories/user_repository.dart';
+import '../swim_session/events/checkpoint.dart';
+
+class RaceComparisonPage extends StatefulWidget {
   final List<String> raceIds;
   final String? brandIconAssetPath; // New optional parameter
+
   const RaceComparisonPage({
     super.key,
     required this.raceIds,
@@ -10,27 +26,10 @@ class RaceComparisonPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
+  State<RaceComparisonPage> createState() => _RaceComparisonPageState();
 }
 
-// class RaceComparisonPage extends StatefulWidget {
-//   final List<String> raceIds;
-//   final String? brandIconAssetPath; // New optional parameter
-//
-//   const RaceComparisonPage({
-//     super.key,
-//     required this.raceIds,
-//     required this.brandIconAssetPath, // Parameter added to constructor
-//   });
-//
-//   //@override
-//   //State<RaceComparisonPage> createState() => _RaceComparisonPageState();
-// }
-
-/*class _RaceComparisonPageState extends State<RaceComparisonPage> {
-
+class _RaceComparisonPageState extends State<RaceComparisonPage> {
   late Future<List<RaceAnalyze>> _racesFuture;
   List<RaceAnalyze>? _loadedRaces;
 
@@ -52,7 +51,9 @@ class RaceComparisonPage extends StatelessWidget {
     );
     final userRepository = Provider.of<UserRepository>(context, listen: false);
 
-    _racesFuture = Future.wait(widget.raceIds.map((id) => raceRepository.getRace(id))).then((
+    _racesFuture =
+        Future.wait(widget.raceIds.map((id) => raceRepository.getRace(id)))
+            .then((
       races,
     ) async {
       final stopwatch = Stopwatch()..start();
@@ -112,9 +113,8 @@ class RaceComparisonPage extends StatelessWidget {
     // Cache segment lookups for efficiency
     final segmentsBySequence = {for (var s in race.segments) s.sequence: s};
     final wallSegments = race.segments
-        .where((s) =>
-        [CheckPoint.start, CheckPoint.turn, CheckPoint.finish].contains(
-            s.checkPoint))
+        .where((s) => [CheckPoint.start, CheckPoint.turn, CheckPoint.finish]
+            .contains(s.checkPoint))
         .sortedBy<num>((s) => s.sequence);
 
     // Pre-calculate totals to avoid repeated .map().sum calls
@@ -137,11 +137,9 @@ class RaceComparisonPage extends StatelessWidget {
       final lapTimeMillis =
           endLapSegment.totalTimeMillis - startLapSegment.totalTimeMillis;
       int lapStrokes = 0;
-      for (
-        int j = startLapSegment.sequence + 1;
-        j <= endLapSegment.sequence;
-        j++
-      ) {
+      for (int j = startLapSegment.sequence + 1;
+          j <= endLapSegment.sequence;
+          j++) {
         lapStrokes += segmentsBySequence[j]?.strokes ?? 0;
       }
 
@@ -181,11 +179,8 @@ class RaceComparisonPage extends StatelessWidget {
       }
     }
     // Correctly use swimmerName for display with the right method.
-    final swimmerNames = races
-        .map((r) => r.swimmerName)
-        .nonNulls
-        .toSet()
-        .join(', ');
+    final swimmerNames =
+        races.map((r) => r.swimmerName).nonNulls.toSet().join(', ');
     final docTitle = races.length == 2
         ? '${races[0].raceName ?? 'Race'} vs ${races[1].raceName ?? 'Race'}'
         : 'Race Comparison';
@@ -358,8 +353,8 @@ class RaceComparisonPage extends StatelessWidget {
       final bestValue = numericValues.isEmpty
           ? null
           : (lowerIsBetter
-                ? numericValues.reduce(min)
-                : numericValues.reduce(max));
+              ? numericValues.reduce(min)
+              : numericValues.reduce(max));
 
       final cells = <pw.Widget>[
         pw.Padding(
@@ -398,9 +393,8 @@ class RaceComparisonPage extends StatelessWidget {
                   ? PdfColor.fromInt(Colors.green.shade800.g.toInt())
                   : PdfColor.fromInt(Colors.red.shade700.r.toInt()),
             );
-            diffText = formatDiff != null
-                ? formatDiff(diff)
-                : diff.toStringAsFixed(1);
+            diffText =
+                formatDiff != null ? formatDiff(diff) : diff.toStringAsFixed(1);
           }
         }
         cells.add(
@@ -524,8 +518,7 @@ class RaceComparisonPage extends StatelessWidget {
         .map(
           (race) => {
             for (var s in race.segments.where(
-                  (s) =>
-                  [CheckPoint.start, CheckPoint.turn].contains(s.checkPoint),
+              (s) => [CheckPoint.start, CheckPoint.turn].contains(s.checkPoint),
             ))
               s.sequence: s,
           },
@@ -548,32 +541,33 @@ class RaceComparisonPage extends StatelessWidget {
             if (segment == null) return null;
 
             // Optimization: Find previous wall segment more efficiently.
-            final prevWall = wallSegmentMaps[i].entries
+            final prevWall = wallSegmentMaps[i]
+                .entries
                 .lastWhereOrNull((entry) => entry.key < segment.sequence)
                 ?.value;
 
             final breakoutDist =
-                segment.distanceMeters - (prevWall?.distanceMeters ?? 0.0);
+                segment.segmentDistance - (prevWall?.segmentDistance ?? 0.0);
             return breakoutDist > 0 ? breakoutDist.toStringAsFixed(1) : null;
           },
           getNumericValue: (i) {
             final segment = segments[i];
             if (segment == null) return null;
-            final prevWall = wallSegmentMaps[i].entries
+            final prevWall = wallSegmentMaps[i]
+                .entries
                 .lastWhereOrNull((entry) => entry.key < segment.sequence)
                 ?.value;
 
             final breakoutDist =
-                segment.distanceMeters - (prevWall?.distanceMeters ?? 0.0);
+                segment.segmentDistance - (prevWall?.segmentDistance ?? 0.0);
             return breakoutDist > 0 ? breakoutDist : null;
           },
           lowerIsBetter: false,
           formatDiff: (v) => signFormatter(v, 1),
         );
       } else {
-        final distance = segments
-            .firstWhereOrNull((s) => s != null)
-            ?.distanceMeters;
+        final distance =
+            segments.firstWhereOrNull((s) => s != null)?.segmentDistance;
         if (distance == null) continue;
         final distanceLabel =
             '${distance.toStringAsFixed(distance.truncateToDouble() == distance ? 0 : 1)}m';
@@ -644,18 +638,18 @@ class RaceComparisonPage extends StatelessWidget {
         addPdfStatRow(
           title: 'Stroke Freq.',
           isOverall: false,
-          getValue: (i) => segments[i]?.strokeFrequency?.toStringAsFixed(1),
-          getNumericValue: (i) => segments[i]?.strokeFrequency,
+          getValue: (i) => segments[i]?.strokeFreq?.toStringAsFixed(1),
+          getNumericValue: (i) => segments[i]?.strokeFreq,
           lowerIsBetter: false,
           formatDiff: (v) => signFormatter(v, 1),
         );
         addPdfStatRow(
           title: 'Stroke Len.',
           isOverall: false,
-          getValue: (i) => segments[i]?.strokeLengthMeters != null
-              ? '${segments[i]!.strokeLengthMeters!.toStringAsFixed(2)}m'
+          getValue: (i) => segments[i]?.strokeLength != null
+              ? '${segments[i]!.strokeLength!.toStringAsFixed(2)}m'
               : '-',
-          getNumericValue: (i) => segments[i]?.strokeLengthMeters,
+          getNumericValue: (i) => segments[i]?.strokeLength,
           lowerIsBetter: false,
           formatDiff: signMeterFormatter,
         );
@@ -663,12 +657,12 @@ class RaceComparisonPage extends StatelessWidget {
           title: 'Avg. Speed (m/s)',
           isOverall: false,
           getValue: (i) => _calculateSpeed(
-            segments[i]?.strokeLengthMeters,
-            segments[i]?.strokeFrequency,
+            segments[i]?.strokeLength,
+            segments[i]?.strokeFreq,
           )?.toStringAsFixed(2),
           getNumericValue: (i) => _calculateSpeed(
-            segments[i]?.strokeLengthMeters,
-            segments[i]?.strokeFrequency,
+            segments[i]?.strokeLength,
+            segments[i]?.strokeFreq,
           ),
           lowerIsBetter: false,
           formatDiff: (v) => signFormatter(v, 2),
@@ -830,8 +824,8 @@ class RaceComparisonPage extends StatelessWidget {
       final bestValue = numericValues.isEmpty
           ? null
           : (lowerIsBetter
-                ? numericValues.reduce(min)
-                : numericValues.reduce(max));
+              ? numericValues.reduce(min)
+              : numericValues.reduce(max));
 
       Widget titleWidget;
       if (title == 'Avg. SWOLF') {
@@ -1053,8 +1047,7 @@ class RaceComparisonPage extends StatelessWidget {
         .map(
           (race) => {
             for (var s in race.segments.where(
-                  (s) =>
-                  [CheckPoint.start, CheckPoint.turn].contains(s.checkPoint),
+              (s) => [CheckPoint.start, CheckPoint.turn].contains(s.checkPoint),
             ))
               s.sequence: s,
           },
@@ -1077,21 +1070,23 @@ class RaceComparisonPage extends StatelessWidget {
             final segment = segments[i];
             if (segment == null) return null;
             // Optimization: Efficiently find the previous wall segment from the map.
-            final prevWall = wallSegmentMaps[i].entries
+            final prevWall = wallSegmentMaps[i]
+                .entries
                 .lastWhereOrNull((entry) => entry.key < segment.sequence)
                 ?.value;
             final breakoutDist =
-                segment.distanceMeters - (prevWall?.distanceMeters ?? 0.0);
+                segment.segmentDistance - (prevWall?.segmentDistance ?? 0.0);
             return breakoutDist > 0 ? breakoutDist.toStringAsFixed(1) : null;
           },
           getNumericValue: (i) {
             final segment = segments[i];
             if (segment == null) return null;
-            final prevWall = wallSegmentMaps[i].entries
+            final prevWall = wallSegmentMaps[i]
+                .entries
                 .lastWhereOrNull((entry) => entry.key < segment.sequence)
                 ?.value;
             final breakoutDist =
-                segment.distanceMeters - (prevWall?.distanceMeters ?? 0.0);
+                segment.segmentDistance - (prevWall?.segmentDistance ?? 0.0);
             return breakoutDist > 0 ? breakoutDist : null;
           },
           lowerIsBetter: false,
@@ -1099,9 +1094,8 @@ class RaceComparisonPage extends StatelessWidget {
           formatDiff: (v) => signFormatter(v, 1),
         );
       } else {
-        final distance = segments
-            .firstWhereOrNull((s) => s != null)
-            ?.distanceMeters;
+        final distance =
+            segments.firstWhereOrNull((s) => s != null)?.segmentDistance;
         if (distance == null) continue;
 
         final distanceLabel =
@@ -1182,18 +1176,18 @@ class RaceComparisonPage extends StatelessWidget {
         addStatRow(
           title: 'Stroke Freq.',
           isOverall: false,
-          getValue: (i) => segments[i]?.strokeFrequency?.toStringAsFixed(1),
-          getNumericValue: (i) => segments[i]?.strokeFrequency,
+          getValue: (i) => segments[i]?.strokeFreq?.toStringAsFixed(1),
+          getNumericValue: (i) => segments[i]?.strokeFreq,
           lowerIsBetter: false,
           formatDiff: (v) => signFormatter(v, 1),
         );
         addStatRow(
           title: 'Stroke Len.',
           isOverall: false,
-          getValue: (i) => segments[i]?.strokeLengthMeters != null
-              ? '${segments[i]!.strokeLengthMeters!.toStringAsFixed(2)}m'
+          getValue: (i) => segments[i]?.strokeLength != null
+              ? '${segments[i]!.strokeLength!.toStringAsFixed(2)}m'
               : '-',
-          getNumericValue: (i) => segments[i]?.strokeLengthMeters,
+          getNumericValue: (i) => segments[i]?.strokeLength,
           lowerIsBetter: false,
           formatDiff: signMeterFormatter,
         );
@@ -1201,12 +1195,12 @@ class RaceComparisonPage extends StatelessWidget {
           title: 'Avg. Speed (m/s)',
           isOverall: false,
           getValue: (i) => _calculateSpeed(
-            segments[i]?.strokeLengthMeters,
-            segments[i]?.strokeFrequency,
+            segments[i]?.strokeLength,
+            segments[i]?.strokeFreq,
           )?.toStringAsFixed(2),
           getNumericValue: (i) => _calculateSpeed(
-            segments[i]?.strokeLengthMeters,
-            segments[i]?.strokeFrequency,
+            segments[i]?.strokeLength,
+            segments[i]?.strokeFreq,
           ),
           lowerIsBetter: false,
           formatDiff: (v) => signFormatter(v, 2),
@@ -1277,4 +1271,3 @@ class RaceComparisonPage extends StatelessWidget {
     );
   }
 }
-*/
