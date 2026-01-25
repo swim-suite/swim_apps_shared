@@ -40,49 +40,67 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
   }
 
   /// Optimization: Fetches, processes, and caches race data in one go.
-  /// This method computes derived metrics like SWOLF, total kicks/breaths,
+  /// This method computes derived metrics like swolf, total kicks/breaths,
   /// and organizes segment data for quick access. This prevents recalculating
   /// these values every time the UI or PDF is built, which is a major
   /// performance improvement.
   void _loadAndProcessRaces() {
+    debugPrint(
+        '--- _loadAndProcessRaces: START for IDs: ${widget.raceIds} ---');
+
     final raceRepository = Provider.of<AnalyzesRepository>(
       context,
       listen: false,
     );
     final userRepository = Provider.of<UserRepository>(context, listen: false);
 
-    _racesFuture =
-        Future.wait(widget.raceIds.map((id) => raceRepository.getRace(id)))
-            .then((
-      races,
-    ) async {
+    _racesFuture = Future.wait(
+      widget.raceIds.map((id) => raceRepository.getRace(id)),
+    ).then((races) async {
+      debugPrint(
+          '--- _loadAndProcessRaces: Repository returned ${races.length} items ---');
+
       final stopwatch = Stopwatch()..start();
 
       final validRaces = races.whereType<RaceAnalyze>();
+      debugPrint(
+          '--- _loadAndProcessRaces: ${validRaces.length} valid RaceAnalyze objects found ---');
 
       final racesWithNames = await Future.wait(
         validRaces.map((RaceAnalyze race) async {
+          debugPrint(
+              '>> Processing Race ID: ${race.id} | Current Swimmer Name: ${race.swimmerName}');
+
           // Fetch swimmer name only if it's missing and a swimmerId is available.
           if ((race.swimmerName == null || race.swimmerName!.isEmpty) &&
               race.swimmerId != null &&
               race.swimmerId!.isNotEmpty) {
             try {
+              debugPrint(
+                  '   Fetching User Document for Swimmer ID: ${race.swimmerId}...');
               final user = await userRepository.getUserDocument(
                 race.swimmerId!,
               );
               final name = '${user?.name ?? ''} ${user?.lastName ?? ''}'.trim();
               race.swimmerName = name.isNotEmpty ? name : 'Unknown Swimmer';
+              debugPrint('   Name resolved to: ${race.swimmerName}');
             } catch (e) {
               // If user fetch fails, log the error and assign a default name.
-              debugPrint('Could not fetch user for race ${race.id}: $e');
+              debugPrint(
+                  '   ERROR: Could not fetch user for race ${race.id}: $e');
               race.swimmerName = 'Unknown Swimmer';
             }
           } else if (race.swimmerName == null || race.swimmerName!.isEmpty) {
             // If swimmerId was missing, assign a default name directly.
+            debugPrint(
+                '   No Swimmer ID available. Defaulting to "Unknown Swimmer".');
             race.swimmerName = 'Unknown Swimmer';
+          } else {
+            debugPrint('   Swimmer name already present. Skipping user fetch.');
           }
 
           // Optimization: Pre-calculate and cache derived values for each race.
+          debugPrint('   Running _processAndCacheRaceData for ${race.id}...');
           _processAndCacheRaceData(race);
           return race;
         }),
@@ -100,9 +118,14 @@ class _RaceComparisonPageState extends State<RaceComparisonPage> {
       // --- END: Performance Logging ---
 
       if (mounted) {
+        debugPrint(
+            '--- _loadAndProcessRaces: Updating State with ${racesWithNames.length} races ---');
         setState(() {
           _loadedRaces = racesWithNames;
         });
+      } else {
+        debugPrint(
+            '--- _loadAndProcessRaces: Widget unmounted, skipping setState ---');
       }
       return racesWithNames;
     });
