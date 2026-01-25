@@ -239,6 +239,19 @@ class AnalyzesRepository extends BaseRepository {
         .map((s) => _parseDocsSafely(s.docs, 'club race stream'));
   }
 
+  /// Streaming for "Tagged" swimmers (Virtual profiles)
+  /// Requires a Firestore Composite Index: coachId ASC, swimmerName ASC, raceDate DESC
+  Stream<List<RaceAnalyze>> getStreamOfRacesForCoachAndName({
+    required String coachId,
+    required String swimmerName,
+  }) {
+    return _racesRef
+        .where('coachId', isEqualTo: coachId)
+        .where('swimmerName', isEqualTo: swimmerName)
+        .orderBy('raceDate', descending: true)
+        .snapshots()
+        .map((s) => _parseDocsSafely(s.docs, 'coach tagged stream'));
+  }
 
   Future<RaceAnalyze?> getRace(String raceId) async {
     try {
