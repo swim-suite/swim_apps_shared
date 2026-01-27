@@ -192,6 +192,7 @@ class SwimSession {
       'assignedGroupIds': assignedGroupIds,
       'overallSessionGoal': overallSessionGoal,
       'sessionNotes': sessionNotes,
+      'clubId': clubId,
       if (trainingFocus != null) 'trainingFocus': trainingFocus?.name,
       'createdAt': Timestamp.fromDate(createdAt),
       if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
