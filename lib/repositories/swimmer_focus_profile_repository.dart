@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:swim_apps_shared/race_analyzes/race_history_page.dart';
 
 import '../objects/user/swimmer_focus_profile.dart';
 
@@ -130,5 +131,35 @@ class SwimmerFocusProfileRepository {
     }
 
     return profiles;
+  }
+
+  /// Fetch focus profiles for a set of swimmers in this club.
+  Future<List<SwimmerFocusProfile>> getProfilesForSwimmers(
+    Set<String> swimmerIds,
+  ) async {
+    if (swimmerIds.isEmpty) return [];
+
+    try {
+      // Firestore `whereIn` max = 10 → chunk if needed
+      final List<SwimmerFocusProfile> profiles = [];
+
+      final chunks = swimmerIds.toList().chunked(10);
+
+      for (final chunk in chunks) {
+        final snapshot =
+            await _profilesCollection.where('swimmerId', whereIn: chunk).get();
+
+        profiles.addAll(
+          snapshot.docs.map((d) => d.data()),
+        );
+      }
+
+      return profiles;
+    } on FirebaseException catch (e, s) {
+      debugPrint(
+        '🔥 Error fetching focus profiles for swimmers $swimmerIds: $e\n$s',
+      );
+      return [];
+    }
   }
 }
