@@ -366,4 +366,36 @@ class UserRepository extends BaseRepository {
         .get();
     return snap.docs.isNotEmpty;
   }
+  Future<List<AppUser>> getUsersByEmails(List<String> emails) async {
+    if (emails.isEmpty) return [];
+
+    final normalized = emails.map((e) => e.toLowerCase()).toSet().toList();
+    final users = <AppUser>[];
+
+    try {
+      for (var i = 0; i < normalized.length; i += 30) {
+        final chunk = normalized.sublist(
+          i,
+          i + 30 > normalized.length ? normalized.length : i + 30,
+        );
+
+        final snapshot = await usersCollection
+            .where('email', whereIn: chunk)
+            .get();
+
+        for (final doc in snapshot.docs) {
+          final user = _parseUserDoc(doc);
+          if (user != null) {
+            users.add(user);
+          }
+        }
+      }
+    } catch (e, s) {
+      debugPrint('🔥 Error fetching users by emails: $e');
+      debugPrintStack(stackTrace: s);
+    }
+
+    return users;
+  }
+
 }
