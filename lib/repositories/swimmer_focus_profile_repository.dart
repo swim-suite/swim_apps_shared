@@ -1,35 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../objects/user/swimmer_focus_profile.dart';
 
-/// A repository for managing swimmer focus profiles in Firestore.
-///
-/// 🔐 Club-scoped:
-/// Data is stored under:
-/// /swimClubs/{clubId}/swimmerFocusProfile/{profileId}
-///
-/// This aligns exactly with Firestore security rules.
 class SwimmerFocusProfileRepository {
   final FirebaseFirestore _db;
   final String clubId;
 
-  /// The repository is explicitly bound to a club.
-  ///
-  /// This avoids permission issues and makes the data model explicit.
   SwimmerFocusProfileRepository(
-      this._db, {
-        required this.clubId,
-      });
+    this._db, {
+    required this.clubId,
+  });
 
-  /// Typed reference to:
   /// /swimClubs/{clubId}/swimmerFocusProfile
-  CollectionReference<SwimmerFocusProfile> get _profilesCollection =>
-      _db
-          .collection('swimClubs')
-          .doc(clubId)
-          .collection('swimmerFocusProfile')
-          .withConverter<SwimmerFocusProfile>(
+  CollectionReference<SwimmerFocusProfile> get _profilesCollection => _db
+      .collection('swimClubs')
+      .doc(clubId)
+      .collection('swimmerFocusProfile')
+      .withConverter<SwimmerFocusProfile>(
         fromFirestore: (snapshot, _) {
           final data = snapshot.data();
           if (data == null) {
@@ -42,76 +30,93 @@ class SwimmerFocusProfileRepository {
         toFirestore: (profile, _) => profile.toJson(),
       );
 
-  /// Saves or updates a swimmer focus profile.
-  ///
-  /// Uses merge to support upserts.
+  // --------------------------------------------------------------------------
+  // WRITE
+  // --------------------------------------------------------------------------
+
+  /// Create or update a swimmer focus profile (upsert).
   Future<void> saveProfile(SwimmerFocusProfile profile) async {
     try {
       await _profilesCollection
           .doc(profile.id)
           .set(profile, SetOptions(merge: true));
-    } on FirebaseException catch (e) {
+    } on FirebaseException catch (e, s) {
       debugPrint(
-        '🔥 Firestore Error saving focus profile ${profile.id}: $e',
+        '🔥 Error saving swimmer focus profile ${profile.id}: $e\n$s',
       );
       rethrow;
     }
   }
 
-  /// Retrieves all focus profiles owned by a coach.
-  ///
-  /// Rule-aligned query:
-  /// request.query.where.coachId == request.auth.uid
-  Future<List<SwimmerFocusProfile>> getProfilesForCoach(
-      String coachId,
-      ) async {
-    try {
-      final snapshot = await _profilesCollection
-          .where('coachId', isEqualTo: coachId)
-          .get();
-
-      return _parseProfilesFromSnapshot(snapshot.docs);
-    } on FirebaseException catch (e, s) {
-      debugPrint(
-        '🔥 Firestore Error fetching profiles for coach $coachId: $e\n$s',
-      );
-      return [];
-    }
-  }
-
-  /// Retrieves a single focus profile by its document ID.
-  ///
-  /// Returns null if it does not exist.
-  Future<SwimmerFocusProfile?> getProfile(String profileId) async {
-    try {
-      final doc = await _profilesCollection.doc(profileId).get();
-      return doc.data();
-    } on FirebaseException catch (e, s) {
-      debugPrint(
-        '🔥 Firestore Error fetching focus profile $profileId: $e\n$s',
-      );
-      rethrow;
-    }
-  }
-
-  /// Deletes a focus profile.
+  /// Delete a focus profile by document id.
   Future<void> deleteProfile(String profileId) async {
     try {
       await _profilesCollection.doc(profileId).delete();
     } on FirebaseException catch (e, s) {
       debugPrint(
-        '🔥 Firestore Error deleting focus profile $profileId: $e\n$s',
+        '🔥 Error deleting swimmer focus profile $profileId: $e\n$s',
       );
       rethrow;
     }
   }
 
-  /// Safely parses query snapshots.
+  // --------------------------------------------------------------------------
+  // READ (club-scoped)
+  // --------------------------------------------------------------------------
+
+  /// ✅ Preferred: get focus profile for a specific swimmer in this club.
   ///
-  /// Individual corrupt documents are skipped instead of crashing the app.
-  List<SwimmerFocusProfile> _parseProfilesFromSnapshot(
-      List<QueryDocumentSnapshot<SwimmerFocusProfile>> docs,
-      ) {
+  /// There should be at most ONE profile per swimmer per club.
+  Future<SwimmerFocusProfile?> getProfileForSwimmer(String swimmerId) async {
+    try {
+      final snapshot = await _profilesCollection
+          .where('swimmerId', isEqualTo: swimmerId)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+      return snapshot.docs.first.data();
+    } on FirebaseException catch (e, s) {
+      debugPrint(
+        '🔥 Error fetching focus profile for swimmer $swimmerId: $e\n$s',
+      );
+      rethrow;
+    }
+  }
+
+  /// 🔄 Reactive version for UI
+  Stream<SwimmerFocusProfile?> streamProfileForSwimmer(String swimmerId) {
+    return _profilesCollection
+        .where('swimmerId', isEqualTo: swimmerId)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      return snapshot.docs.first.data();
+    });
+  }
+
+  /// (Optional) Fetch all focus profiles in the club
+  /// Useful for dashboards / analytics.
+  Future<List<SwimmerFocusProfile>> getAllProfilesInClub() async {
+    try {
+      final snapshot = await _profilesCollection.get();
+      return _parseProfiles(snapshot.docs);
+    } on FirebaseException catch (e, s) {
+      debugPrint(
+        '🔥 Error fetching all swimmer focus profiles for club $clubId: $e\n$s',
+      );
+      return [];
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Helpers
+  // --------------------------------------------------------------------------
+
+  List<SwimmerFocusProfile> _parseProfiles(
+    List<QueryDocumentSnapshot<SwimmerFocusProfile>> docs,
+  ) {
     final List<SwimmerFocusProfile> profiles = [];
 
     for (final doc in docs) {
@@ -126,5 +131,4 @@ class SwimmerFocusProfileRepository {
 
     return profiles;
   }
-
 }
