@@ -570,4 +570,28 @@ class InviteService {
 
     return snap.docs.isNotEmpty;
   }
+
+  Stream<AppInvite?> streamInviteForCoachAndSwimmer({
+    required String coachId,
+    required String swimmerId,
+    required App app,
+  }) {
+    return _inviteRepository.collection.where('app', isEqualTo: app.name)
+        .snapshots()
+        .map((snap) {
+      for (final doc in snap.docs) {
+        final invite = AppInvite.fromJson(doc.id, doc.data());
+
+        final resolvedSwimmerId = _resolveSwimmerIdForCoach(
+          invite: invite,
+          coachId: coachId,
+        );
+
+        if (resolvedSwimmerId == swimmerId) {
+          return invite;
+        }
+      }
+      return null;
+    });
+  }
 }
