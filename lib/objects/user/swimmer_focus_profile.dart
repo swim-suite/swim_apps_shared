@@ -49,4 +49,27 @@ class SwimmerFocusProfile {
       longTermGoal: json['longTermGoal'],
     );
   }
+  SwimmerFocusProfile copyWith({
+    String? id,
+    String? swimmerId,
+    String? swimmerName,
+    String? coachId,
+    String? clubId,
+    EventSpecialization? eventSpecialization,
+    List<Stroke>? focusStrokes,
+    String? longTermGoal,
+  }) {
+    return SwimmerFocusProfile(
+      id: id ?? this.id,
+      swimmerId: swimmerId ?? this.swimmerId,
+      swimmerName: swimmerName ?? this.swimmerName,
+      coachId: coachId ?? this.coachId,
+      clubId: clubId ?? this.clubId,
+      eventSpecialization:
+      eventSpecialization ?? this.eventSpecialization,
+      focusStrokes: focusStrokes ?? List<Stroke>.from(this.focusStrokes),
+      longTermGoal: longTermGoal ?? this.longTermGoal,
+    );
+  }
+
 }

@@ -126,4 +126,5 @@ class SwimmerFocusProfileRepository {
 
     return profiles;
   }
+
 }
