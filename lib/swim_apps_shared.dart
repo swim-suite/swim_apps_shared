@@ -25,7 +25,6 @@ export 'repositories/analyzes_repository.dart';
 export 'repositories/base_repository.dart';
 export 'repositories/entitlement_repository.dart';
 export 'repositories/firestore_helper.dart';
-export 'repositories/swim_club_repository.dart';
 export 'repositories/swimmer_focus_profile_repository.dart';
 export 'repositories/user_repository.dart';
 export 'results/result_service.dart';

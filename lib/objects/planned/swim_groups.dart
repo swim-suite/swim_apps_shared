@@ -23,23 +23,19 @@ class SwimGroup {
     this.updatedAt,
   }) : swimmerIds = swimmerIds ?? []; // Initialize to empty list if null
 
-  // Factory constructor to create a SwimGroup from Firestore document
-  factory SwimGroup.fromJson(String documentId, Map<String, dynamic> json) {
+  // Factory constructor to create a SwimGroup from embedded JSON
+  factory SwimGroup.fromJson(Map<String, dynamic> json) {
     return SwimGroup(
-      id: documentId,
+      id: json['id'] as String,
       name: json['name'] as String? ?? 'Unnamed Group',
-      // Provide default
       description: json['description'] as String?,
       coachId: json['coachId'] as String? ?? '',
-      // Provide default or handle error
       coachName: json['coachName'] as String?,
       clubId: json['clubId'] as String?,
-      swimmerIds:
-          (json['swimmerIds'] as List<dynamic>?)
-              ?.map((id) => id as String)
-              .toList() ??
+      swimmerIds: (json['swimmerIds'] as List<dynamic>?)
+          ?.map((id) => id as String)
+          .toList() ??
           [],
-      // Ensure it's a list of strings
       createdAt: json['createdAt'] as Timestamp?,
       updatedAt: json['updatedAt'] as Timestamp?,
     );
