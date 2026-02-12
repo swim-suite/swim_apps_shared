@@ -41,18 +41,28 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Disable analytics (CI)
+      # Avoids first-run prompts/noise and saves a little time.
+        run: |
+          flutter config --no-analytics --no-cli-animations
+
       - name: Cache Dart/Flutter artifacts
         uses: actions/cache@v4
         with:
           path: |
             ~/.pub-cache
             .dart_tool
-          key: ${{ runner.os }}-flutter-${{ env.FLUTTER_VERSION }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          key: ${{ runner.os }}-flutter-${{ env.FLUTTER_VERSION }}-pub-${{ hashFiles('pubspec.yaml', 'pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-flutter-${{ env.FLUTTER_VERSION }}-pub-
 
-      - name: Pub get (locked)
-        run: flutter pub get --enforce-lockfile
+      - name: Pub get
+        run: |
+          if [ -f pubspec.lock ]; then
+            flutter pub get --enforce-lockfile
+          else
+            flutter pub get
+          fi
 
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
