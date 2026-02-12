@@ -19,7 +19,8 @@ permissions:
   contents: read
 
 env:
-  FLUTTER_VERSION: "3.27.1"
+  # Pinned for reproducibility; must ship with a Dart SDK compatible with pubspec constraints.
+  FLUTTER_VERSION: "3.35.1"
 
 jobs:
   validate:
@@ -42,7 +43,6 @@ jobs:
           cache: true
 
       - name: Disable analytics (CI)
-      # Avoids first-run prompts/noise and saves a little time.
         run: |
           flutter config --no-analytics --no-cli-animations
 
