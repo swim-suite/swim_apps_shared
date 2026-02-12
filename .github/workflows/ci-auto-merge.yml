@@ -1,163 +1,103 @@
-name: CI / Validate / Release
+name: CI / Auto-merge / Release
 
 on:
+  pull_request:
+    branches: [master, main]
   push:
-    branches:
-      - develop
-      - feature/**
-      - enabler/**
+    branches: [master, main]
+    tags: ["v*"]
+  pull_request_target:
+    types: [opened, reopened, synchronize, labeled, ready_for_review]
+    branches: [master, main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.27.1"
 
 jobs:
-  # =========================================================
-  # 1️⃣ VALIDATE JOB — SAFE & FAST
-  # =========================================================
   validate:
-    name: Validate (Analyze & Test)
-    runs-on: ubuntu-latest
+    name: Validate (Format • Analyze • Test)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    if: github.event_name != 'pull_request_target'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.5'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
 
-      - name: Flutter Pub Get
-        run: flutter pub get
+      - name: Pub get (locked)
+        run: flutter pub get --enforce-lockfile
 
-      - name: Run Tests
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
         run: flutter test --no-pub
 
-  # =========================================================
-  # 2️⃣ RELEASE JOB — ONLY FROM DEVELOP
-  # =========================================================
-  release:
-    name: Release (Version • Tag • Notes)
-    needs: validate
-    runs-on: ubuntu-latest
-
-    # 🚨 Critical: only run on develop
-    if: github.ref == 'refs/heads/develop'
+  automerge_dependabot:
+    name: Auto-merge (Dependabot)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    if: >-
+      ${{
+        github.event_name == 'pull_request_target' &&
+        github.actor == 'dependabot[bot]' &&
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.head.repo.fork == false &&
+        contains(github.event.pull_request.labels.*.name, 'automerge') &&
+        !contains(github.event.pull_request.labels.*.name, 'do-not-merge')
+      }}
 
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-      # -----------------------------------------------------
-      # CHECKOUT FULL HISTORY
-      # -----------------------------------------------------
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Auto-approve
+        uses: hmarr/auto-approve-action@v4
         with:
-          fetch-depth: 0
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch master
-        run: git fetch origin master
-
-      # -----------------------------------------------------
-      # INSTALL GH CLI
-      # -----------------------------------------------------
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install gh -y
-
-      # -----------------------------------------------------
-      # AUTO VERSION BUMP (PATCH)
-      # -----------------------------------------------------
-      - name: Compute next version
-        id: version
-        run: |
-          LATEST_TAG=$(git describe --tags --match "v*.*.*" origin/master --abbrev=0 || echo "v0.0.0")
-          echo "📦 Latest tag: $LATEST_TAG"
-
-          SEMVER="${LATEST_TAG#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$SEMVER"
-
-          PATCH=$((PATCH+1))
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          NEW_TAG="v$NEW_VERSION"
-
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
-
-      - name: Update pubspec.yaml
-        run: |
-          sed -i "s/^version:.*/version: ${{ steps.version.outputs.new_version }}/" pubspec.yaml
-
-      # -----------------------------------------------------
-      # GENERATE RELEASE NOTES
-      # -----------------------------------------------------
-      - name: Generate release notes
-        id: notes
-        run: |
-          LAST_TAG=$(git describe --tags --match "v*.*.*" origin/master --abbrev=0 || echo "")
-          
-          if [ -z "$LAST_TAG" ]; then
-            NOTES=$(git log --pretty=format:"- %s")
-          else
-            NOTES=$(git log "$LAST_TAG"..HEAD --pretty=format:"- %s")
-          fi
-
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      # -----------------------------------------------------
-      # CREATE PR → MASTER
-      # -----------------------------------------------------
-      - name: Create Release PR
-        id: pr
-        uses: peter-evans/create-pull-request@v6
+      - name: Enable auto-merge (squash)
+        uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ci/release-${{ steps.version.outputs.new_version }}
-          base: master
-          delete-branch: true
-          commit-message: "chore: release v${{ steps.version.outputs.new_version }}"
-          title: "Release v${{ steps.version.outputs.new_version }}"
-          body: |
-            ## 🚀 Release v${{ steps.version.outputs.new_version }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: squash
 
-            ### Changes
-            ${{ steps.notes.outputs.notes }}
+  github_release:
+    name: GitHub Release (tags)
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    if: startsWith(github.ref, 'refs/tags/v')
 
-      # -----------------------------------------------------
-      # MERGE + TAG
-      # -----------------------------------------------------
-      - name: Merge PR and Tag
-        if: steps.pr.outputs.pull-request-number != ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR=${{ steps.pr.outputs.pull-request-number }}
-          TAG=${{ steps.version.outputs.tag }}
+    permissions:
+      contents: write
 
-          gh pr merge "$PR" --squash --delete-branch
-
-          git checkout master
-          git pull origin master
-
-          git tag "$TAG"
-          git push origin "$TAG"
-
-      # -----------------------------------------------------
-      # CREATE GITHUB RELEASE
-      # -----------------------------------------------------
+    steps:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: "Release ${{ steps.version.outputs.tag }}"
-          body: |
-            ## 🚀 Release ${{ steps.version.outputs.tag }}
-
-            ### What's changed
-            ${{ steps.notes.outputs.notes }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

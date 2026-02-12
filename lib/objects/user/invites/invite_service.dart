@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +13,46 @@ import 'package:swim_apps_shared/repositories/user_repository.dart';
 
 import '../user.dart';
 import '../user_types.dart';
+
+@immutable
+class InviteMembershipContext {
+  final String contextType;
+  final String contextId;
+  final String role;
+  final String collection;
+
+  const InviteMembershipContext({
+    required this.contextType,
+    required this.contextId,
+    required this.role,
+    this.collection = 'memberships',
+  });
+
+  Map<String, dynamic> toAliasContextJson() {
+    return {
+      'type': contextType,
+      'id': contextId,
+      'role': role,
+    };
+  }
+}
+
+@immutable
+class InviteResult {
+  final String inviteId;
+  final String membershipId;
+  final String? aliasId;
+  final String? resolvedUserId;
+  final bool isAliasPrincipal;
+
+  const InviteResult({
+    required this.inviteId,
+    required this.membershipId,
+    required this.aliasId,
+    required this.resolvedUserId,
+    required this.isAliasPrincipal,
+  });
+}
 
 class InviteService {
   final InviteRepository _inviteRepository;
@@ -41,6 +83,79 @@ class InviteService {
   // --------------------------------------------------------------------------
 
   String _normalizeEmail(String email) => email.trim().toLowerCase();
+
+  static const List<String> _membershipCollections = <String>[
+    'memberships',
+    'club_memberships',
+    'team_memberships',
+    'seat_memberships',
+  ];
+
+  String _stableDocId(String source) {
+    return base64Url.encode(utf8.encode(source)).replaceAll('=', '');
+  }
+
+  String _aliasIdForEmail(String normalizedEmail) {
+    return _stableDocId('alias:$normalizedEmail');
+  }
+
+  String _membershipDocId({
+    required InviteMembershipContext context,
+    String? aliasId,
+    String? userId,
+  }) {
+    final principal =
+        aliasId != null ? 'alias:$aliasId' : 'user:${userId ?? 'unknown'}';
+    return _stableDocId(
+      'membership:${context.collection}:${context.contextType}:${context.contextId}:${context.role}:$principal',
+    );
+  }
+
+  String _inviteDocId({
+    required InviteMembershipContext context,
+    required String principalId,
+    required bool isAliasPrincipal,
+  }) {
+    final principalPrefix = isAliasPrincipal ? 'alias' : 'user';
+    return _stableDocId(
+      'invite:${context.collection}:${context.contextType}:${context.contextId}:${context.role}:$principalPrefix:$principalId',
+    );
+  }
+
+  String _inviteToken({
+    required String inviteId,
+    required String principalId,
+    required bool isAliasPrincipal,
+  }) {
+    final principalPrefix = isAliasPrincipal ? 'alias' : 'user';
+    return _stableDocId(
+      'token:$inviteId:$principalPrefix:$principalId:${DateTime.now().millisecondsSinceEpoch}',
+    );
+  }
+
+  Future<QueryDocumentSnapshot<Map<String, dynamic>>?> _findUserByEmail(
+    String normalizedEmail,
+  ) async {
+    final byNormalized = await _firestore
+        .collection('users')
+        .where('emailNormalized', isEqualTo: normalizedEmail)
+        .limit(1)
+        .get();
+    if (byNormalized.docs.isNotEmpty) {
+      return byNormalized.docs.first;
+    }
+
+    final byEmail = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: normalizedEmail)
+        .limit(1)
+        .get();
+    if (byEmail.docs.isNotEmpty) {
+      return byEmail.docs.first;
+    }
+
+    return null;
+  }
 
   /// For an accepted coach<->swimmer invite, resolve the "other" user id,
   /// given the current coachId.
@@ -126,6 +241,205 @@ class InviteService {
       debugPrint('❌ Error fetching invite by ID: $e\n$st');
       return null;
     }
+  }
+
+  // --------------------------------------------------------------------------
+  // ✉️ CANONICAL INVITE FLOW (ALIAS-FIRST WITH IDEMPOTENT MEMBERSHIP UPSERT)
+  // --------------------------------------------------------------------------
+
+  InviteType _inviteTypeForContext(InviteMembershipContext context) {
+    switch (context.contextType) {
+      case 'club':
+        return InviteType.clubInvite;
+      case 'seat':
+        return InviteType.seatInvite;
+      default:
+        return InviteType.coachToSwimmer;
+    }
+  }
+
+  Future<InviteResult> invite({
+    required String email,
+    required String name,
+    required InviteMembershipContext context,
+    App app = App.swimSuite,
+    bool sendEmail = true,
+  }) async {
+    final inviter = _auth.currentUser;
+    if (inviter == null) throw Exception('No logged-in user.');
+
+    final normalizedEmail = _normalizeEmail(email);
+    if (normalizedEmail.isEmpty) {
+      throw Exception('Email cannot be empty.');
+    }
+
+    final membershipCollection =
+        _membershipCollections.contains(context.collection)
+            ? context.collection
+            : 'memberships';
+    final normalizedContext = InviteMembershipContext(
+      contextType: context.contextType,
+      contextId: context.contextId,
+      role: context.role,
+      collection: membershipCollection,
+    );
+
+    final existingUserDoc = await _findUserByEmail(normalizedEmail);
+    final existingUserId = existingUserDoc?.id;
+    final isAliasPrincipal = existingUserId == null;
+    final aliasId = isAliasPrincipal ? _aliasIdForEmail(normalizedEmail) : null;
+    final principalId = aliasId ?? existingUserId!;
+    final membershipId = _membershipDocId(
+      context: normalizedContext,
+      aliasId: aliasId,
+      userId: existingUserId,
+    );
+    final inviteId = _inviteDocId(
+      context: normalizedContext,
+      principalId: principalId,
+      isAliasPrincipal: isAliasPrincipal,
+    );
+    final inviteToken = _inviteToken(
+      inviteId: inviteId,
+      principalId: principalId,
+      isAliasPrincipal: isAliasPrincipal,
+    );
+
+    final inviteType = _inviteTypeForContext(normalizedContext);
+    final now = FieldValue.serverTimestamp();
+
+    await _firestore.runTransaction((transaction) async {
+      String? resolvedUserId = existingUserId;
+      final aliasRef = isAliasPrincipal
+          ? _firestore.collection('aliases').doc(aliasId)
+          : null;
+      final membershipRef =
+          _firestore.collection(membershipCollection).doc(membershipId);
+      final inviteRef = _firestore.collection('invites').doc(inviteId);
+
+      // Firestore transactions require reads before writes.
+      final aliasSnap =
+          aliasRef != null ? await transaction.get(aliasRef) : null;
+      final membershipSnap = await transaction.get(membershipRef);
+      final inviteSnap = await transaction.get(inviteRef);
+
+      if (isAliasPrincipal) {
+        final aliasContext = normalizedContext.toAliasContextJson();
+
+        if (aliasSnap != null && aliasSnap.exists) {
+          final aliasData = aliasSnap.data() ?? <String, dynamic>{};
+          final aliasUserId = aliasData['userId'] as String?;
+          if (aliasUserId != null && aliasUserId.isNotEmpty) {
+            resolvedUserId = aliasUserId;
+          }
+
+          transaction.set(
+              aliasRef!,
+              {
+                'email': normalizedEmail,
+                if (name.trim().isNotEmpty) 'name': name.trim(),
+                'invitedBy': inviter.uid,
+                'inviteContexts': FieldValue.arrayUnion([aliasContext]),
+                'updatedAt': now,
+              },
+              SetOptions(merge: true));
+        } else {
+          transaction.set(aliasRef!, {
+            'email': normalizedEmail,
+            if (name.trim().isNotEmpty) 'name': name.trim(),
+            'invitedBy': inviter.uid,
+            'inviteContexts': [aliasContext],
+            'userId': null,
+            'createdAt': now,
+            'updatedAt': now,
+          });
+        }
+      }
+
+      final membershipData = <String, dynamic>{
+        'contextType': normalizedContext.contextType,
+        'contextId': normalizedContext.contextId,
+        'role': normalizedContext.role,
+        if (aliasId != null) 'aliasId': aliasId,
+        if (existingUserId != null) 'userId': existingUserId,
+        if (resolvedUserId != null) 'resolvedUserId': resolvedUserId,
+        'updatedAt': now,
+      };
+
+      if (membershipSnap.exists) {
+        transaction.set(membershipRef, membershipData, SetOptions(merge: true));
+      } else {
+        transaction.set(membershipRef, {
+          ...membershipData,
+          'createdAt': now,
+        });
+      }
+
+      final inviteData = <String, dynamic>{
+        'inviterId': inviter.uid,
+        'inviterEmail': _normalizeEmail(inviter.email ?? ''),
+        'inviteeEmail': normalizedEmail,
+        'type': inviteType.name,
+        'app': app.name,
+        'createdAt': now,
+        'accepted': null,
+        'acceptedUserId': null,
+        'acceptedAt': null,
+        if (normalizedContext.contextType == 'club')
+          'clubId': normalizedContext.contextId,
+        if (normalizedContext.contextType != 'club')
+          'relatedEntityId': normalizedContext.contextId,
+        'contextType': normalizedContext.contextType,
+        'contextId': normalizedContext.contextId,
+        'role': normalizedContext.role,
+        'membershipCollection': membershipCollection,
+        'membershipId': membershipId,
+        if (aliasId != null) 'aliasId': aliasId,
+        if (resolvedUserId != null) 'resolvedUserId': resolvedUserId,
+        'inviteToken': inviteToken,
+        'updatedAt': now,
+      };
+
+      if (inviteSnap.exists) {
+        transaction.set(inviteRef, inviteData, SetOptions(merge: true));
+      } else {
+        transaction.set(inviteRef, inviteData);
+      }
+    });
+
+    if (sendEmail) {
+      try {
+        final callable = _functions.httpsCallableFromUrl(
+          "https://sendinviteemail-dvni7kn54wa-ew.a.run.app",
+        );
+        await callable.call({
+          'email': normalizedEmail,
+          'senderId': inviter.uid,
+          'senderName':
+              inviter.displayName ?? inviter.email ?? 'A Swimify coach',
+          'app': app.name,
+          'type': inviteType.name,
+          'contextType': normalizedContext.contextType,
+          'contextId': normalizedContext.contextId,
+          'role': normalizedContext.role,
+          'membershipCollection': membershipCollection,
+          'membershipId': membershipId,
+          'inviteId': inviteId,
+          'inviteToken': inviteToken,
+          'aliasId': aliasId,
+        });
+      } catch (e, st) {
+        debugPrint('⚠️ Canonical invite email failed (invite stored): $e\n$st');
+      }
+    }
+
+    return InviteResult(
+      inviteId: inviteId,
+      membershipId: membershipId,
+      aliasId: aliasId,
+      resolvedUserId: existingUserId,
+      isAliasPrincipal: isAliasPrincipal,
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -352,25 +666,105 @@ class InviteService {
   // --------------------------------------------------------------------------
 
   Future<void> acceptInvite({
-    required AppInvite appInvite,
+    AppInvite? appInvite,
+    String? inviteId,
     required String userId,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No logged-in user.');
+    final targetInviteId = inviteId ?? appInvite?.id;
+    if (targetInviteId == null || targetInviteId.isEmpty) {
+      throw Exception('Invite ID is required.');
+    }
 
     try {
-      final updated = appInvite.copyWith(
-        accepted: true,
-        acceptedAt: DateTime.now(),
-        acceptedUserId: userId,
-      );
+      String? acceptedAliasId;
 
-      await _firestore
-          .collection('invites')
-          .doc(updated.id)
-          .update(updated.toJson());
+      await _firestore.runTransaction((transaction) async {
+        final inviteRef = _firestore.collection('invites').doc(targetInviteId);
+        final inviteSnap = await transaction.get(inviteRef);
+        if (!inviteSnap.exists) {
+          throw StateError('Invite $targetInviteId does not exist.');
+        }
 
-      debugPrint('✅ Invite ${updated.id} accepted successfully by ${user.uid}');
+        final data = inviteSnap.data() ?? <String, dynamic>{};
+        final isAlreadyAccepted = data['accepted'] == true;
+        final existingAcceptedUserId = data['acceptedUserId'] as String?;
+        final aliasId = data['aliasId'] as String?;
+        final inviteeEmail = data['inviteeEmail'] as String? ?? '';
+        acceptedAliasId = aliasId;
+        final aliasRef = (aliasId != null && aliasId.isNotEmpty)
+            ? _firestore.collection('aliases').doc(aliasId)
+            : null;
+        final aliasSnap =
+            aliasRef != null ? await transaction.get(aliasRef) : null;
+
+        if (isAlreadyAccepted) {
+          if (existingAcceptedUserId == userId) {
+            return;
+          }
+          throw StateError(
+            'Invite $targetInviteId was already accepted by $existingAcceptedUserId.',
+          );
+        }
+
+        if (aliasRef != null) {
+          if (aliasSnap == null || !aliasSnap.exists) {
+            // Defensive recovery for bad state: recreate missing alias document.
+            transaction.set(
+                aliasRef,
+                {
+                  'email': _normalizeEmail(inviteeEmail),
+                  'userId': userId,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'updatedAt': FieldValue.serverTimestamp(),
+                  'migratedAt': FieldValue.serverTimestamp(),
+                  'migratedBy': 'invite_accept',
+                },
+                SetOptions(merge: true));
+          } else {
+            final aliasData = aliasSnap.data() ?? <String, dynamic>{};
+            final aliasUserId = aliasData['userId'] as String?;
+            if (aliasUserId != null &&
+                aliasUserId.isNotEmpty &&
+                aliasUserId != userId) {
+              throw StateError(
+                'Alias $aliasId belongs to $aliasUserId and cannot be accepted by $userId.',
+              );
+            }
+
+            transaction.set(
+                aliasRef,
+                {
+                  'userId': userId,
+                  'migratedAt': FieldValue.serverTimestamp(),
+                  'migratedBy': 'invite_accept',
+                  'updatedAt': FieldValue.serverTimestamp(),
+                },
+                SetOptions(merge: true));
+          }
+        }
+
+        transaction.set(
+            inviteRef,
+            {
+              'accepted': true,
+              'acceptedUserId': userId,
+              'acceptedAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
+      });
+
+      if (acceptedAliasId != null && acceptedAliasId!.isNotEmpty) {
+        await userRepository.syncMembershipsForAlias(
+          aliasId: acceptedAliasId!,
+          userId: userId,
+        );
+      }
+
+      debugPrint(
+          '✅ Invite $targetInviteId accepted successfully by ${user.uid}');
     } on FirebaseFunctionsException catch (e) {
       debugPrint('❌ FirebaseFunctionsException: ${e.code} - ${e.message}');
       rethrow;
@@ -378,6 +772,13 @@ class InviteService {
       debugPrint('❌ Error in acceptInvite: $e\n$st');
       rethrow;
     }
+  }
+
+  Future<void> acceptInviteById({
+    required String inviteId,
+    required String userId,
+  }) {
+    return acceptInvite(inviteId: inviteId, userId: userId);
   }
 
   Future<void> revokeInvite({required String inviteId}) async {
@@ -576,7 +977,8 @@ class InviteService {
     required String swimmerId,
     required App app,
   }) {
-    return _inviteRepository.collection.where('app', isEqualTo: app.name)
+    return _inviteRepository.collection
+        .where('app', isEqualTo: app.name)
         .snapshots()
         .map((snap) {
       for (final doc in snap.docs) {

@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:swim_apps_shared/auth_service.dart';
 import 'package:swim_apps_shared/objects/user/invites/app_enums.dart';
 import 'package:swim_apps_shared/objects/user/invites/app_invite.dart';
 import 'package:swim_apps_shared/objects/user/invites/invite_service.dart';
 import 'package:swim_apps_shared/objects/user/invites/invite_type.dart';
+import 'package:swim_apps_shared/repositories/invite_repository.dart';
+import 'package:swim_apps_shared/repositories/user_repository.dart';
 
 import '../../../mocks.mocks.dart';
 
@@ -201,23 +205,58 @@ void main() {
   });
 
   group('acceptInvite', () {
-    test('updates invite to accepted', () async {
+    test('updates invite to accepted and resolves alias membership', () async {
       final invite = invite0(id: 'invite1', accepted: null);
       final mockUser = MockUser();
+      final fakeDb = FakeFirebaseFirestore();
 
       when(auth.currentUser).thenReturn(mockUser);
       when(mockUser.uid).thenReturn('user123');
+      when(mockUser.email).thenReturn('swimmer@test.com');
 
-      when(inviteRepo.collection).thenReturn(MockCollectionReference());
+      await fakeDb.collection('invites').doc(invite.id).set({
+        ...invite.toJson(),
+        'aliasId': 'alias_swimmer',
+      });
+      await fakeDb.collection('aliases').doc('alias_swimmer').set({
+        'email': 'swimmer@test.com',
+        'userId': null,
+      });
+      await fakeDb.collection('memberships').doc('membership_1').set({
+        'aliasId': 'alias_swimmer',
+        'contextType': 'club',
+        'contextId': 'club_1',
+        'role': 'coach',
+      });
 
-      // We don’t assert Firestore internals, only that it doesn’t throw
-      await service.acceptInvite(
+      final localService = InviteService(
+        inviteRepository: InviteRepository(firestore: fakeDb),
+        auth: auth,
+        firestore: fakeDb,
+        functions: functions,
+        userRepository: UserRepository(
+          fakeDb,
+          authService: AuthService(firebaseAuth: auth),
+        ),
+      );
+
+      await localService.acceptInvite(
         appInvite: invite,
         userId: 'user123',
       );
 
-      // No exception = success
-      expect(true, true);
+      final updatedInvite =
+          await fakeDb.collection('invites').doc(invite.id).get();
+      final alias =
+          await fakeDb.collection('aliases').doc('alias_swimmer').get();
+      final membership =
+          await fakeDb.collection('memberships').doc('membership_1').get();
+
+      expect(updatedInvite.data()?['accepted'], isTrue);
+      expect(updatedInvite.data()?['acceptedUserId'], 'user123');
+      expect(alias.data()?['userId'], 'user123');
+      expect(membership.data()?['resolvedUserId'], 'user123');
+      expect(membership.data()?['userId'], 'user123');
     });
   });
   group('getAcceptedSwimmerIdsForCoach', () {

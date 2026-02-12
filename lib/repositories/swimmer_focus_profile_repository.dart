@@ -133,33 +133,35 @@ class SwimmerFocusProfileRepository {
     return profiles;
   }
 
-  /// Fetch focus profiles for a set of swimmers in this club.
+  /// Fetch focus profiles for a set of swimmers in THIS club.
   Future<List<SwimmerFocusProfile>> getProfilesForSwimmers(
-    Set<String> swimmerIds,
-  ) async {
+      Set<String> swimmerIds,
+      ) async {
     if (swimmerIds.isEmpty) return [];
 
     try {
-      // Firestore `whereIn` max = 10 → chunk if needed
       final List<SwimmerFocusProfile> profiles = [];
 
+      // Firestore `whereIn` max = 10 → chunk
       final chunks = swimmerIds.toList().chunked(10);
 
       for (final chunk in chunks) {
-        final snapshot =
-            await _profilesCollection.where('swimmerId', whereIn: chunk).get();
+        final snapshot = await _profilesCollection
+            .where('clubId', isEqualTo: clubId)
+            .where('swimmerId', whereIn: chunk)
+            .get();
 
-        profiles.addAll(
-          snapshot.docs.map((d) => d.data()),
-        );
+        profiles.addAll(snapshot.docs.map((d) => d.data()));
       }
 
       return profiles;
     } on FirebaseException catch (e, s) {
       debugPrint(
-        '🔥 Error fetching focus profiles for swimmers $swimmerIds: $e\n$s',
+        '🔥 Error fetching focus profiles for swimmers $swimmerIds '
+            '(clubId=$clubId): $e\n$s',
       );
       return [];
     }
   }
+
 }

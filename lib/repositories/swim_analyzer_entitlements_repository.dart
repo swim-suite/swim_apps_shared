@@ -21,7 +21,8 @@ class SwimAnalyzerEntitlementsRepository {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
-          .map((doc) => AnalyzerEntitlementPlan.fromFirestore(doc.id, doc.data()))
+          .map((doc) =>
+              AnalyzerEntitlementPlan.fromFirestore(doc.id, doc.data()))
           .toList();
     });
   }
@@ -48,14 +49,25 @@ class SwimAnalyzerEntitlementsRepository {
   }) {
     return _db
         .collection('swimAnalyzerSubscriptions')
-        .where('status', isEqualTo: 'active')
         .where('memberUids', arrayContains: userId)
-        .limit(1)
         .snapshots()
         .map((snapshot) {
-      if (snapshot.docs.isEmpty) return null;
+      QueryDocumentSnapshot<Map<String, dynamic>>? activeDoc;
+      QueryDocumentSnapshot<Map<String, dynamic>>? trialingDoc;
 
-      final doc = snapshot.docs.first;
+      for (final doc in snapshot.docs) {
+        final status = doc.data()['status']?.toString().toLowerCase();
+        if (status == 'active') {
+          activeDoc = doc;
+          break;
+        }
+        if (status == 'trialing' && trialingDoc == null) {
+          trialingDoc = doc;
+        }
+      }
+
+      final doc = activeDoc ?? trialingDoc;
+      if (doc == null) return null;
       return SwimAnalyzerSubscription.fromFirestore(doc.id, doc.data());
     });
   }
@@ -63,16 +75,32 @@ class SwimAnalyzerEntitlementsRepository {
   Future<SwimAnalyzerSubscription?> getActiveSubscriptionForUser({
     required String userId,
   }) async {
-    final snapshot = await _db
+    final activeSnapshot = await _db
         .collection('swimAnalyzerSubscriptions')
         .where('status', isEqualTo: 'active')
         .where('memberUids', arrayContains: userId)
         .limit(1)
         .get();
 
-    if (snapshot.docs.isEmpty) return null;
+    if (activeSnapshot.docs.isNotEmpty) {
+      final activeDoc = activeSnapshot.docs.first;
+      return SwimAnalyzerSubscription.fromFirestore(
+          activeDoc.id, activeDoc.data());
+    }
 
-    final doc = snapshot.docs.first;
-    return SwimAnalyzerSubscription.fromFirestore(doc.id, doc.data());
+    final trialingSnapshot = await _db
+        .collection('swimAnalyzerSubscriptions')
+        .where('status', isEqualTo: 'trialing')
+        .where('memberUids', arrayContains: userId)
+        .limit(1)
+        .get();
+
+    if (trialingSnapshot.docs.isEmpty) return null;
+
+    final trialingDoc = trialingSnapshot.docs.first;
+    return SwimAnalyzerSubscription.fromFirestore(
+      trialingDoc.id,
+      trialingDoc.data(),
+    );
   }
 }

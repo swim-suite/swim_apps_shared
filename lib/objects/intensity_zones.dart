@@ -15,7 +15,7 @@ extension IntensityZonesColoring on IntensityZone {
         return Colors.purpleAccent;
       case IntensityZone.i4:
         return Colors.purpleAccent.withBlue(10);
-        case IntensityZone.i3:
+      case IntensityZone.i3:
         return Colors.cyanAccent;
       case IntensityZone.i2:
         return Colors.cyan;
@@ -36,11 +36,14 @@ extension IntensityZoneHeartRate on IntensityZone {
         return (50, 65);
       case IntensityZone.i2: // Light to moderate aerobic, endurance base
         return (65, 75);
-      case IntensityZone.i3: // Moderate to vigorous aerobic, building aerobic fitness, "tempo"
+      case IntensityZone
+            .i3: // Moderate to vigorous aerobic, building aerobic fitness, "tempo"
         return (75, 85);
-      case IntensityZone.i4: // Vigorous to very hard, anaerobic threshold / VO2 max
+      case IntensityZone
+            .i4: // Vigorous to very hard, anaerobic threshold / VO2 max
         return (85, 95);
-      case IntensityZone.sp1: // Sprint endurance, very hard, above anaerobic threshold
+      case IntensityZone
+            .sp1: // Sprint endurance, very hard, above anaerobic threshold
         return (90, 98); // Can overlap with i4 and sp2, depends on duration
       case IntensityZone.sp2: // Shorter sprints, very hard
         return (92, 100);
@@ -48,9 +51,10 @@ extension IntensityZoneHeartRate on IntensityZone {
         return (95, 100);
       case IntensityZone.max: // All-out maximal effort, peak HR
         return (98, 100);
-      case IntensityZone.racePace: // Dependent on race distance, but generally high
-      // For longer races, it might be closer to i3/i4. For sprints, closer to sp2/sp3/max.
-      // This is a broad estimate assuming sustained race effort.
+      case IntensityZone
+            .racePace: // Dependent on race distance, but generally high
+        // For longer races, it might be closer to i3/i4. For sprints, closer to sp2/sp3/max.
+        // This is a broad estimate assuming sustained race effort.
         return (85, 100);
     }
   }
@@ -116,7 +120,7 @@ extension IntensityZoneParsingHelper on IntensityZone {
       keywords.add("zone ${name.substring(4)}"); // zone 1, zone 2
     }
     // Add other common aliases if needed
-    if (this == IntensityZone.max) keywords.addAll(["race pace", "rp"]);
+    if (this == IntensityZone.racePace) keywords.addAll(["race pace", "rp"]);
     return keywords.toSet().toList(); // Ensure unique
   }
 }

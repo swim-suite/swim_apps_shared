@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -18,11 +20,29 @@ class UserRepository extends BaseRepository {
   // The constructor is simplified to only require essential dependencies (_db and _authService).
   // The optional FirebaseCrashlytics parameter and the private _crashlytics field are removed.
   UserRepository(this._db, {required AuthService authService})
-    : _authService = authService;
+      : _authService = authService;
+
+  static const List<String> _membershipCollections = <String>[
+    'memberships',
+    'club_memberships',
+    'team_memberships',
+    'seat_memberships',
+  ];
 
   CollectionReference get usersCollection => _db.collection('users');
 
   CollectionReference get _coachesCollection => _db.collection('coaches');
+
+  CollectionReference<Map<String, dynamic>> get _aliasesCollection =>
+      _db.collection('aliases');
+
+  String _normalizeEmail(String email) => email.trim().toLowerCase();
+
+  String _stableDocId(String source) =>
+      base64Url.encode(utf8.encode(source)).replaceAll('=', '');
+
+  String _aliasIdForEmail(String normalizedEmail) =>
+      _stableDocId('alias:$normalizedEmail');
 
   /// Helper function to map a QuerySnapshot to a list of AppUser objects.
   /// This reduces code duplication in stream-based methods and isolates parsing logic.
@@ -83,11 +103,11 @@ class UserRepository extends BaseRepository {
         .snapshots()
         .map(_mapSnapshotToUsers)
         .handleError((error, stackTrace) {
-          // Catch and log errors from the stream itself (e.g., permission denied).
-          debugPrint("🔥 Error in getUsersByClub stream: $error");
-          // Return an empty list to keep the stream alive and the UI stable.
-          return <AppUser>[];
-        });
+      // Catch and log errors from the stream itself (e.g., permission denied).
+      debugPrint("🔥 Error in getUsersByClub stream: $error");
+      // Return an empty list to keep the stream alive and the UI stable.
+      return <AppUser>[];
+    });
   }
 
   // --- STREAM: Users created by me ---
@@ -100,10 +120,10 @@ class UserRepository extends BaseRepository {
         .snapshots()
         .map(_mapSnapshotToUsers)
         .handleError((error, stackTrace) {
-          // Catch and log errors from the stream itself.
-          debugPrint("🔥 Error in getUsersCreatedByMe stream: $error");
-          return <AppUser>[];
-        });
+      // Catch and log errors from the stream itself.
+      debugPrint("🔥 Error in getUsersCreatedByMe stream: $error");
+      return <AppUser>[];
+    });
   }
 
   // --- CREATE: Swimmer ---
@@ -240,55 +260,230 @@ class UserRepository extends BaseRepository {
   }
 
   // --- CREATE / UPDATE ---
+  /// Attempts to resolve the alias principal for the given email and lock it for updates.
+  ///
+  /// Dart transactions can only lock document refs (`tx.get(docRef)`), not queries.
+  /// We therefore query aliases by email and then lock the chosen doc in the same
+  /// transaction with `tx.get(reference)`.
+  Future<DocumentReference<Map<String, dynamic>>?>
+      resolveAliasForEmailForUpdate({
+    required Transaction tx,
+    required String email,
+  }) async {
+    final normalizedEmail = _normalizeEmail(email);
+    final deterministicAliasRef =
+        _aliasesCollection.doc(_aliasIdForEmail(normalizedEmail));
+    final deterministicAliasSnap = await tx.get(deterministicAliasRef);
+    if (deterministicAliasSnap.exists) {
+      return deterministicAliasRef;
+    }
+
+    final aliasByEmail = await _aliasesCollection
+        .where('email', isEqualTo: normalizedEmail)
+        .limit(1)
+        .get();
+    if (aliasByEmail.docs.isEmpty) {
+      return null;
+    }
+
+    final aliasRef = aliasByEmail.docs.first.reference;
+    final lockedAliasSnap = await tx.get(aliasRef);
+    if (!lockedAliasSnap.exists) return null;
+    return aliasRef;
+  }
+
+  Future<Set<String>> _candidateAliasIdsForEmail(String normalizedEmail) async {
+    final aliasIds = <String>{_aliasIdForEmail(normalizedEmail)};
+
+    final legacyAliasQuery = await _aliasesCollection
+        .where('email', isEqualTo: normalizedEmail)
+        .limit(10)
+        .get();
+    for (final doc in legacyAliasQuery.docs) {
+      aliasIds.add(doc.id);
+    }
+    return aliasIds;
+  }
+
+  Future<List<DocumentReference<Map<String, dynamic>>>>
+      _prefetchMembershipRefsForAliases({
+    required Iterable<String> aliasIds,
+    int perCollectionLimit = 25,
+  }) async {
+    final refsByPath = <String, DocumentReference<Map<String, dynamic>>>{};
+    for (final aliasId in aliasIds) {
+      for (final collection in _membershipCollections) {
+        final query = await _db
+            .collection(collection)
+            .where('aliasId', isEqualTo: aliasId)
+            .limit(perCollectionLimit)
+            .get();
+        for (final doc in query.docs) {
+          refsByPath[doc.reference.path] = doc.reference;
+        }
+      }
+    }
+    return refsByPath.values.toList();
+  }
+
+  Future<int> _syncMembershipsForAliases({
+    required Iterable<String> aliasIds,
+    required String userId,
+  }) async {
+    var updated = 0;
+    final deduped = aliasIds.toSet();
+    for (final aliasId in deduped) {
+      updated +=
+          await syncMembershipsForAlias(aliasId: aliasId, userId: userId);
+    }
+    return updated;
+  }
+
+  /// Updates memberships in pages to avoid transaction size limits.
+  ///
+  /// This method is idempotent: docs already resolved to [userId] are skipped.
+  Future<int> syncMembershipsForAlias({
+    required String aliasId,
+    required String userId,
+    int pageSize = 200,
+  }) async {
+    var updatedCount = 0;
+
+    for (final collection in _membershipCollections) {
+      DocumentSnapshot<Map<String, dynamic>>? cursor;
+      while (true) {
+        Query<Map<String, dynamic>> query = _db
+            .collection(collection)
+            .where('aliasId', isEqualTo: aliasId)
+            .orderBy(FieldPath.documentId)
+            .limit(pageSize);
+
+        if (cursor != null) {
+          query = query.startAfterDocument(cursor);
+        }
+
+        final page = await query.get();
+        if (page.docs.isEmpty) break;
+
+        final batch = _db.batch();
+        for (final membershipDoc in page.docs) {
+          final membershipData = membershipDoc.data();
+          final currentResolved = membershipData['resolvedUserId'] as String?;
+          final currentUserId = membershipData['userId'] as String?;
+          if (currentResolved == userId && currentUserId == userId) {
+            continue;
+          }
+
+          batch.set(
+              membershipDoc.reference,
+              {
+                'resolvedUserId': userId,
+                'userId': userId,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+          updatedCount++;
+        }
+
+        await batch.commit();
+        cursor = page.docs.last;
+        if (page.docs.length < pageSize) break;
+      }
+    }
+
+    return updatedCount;
+  }
+
   Future<void> createOrMergeUserByEmail({required AppUser newUser}) async {
+    final normalizedEmail = _normalizeEmail(newUser.email);
+    if (normalizedEmail.isEmpty) {
+      throw Exception('User email cannot be empty.');
+    }
+
+    final candidateAliasIds = await _candidateAliasIdsForEmail(normalizedEmail);
+    final optimisticMembershipRefs = await _prefetchMembershipRefsForAliases(
+      aliasIds: candidateAliasIds,
+    );
+    final aliasIdsToBackfill = <String>{...candidateAliasIds};
+
     try {
-      // 1️⃣ Search for an existing user document with same email
-      final query = await usersCollection
-          .where('email', isEqualTo: newUser.email)
-          .limit(1)
-          .get();
+      await _db.runTransaction((tx) async {
+        final userRef = usersCollection.doc(newUser.id);
+        final userSnap = await tx.get(userRef);
+        final aliasRef = await resolveAliasForEmailForUpdate(
+          tx: tx,
+          email: normalizedEmail,
+        );
+        final aliasSnap = aliasRef != null ? await tx.get(aliasRef) : null;
 
-      if (query.docs.isNotEmpty) {
-        final existingDoc = query.docs.first;
-        final existingId = existingDoc.id;
-
-        debugPrint("📬 Found existing invited user doc for ${newUser.email}");
-
-        // Make sure we have a typed Map<String, dynamic>
-        final Map<String, dynamic> existingData =
-            existingDoc.data() as Map<String, dynamic>;
-
-        // 2️⃣ Merge new UID & data into the existing document (by email)
-        final Map<String, dynamic> mergedIntoExisting = <String, dynamic>{
-          ...existingData, // keep existing fields (invitedBy, clubId...)
-          ...newUser.toJson(), // override / add new fields (name, role, etc.)
-          'id': newUser.id, // ensure we store the real uid
+        final userData = <String, dynamic>{
+          ...newUser.toJson(),
+          'id': newUser.id,
+          'email': normalizedEmail,
+          'emailNormalized': normalizedEmail,
+          'updatedAt': FieldValue.serverTimestamp(),
         };
 
-        await usersCollection
-            .doc(existingId)
-            .set(mergedIntoExisting, SetOptions(merge: true));
-
-        // 3️⃣ Optionally migrate to users/{uid} instead of users/{randomInviteId}
-        if (existingId != newUser.id) {
-          final Map<String, dynamic> mergedForUidDoc = <String, dynamic>{
-            ...mergedIntoExisting,
-          };
-
-          await usersCollection
-              .doc(newUser.id)
-              .set(mergedForUidDoc, SetOptions(merge: true));
-
-          // Optional: delete old “invited” doc to avoid duplicates
-          await usersCollection.doc(existingId).delete();
-
-          debugPrint("♻️ Migrated invited user $existingId → ${newUser.id}");
+        // All reads were executed above; writes begin here.
+        if (!userSnap.exists) {
+          tx.set(
+              userRef,
+              {
+                ...userData,
+                'createdAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+        } else {
+          tx.set(userRef, userData, SetOptions(merge: true));
         }
-      } else {
-        // 4️⃣ No existing doc → create a brand new one at users/{uid}
-        await usersCollection.doc(newUser.id).set(newUser.toJson());
-        debugPrint("✨ Created new user document for ${newUser.email}");
-      }
+
+        if (aliasRef == null || aliasSnap == null || !aliasSnap.exists) {
+          return;
+        }
+
+        aliasIdsToBackfill.add(aliasRef.id);
+
+        final aliasData = aliasSnap.data() ?? <String, dynamic>{};
+        final aliasUserId = aliasData['userId'] as String?;
+        if (aliasUserId != null &&
+            aliasUserId.isNotEmpty &&
+            aliasUserId != newUser.id) {
+          throw StateError(
+            'Alias ${aliasRef.id} already points to $aliasUserId (new uid: ${newUser.id}).',
+          );
+        }
+
+        tx.set(
+            aliasRef,
+            {
+              'email': normalizedEmail,
+              'userId': newUser.id,
+              'migratedAt': FieldValue.serverTimestamp(),
+              'migratedBy': newUser.id,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
+
+        // Opportunistic in-transaction updates for a small pre-fetched set.
+        for (final membershipRef in optimisticMembershipRefs) {
+          tx.set(
+              membershipRef,
+              {
+                'resolvedUserId': newUser.id,
+                'userId': newUser.id,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+        }
+      });
+
+      final updatedMemberships = await _syncMembershipsForAliases(
+        aliasIds: aliasIdsToBackfill,
+        userId: newUser.id,
+      );
+      debugPrint(
+        '✅ createOrMergeUserByEmail resolved ${aliasIdsToBackfill.length} alias id(s) and updated $updatedMemberships membership(s) for ${newUser.id}',
+      );
     } catch (e) {
       debugPrint("🔥 Error in createOrMergeUserByEmail: $e");
       throw Exception("Failed to create or merge user by email: $e");
@@ -360,12 +555,11 @@ class UserRepository extends BaseRepository {
   }
 
   Future<bool> userExistsByEmail(String email) async {
-    final snap = await usersCollection
-        .where("email", isEqualTo: email)
-        .limit(1)
-        .get();
+    final snap =
+        await usersCollection.where("email", isEqualTo: email).limit(1).get();
     return snap.docs.isNotEmpty;
   }
+
   Future<List<AppUser>> getUsersByEmails(List<String> emails) async {
     if (emails.isEmpty) return [];
 
@@ -379,9 +573,8 @@ class UserRepository extends BaseRepository {
           i + 30 > normalized.length ? normalized.length : i + 30,
         );
 
-        final snapshot = await usersCollection
-            .where('email', whereIn: chunk)
-            .get();
+        final snapshot =
+            await usersCollection.where('email', whereIn: chunk).get();
 
         for (final doc in snapshot.docs) {
           final user = _parseUserDoc(doc);
@@ -397,5 +590,4 @@ class UserRepository extends BaseRepository {
 
     return users;
   }
-
 }
