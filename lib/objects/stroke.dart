@@ -1,3 +1,5 @@
+import 'package:swim_apps_shared/objects/user/swimmer.dart';
+
 enum Stroke {
   butterfly('Butterfly', 'bu'),
   freestyle('Freestyle', 'fr'),
@@ -5,7 +7,8 @@ enum Stroke {
   breaststroke('Breaststroke', 'br'),
   medley('Medley', 'IM'),
   choice('Choice', 'c'),
-  unknown('Unknown', 'unknown');
+  unknown('Unknown', 'unknown'),
+  bestStroke('Best stroke', 'best');
 
   final String description;
   final String short;
@@ -24,12 +27,12 @@ enum Stroke {
 
   // 🔥 The proper way: returns a Set
   static Set<Stroke> get all => {
-        Stroke.butterfly,
-        Stroke.freestyle,
-        Stroke.backstroke,
-        Stroke.breaststroke,
-        Stroke.medley,
-      };
+    Stroke.butterfly,
+    Stroke.freestyle,
+    Stroke.backstroke,
+    Stroke.breaststroke,
+    Stroke.medley,
+  };
 }
 
 extension StrokeParsingHelper on Stroke {
@@ -49,6 +52,26 @@ extension StrokeParsingHelper on Stroke {
         return ['choice', 'ch', 'c'];
       case Stroke.unknown:
         return ['uk', 'unknown'];
+      case Stroke.bestStroke:
+        return ['best', 'best stroke'];
     }
+  }
+}
+
+extension StrokeResolution on Stroke {
+  Stroke resolveForSwimmer(Swimmer swimmer) {
+    if (this != Stroke.bestStroke) return this;
+    final primary = swimmer.primaryStroke;
+    if (primary == null || primary == Stroke.bestStroke) {
+      return Stroke.freestyle;
+    }
+    return primary;
+  }
+}
+
+extension StrokeDisplayName on Stroke {
+  String get displayName {
+    if (this == Stroke.bestStroke) return 'Best stroke';
+    return description;
   }
 }
