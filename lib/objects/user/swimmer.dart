@@ -1,5 +1,6 @@
 import 'package:swim_apps_shared/objects/user/user.dart';
 import 'package:swim_apps_shared/objects/user/user_types.dart';
+import 'package:swim_apps_shared/objects/stroke.dart';
 
 class Swimmer extends AppUser {
   String? headCoachId;
@@ -7,6 +8,7 @@ class Swimmer extends AppUser {
   String? thirdCoachId;
   List<String>? memberOfTeams;
   final List<String> mainEventIds;
+  final Stroke? primaryStroke;
 
   Swimmer({
     required super.id,
@@ -19,6 +21,7 @@ class Swimmer extends AppUser {
     super.clubId,
     super.updatedAt,
     this.memberOfTeams,
+    this.primaryStroke,
     super.creatorId,
     this.secondCoachId,
     this.thirdCoachId,
@@ -50,6 +53,7 @@ class Swimmer extends AppUser {
       creatorId: json['creatorId'] as String?,
       secondCoachId: json['secondCoachId'] as String?,
       thirdCoachId: json['thirdCoachId'] as String?,
+      primaryStroke: Stroke.fromString(json['primaryStroke'] as String?),
     );
   }
 
@@ -62,6 +66,7 @@ class Swimmer extends AppUser {
       if (thirdCoachId != null) 'thirdCoachId': thirdCoachId,
       if (memberOfTeams != null) 'memberOfTeams': memberOfTeams,
       if (mainEventIds.isNotEmpty) 'mainEventIds': mainEventIds,
+      if (primaryStroke != null) 'primaryStroke': primaryStroke!.name,
     });
     return json;
   }
@@ -87,6 +92,7 @@ class Swimmer extends AppUser {
     String? thirdCoachId,
     List<String>? memberOfTeams,
     List<String>? mainEventIds,
+    Stroke? primaryStroke,
     bool? isBetaUser,
   }) {
     final swimmer = Swimmer(
@@ -102,6 +108,7 @@ class Swimmer extends AppUser {
       creatorId: creatorId ?? this.creatorId,
       memberOfTeams: memberOfTeams ?? this.memberOfTeams,
       mainEventIds: mainEventIds ?? this.mainEventIds,
+      primaryStroke: primaryStroke ?? this.primaryStroke,
       secondCoachId: secondCoachId ?? this.secondCoachId,
       thirdCoachId: thirdCoachId ?? this.thirdCoachId,
       // Note: headCoachId is not in constructor but preserved below
