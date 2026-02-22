@@ -13,6 +13,7 @@ export 'objects/analyzes/stroke_analyze.dart';
 export 'objects/analyzes/stroke_segment_matrix.dart';
 export 'objects/analyzes/stroke_under_water_matrix.dart';
 export 'objects/per_25.dart';
+
 ///OBJECTS
 export 'objects/session_set_configuration_extension.dart';
 export 'objects/user/invites/app_enums.dart';
@@ -29,6 +30,12 @@ export 'repositories/swimmer_focus_profile_repository.dart';
 export 'repositories/user_repository.dart';
 export 'results/result_service.dart';
 export 'results/set_item_result.dart';
+export 'training_results/training_result_metadata.dart';
+export 'training_results/training_result_parser.dart';
+export 'training_results/training_result_repository.dart';
+export 'training_results/training_result_set.dart';
+export 'training_results/training_result_tag_similarity.dart';
+
 ///Ai
 export 'support/ai/interpretation_service.dart';
 export 'support/full_page_widget/my_support_requests.dart';
