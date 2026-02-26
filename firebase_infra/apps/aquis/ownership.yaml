@@ -1,0 +1,16 @@
+app: aquis
+rules_paths:
+  - "/dailyTrainingRecords/{id}"
+  - "/attendanceResponses/{id}"
+  - "/coachNotes/{id}"
+  - "/aiSubscriptions/{uid}"
+  - "/healthDailyMetrics/{id}"
+  - "/healthWorkoutMetrics/{id}"
+  - "/healthSyncState/{uid}"
+  - "/healthCoachDailyAggregates/{id}"
+  - "/completedSessions/{id}"
+index_collection_groups:
+  - "healthCoachDailyAggregates"
+  - "healthDailyMetrics"
+  - "healthWorkoutMetrics"
+storage_paths:

@@ -1,0 +1,20 @@
+app: swim_analyzer
+rules_paths:
+  - "/swimmer_overall_summaries/{swimmerId}"
+  - "/stripe_configs/{id}"
+  - "/checkout_tokens/{token}"
+  - "/swimAnalyzerSubscriptions/{id}"
+  - "/analysis_requests/{id}"
+  - "/entitlements_swim_analyzer/{planId}"
+  - "/racesAnalyzes/{raceId}"
+  - "/offTheBlockAnalyzes/{raceId}"
+  - "/strokeAnalyzes/{raceId}"
+  - "/strokeAnalyzeGroups/{raceId}"
+  - "/swimmer_overall_summaries/{docId}"
+index_collection_groups:
+  - "analysis_requests"
+  - "offTheBlockAnalyzes"
+  - "racesAnalyzes"
+  - "strokeAnalyzeGroups"
+  - "strokeAnalyzes"
+storage_paths:

@@ -1,0 +1,66 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // BEGIN swimify
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isClubAdmin(clubId) {
+      return isSignedIn()
+        && firestore.exists(
+          /databases/(default)/documents/swimClubs/$(clubId)/admins/$(request.auth.uid)
+        );
+    }
+
+    function isClubCoach(clubId) {
+      return isSignedIn()
+        && firestore.exists(
+          /databases/(default)/documents/swimClubs/$(clubId)/coaches/$(request.auth.uid)
+        );
+    }
+
+    function isClubSwimmer(clubId) {
+      return isSignedIn()
+        && firestore.exists(
+          /databases/(default)/documents/swimClubs/$(clubId)/swimmers/$(request.auth.uid)
+        );
+    }
+
+    function isClubMember(clubId) {
+      return isClubAdmin(clubId)
+        || isClubCoach(clubId)
+        || isClubSwimmer(clubId);
+    }
+
+    function isValidClubLogoUpload() {
+      return request.resource != null
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(png|jpeg)');
+    }
+
+    match /clubs/{clubId}/branding/logo.png {
+      allow read: if isClubMember(clubId);
+      allow create, update: if isClubAdmin(clubId) && isValidClubLogoUpload();
+      allow delete: if isClubAdmin(clubId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if request.time < timestamp.date(2026, 12, 31)
+        && !allPaths.matches('clubs/[^/]+/branding/logo\\.png');
+    }
+      }
+    // END swimify
+
+    // BEGIN swim_analyzer
+    // Swim Analyzer does not own shared Storage rules in phase 1.
+    // END swim_analyzer
+
+    // BEGIN aquis
+    // Aquis does not own shared Storage rules in phase 1.
+    // END aquis
+
+  }
+}

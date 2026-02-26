@@ -1,0 +1,18 @@
+{
+  "firestore": {
+    "rules": "firebase_infra/generated/firestore.rules",
+    "indexes": "firebase_infra/generated/firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "firebase_infra/generated/storage.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
+}

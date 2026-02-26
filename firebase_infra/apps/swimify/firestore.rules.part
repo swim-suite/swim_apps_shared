@@ -1,0 +1,671 @@
+
+    // ==============================================================
+    // Helper Functions
+    // ==============================================================
+
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    function isClubCreator(clubId) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/swimClubs/$(clubId))
+          .data.creatorId == request.auth.uid;
+    }
+
+
+    function isCoach(clubId) {
+      return request.auth != null && (
+        exists(
+          /databases/$(database)/documents/swimClubs/$(clubId)/coaches/$(request.auth.uid)
+        )
+        || get(
+          /databases/$(database)/documents/swimClubs/$(clubId)
+        ).data.creatorId == request.auth.uid
+      );
+    }
+
+    // Fallback for newly invited coaches before the coaches/{uid} membership
+    // doc is present in the club subcollection.
+    function isCoachByUserProfile(clubId) {
+      let profile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let role = profile.role;
+      let userType = profile.userType;
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && profile.clubId == clubId
+        && (
+          userType == 'coach'
+          || userType == 'Coach'
+          || userType == 'COACH'
+          || role == 'coach'
+          || role == 'Coach'
+          || role == 'COACH'
+        );
+    }
+
+    function isClubAdminByUserProfile(clubId) {
+      let profile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let role = profile.role;
+      let userType = profile.userType;
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && profile.clubId == clubId
+        && (
+          userType == 'clubadmin'
+          || userType == 'ClubAdmin'
+          || userType == 'CLUBADMIN'
+          || userType == 'admin'
+          || userType == 'Admin'
+          || userType == 'ADMIN'
+          || role == 'clubadmin'
+          || role == 'ClubAdmin'
+          || role == 'CLUBADMIN'
+          || role == 'admin'
+          || role == 'Admin'
+          || role == 'ADMIN'
+        );
+    }
+
+    function matchesUserIdentity(idValue) {
+      let profile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return request.auth != null
+        && idValue is string
+        && (
+          idValue == request.auth.uid
+          || (profile.uid is string && idValue == profile.uid)
+          || (profile.id is string && idValue == profile.id)
+        );
+    }
+
+    function isClubMember(clubId) {
+      return isCoach(clubId) ||
+        exists(
+          /databases/$(database)/documents/swimClubs/$(clubId)/admins/$(request.auth.uid)
+        ) ||
+        isClubAdminByUserProfile(clubId) ||
+        isCoachByUserProfile(clubId);
+    }
+
+    function userClubId() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId
+        : null;
+    }
+
+    function isCoachInOwnClub() {
+      return request.auth != null
+        && userClubId() != null
+        && isCoach(userClubId());
+    }
+
+    function isSessionInCoachClub(sessionId) {
+      return request.auth != null
+        && userClubId() != null
+        && exists(
+          /databases/$(database)/documents/swimClubs/$(userClubId())/sessions/$(sessionId)
+        );
+    }
+
+    function _sessionDoc(clubId, sessionId) {
+      return get(
+        /databases/$(database)/documents/swimClubs/$(clubId)/sessions/$(sessionId)
+      ).data;
+    }
+
+    function isSwimmerAssignedToSession(clubId, sessionId, swimmerId) {
+      return request.auth != null
+        && exists(
+          /databases/$(database)/documents/swimClubs/$(clubId)/sessions/$(sessionId)
+        )
+        && _sessionDoc(clubId, sessionId).assignedSwimmerIds is list
+        && swimmerId in _sessionDoc(clubId, sessionId).assignedSwimmerIds;
+    }
+
+    function isSwimmerInCoachClub(swimmerId) {
+      return request.auth != null
+        && userClubId() != null
+        && exists(
+          /databases/$(database)/documents/swimClubs/$(userClubId())/swimmers/$(swimmerId)
+        );
+    }
+
+    function isSwimmerInGroup(groupId) {
+      let groupData = get(
+        /databases/$(database)/documents/swimGroups/$(groupId)
+      ).data;
+      return request.auth != null && request.auth.uid in groupData.swimmerIds;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isStaff() {
+      return request.auth != null
+        && (
+          request.auth.token.staff == true
+          || request.auth.token.isStaff == true
+        );
+    }
+
+    function isClubAdmin(clubId) {
+      return request.auth != null &&
+        exists(
+          /databases/$(database)/documents/swimClubs/$(clubId)/admins/$(request.auth.uid)
+        );
+    }
+
+    function coachAssignedGroupIds(clubId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/swimClubs/$(clubId)/coaches/$(request.auth.uid))
+        && get(/databases/$(database)/documents/swimClubs/$(clubId)/coaches/$(request.auth.uid)).data.assignedGroupIds is list
+        ? get(/databases/$(database)/documents/swimClubs/$(clubId)/coaches/$(request.auth.uid)).data.assignedGroupIds
+        : [];
+    }
+
+    function canCoachManageGroup(clubId, groupId, groupCoachId) {
+      return request.auth != null
+        && (isCoach(clubId) || isCoachByUserProfile(clubId))
+        && (
+          (groupCoachId is string && matchesUserIdentity(groupCoachId))
+          || (groupId is string && groupId in coachAssignedGroupIds(clubId))
+        );
+    }
+
+    function canManageScheduleGroup(clubId, groupId, groupCoachId) {
+      return isClubAdmin(clubId) || canCoachManageGroup(clubId, groupId, groupCoachId);
+    }
+
+    match /clubSubscriptions/{clubId} {
+          // Allows any logged-in user to check if a club is active.
+          // This unblocks your app gate logic.
+          allow read: if request.auth != null;
+        }
+
+    match /clubSapSeats/{clubId} {
+      allow get, list: if isClubAdmin(clubId)
+        || isCoach(clubId)
+        || isCoachByUserProfile(clubId);
+      allow create, update, delete: if false;
+
+      match /seats/{userId} {
+        allow get: if (request.auth != null && request.auth.uid == userId)
+          || isClubAdmin(clubId)
+          || isCoach(clubId)
+          || isCoachByUserProfile(clubId);
+        allow list: if isClubAdmin(clubId)
+          || isCoach(clubId)
+          || isCoachByUserProfile(clubId);
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ==============================================================
+    // swimmer_overall_summaries
+    // Path: /swimmer_overall_summaries/{swimmerId}
+    // ==============================================================
+
+
+    match /support_requests/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow get, list: if request.auth != null
+        && (
+          resource.data.userId == request.auth.uid
+          || isStaff()
+        );
+      allow update: if isStaff();
+      allow delete: if false;
+    }
+
+    match /invites/{id} {
+        allow get, list, create, update: if true;
+    }
+
+    match /coach_swimmer_links/{id} {
+      allow create, read, update: if true;
+    }
+
+    // ==============================================================
+    // Entitlements
+    // ==============================================================
+
+    match /entitlements/{product} {
+      match /plans/{planId} {
+        allow read: if true;
+        allow create, update, delete: if false;
+      }
+    }
+
+
+    // ==============================================================
+    // Canonical intensity definitions
+    // ==============================================================
+
+    match /intensityDefinitions/{intensityId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if false;
+    }
+
+    // ==============================================================
+    // Admin settings
+    // ==============================================================
+
+    match /adminSettings/billing {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.auth.token.staff == true;
+      allow delete: if false;
+    }
+
+    // ==============================================================
+     // Swim Clubs
+     // ==============================================================
+
+     match /swimClubs/{clubId} {
+
+       // ------------------------------------------------------------
+       // 🏊 Club document
+       // ------------------------------------------------------------
+       allow get: if request.auth != null;
+       allow list: if true;                 // Needed for name availability queries
+       allow create: if request.auth != null;
+       allow update: if isClubAdmin(clubId);
+
+       // ------------------------------------------------------------
+       // 👑 ADMINS (REQUIRED for bootstrap)
+       // ------------------------------------------------------------
+       match /admins/{adminId} {
+         // Creator bootstraps themselves as admin
+         allow create: if request.auth != null
+           && request.auth.uid == adminId;
+
+         // Admins can read admins
+         allow read: if isClubAdmin(clubId) || (request.auth != null && request.auth.uid == adminId);
+
+         // Roles are immutable
+         allow update: if false;
+
+         // Admins can remove admins
+         allow delete: if isClubAdmin(clubId);
+       }
+
+       // ------------------------------------------------------------
+       // 👥 COACHES (REQUIRED for bootstrap)
+       // ------------------------------------------------------------
+       match /coaches/{coachId} {
+         function isCoachAssignmentUpdate() {
+           return request.resource.data.diff(resource.data)
+               .affectedKeys()
+               .hasOnly(['assignedGroupIds', 'updatedAt'])
+             && (!('assignedGroupIds' in request.resource.data)
+               || request.resource.data.assignedGroupIds is list);
+         }
+
+         // Coach adds themselves during onboarding
+         allow create: if request.auth != null
+           && request.auth.uid == coachId;
+
+         allow get: if isCoach(clubId) || isClubAdmin(clubId)
+           || (request.auth != null && request.auth.uid == coachId);
+
+         allow list: if isCoach(clubId) || isClubAdmin(clubId)
+           || (request.auth != null
+             && request.auth.token.email != null
+             && request.query.limit <= 1
+             && request.query.where('email', '==', request.auth.token.email));
+
+         allow update: if isClubAdmin(clubId) && isCoachAssignmentUpdate();
+         allow delete: if false;
+       }
+
+       // ------------------------------------------------------------
+       // SETTINGS
+       // ------------------------------------------------------------
+       match /settings/intensity_terminology {
+         allow read, write: if isCoach(clubId) || isClubAdmin(clubId);
+       }
+
+        match /settings/equipment_terminology {
+         allow read, write: if isCoach(clubId) || isClubAdmin(clubId);
+       }
+
+       match /settings/stroke_terminology {
+         allow read, write: if isCoach(clubId) || isClubAdmin(clubId);
+       }
+
+       match /settings/set_type_terminology {
+         allow read, write: if isCoach(clubId) || isClubAdmin(clubId);
+       }
+
+       // Canonical intensity override docs.
+       // Clubs cannot mutate canonical definitions and only override name/description.
+       match /intensityOverrides/{intensityId} {
+         allow read: if isClubMember(clubId);
+         allow create, update: if (isCoach(clubId) || isClubAdmin(clubId))
+           && exists(/databases/$(database)/documents/intensityDefinitions/$(intensityId))
+           && request.resource.data.keys().hasOnly([
+             'clubId',
+             'intensityId',
+             'customName',
+             'customDescription',
+             'createdAt',
+             'updatedAt'
+           ])
+           && request.resource.data.clubId == clubId
+           && request.resource.data.intensityId == intensityId
+           && (
+             !('customName' in request.resource.data)
+             || request.resource.data.customName is string
+             || request.resource.data.customName == null
+           )
+           && (
+             !('customDescription' in request.resource.data)
+             || request.resource.data.customDescription is string
+             || request.resource.data.customDescription == null
+           );
+         allow delete: if isCoach(clubId) || isClubAdmin(clubId);
+       }
+
+       // ------------------------------------------------------------
+       // CYCLES
+       // ------------------------------------------------------------
+       match /cycles/{eventId} {
+         allow read: if true;
+         allow create, update, delete: if isCoach(clubId);
+       }
+
+       match /loadPlan/{id} {
+         allow read: if true;
+         allow create, update: if isCoach(clubId);
+       }
+
+       match /seasonPlans/{planId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if isCoach(clubId)
+           || isCoachByUserProfile(clubId)
+           || isClubAdmin(clubId);
+       }
+
+       match /weeklyFacilityPlan/{id} {
+         allow read: if isClubMember(clubId);
+         allow write: if isCoach(clubId);
+       }
+
+       match /poolFacilities/{facilityId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if isClubAdmin(clubId);
+       }
+
+       match /poolSlotTemplates/{slotTemplateId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if isClubAdmin(clubId);
+       }
+
+       match /groupTrainingConfigs/{groupId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update: if canManageScheduleGroup(
+           clubId,
+           request.resource.data.groupId,
+           request.resource.data.groupCoachId
+         );
+         allow delete: if canManageScheduleGroup(
+           clubId,
+           resource.data.groupId,
+           resource.data.groupCoachId
+         );
+       }
+
+       match /poolRecurringAssignments/{assignmentId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update: if canManageScheduleGroup(
+           clubId,
+           request.resource.data.groupId,
+           request.resource.data.groupCoachId
+         );
+         allow delete: if canManageScheduleGroup(
+           clubId,
+           resource.data.groupId,
+           resource.data.groupCoachId
+         );
+       }
+
+       match /poolDatedSessions/{sessionId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update: if canManageScheduleGroup(
+           clubId,
+           request.resource.data.groupId,
+           request.resource.data.groupCoachId
+         );
+         allow delete: if canManageScheduleGroup(
+           clubId,
+           resource.data.groupId,
+           resource.data.groupCoachId
+         );
+       }
+
+       match /groups/{groupId} {
+         allow read: if isClubMember(clubId);
+         allow create, update, delete: if isCoach(clubId);
+       }
+
+       // ------------------------------------------------------------
+       // ⭐ COACH FAVORITE SETS (workout library)
+       // Path: /swimClubs/{clubId}/coachFavoriteSets/{favoriteSetId}
+       // ------------------------------------------------------------
+       match /coachFavoriteSets/{favoriteSetId} {
+         allow get, list: if isCoach(clubId)
+           || isCoachByUserProfile(clubId)
+           || isClubAdmin(clubId);
+
+         allow create: if (isCoach(clubId) || isCoachByUserProfile(clubId))
+           && request.resource.data.clubId == clubId
+           && matchesUserIdentity(request.resource.data.coachId);
+
+         allow update, delete: if ((isCoach(clubId)
+           || isCoachByUserProfile(clubId))
+           && matchesUserIdentity(resource.data.coachId))
+           || isClubAdmin(clubId);
+       }
+
+       match /swimmerFocusProfile/{profileId} {
+
+         // 👀 READ SINGLE DOCUMENT
+         // Any logged-in user can read
+         allow get: if isLoggedIn();
+
+         // 📚 READ COLLECTION (queries)
+         // Any logged-in user can query
+         allow list: if isLoggedIn();
+
+         // ✍️ CREATE
+         // Any coach in the club can create
+         allow create: if isLoggedIn()
+           && isCoach(clubId)
+           && request.resource.data.clubId == clubId;
+
+         // 🔁 UPDATE
+         // Coach OR the swimmer themselves
+         allow update: if isLoggedIn()
+           && (
+             isCoach(clubId)
+             || resource.data.swimmerId == request.auth.uid
+           );
+
+         // 🗑 DELETE
+         // Admin or club creator only
+         allow delete: if isLoggedIn()
+           && (
+             isClubAdmin(clubId)
+             || isClubCreator(clubId)
+           );
+       }
+
+       // ------------------------------------------------------------
+       // 📅 PLANNED SESSIONS
+       // Path: /swimClubs/{clubId}/sessions/{sessionId}
+       // ------------------------------------------------------------
+       match /sessions/{sessionId} {
+                // Swim Suite portal access is coach/admin-only.
+                allow get, list: if isCoach(clubId)
+                  || isCoachByUserProfile(clubId)
+                  || isClubAdmin(clubId);
+
+                // Coach can create/update/delete
+                allow write: if isCoach(clubId);
+
+                // ------------------------------------------------------------
+                // ✅ ATTENDANCE CONFIRMATIONS
+                // Path: /swimClubs/{clubId}/sessions/{sessionId}/attendanceConfirmations/{swimmerId}
+                // ------------------------------------------------------------
+                match /attendanceConfirmations/{swimmerId} {
+                  // Club members can view attendance confirmations.
+                  allow get, list: if isClubMember(clubId);
+
+                  // Coaches/admins can manage all confirmations.
+                  allow create, update, delete: if isCoach(clubId)
+                    || isCoachByUserProfile(clubId)
+                    || isClubAdmin(clubId);
+                }
+              }
+
+       // ------------------------------------------------------------
+       // ✅ SESSION EXECUTIONS (attendance + completion log link)
+       // Path: /swimClubs/{clubId}/executions/{executionId}
+       // ------------------------------------------------------------
+       match /executions/{executionId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if isCoach(clubId);
+       }
+
+       // ------------------------------------------------------------
+       // 📈 TRAINING RESULTS (structured set results)
+       // Path: /swimClubs/{clubId}/results/{resultSetId}
+       // ------------------------------------------------------------
+       match /results/{resultSetId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if isCoach(clubId)
+           || isCoachByUserProfile(clubId)
+           || isClubAdmin(clubId);
+       }
+
+       // ------------------------------------------------------------
+       // 📊 REPORTING DASHBOARDS (server-side aggregates)
+       // ------------------------------------------------------------
+       match /reportingDashboards/{docId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if false;
+       }
+
+       match /reportingDaily/{dayId} {
+         allow get, list: if isClubMember(clubId);
+         allow create, update, delete: if false;
+       }
+
+
+       // ------------------------------------------------------------
+       // 🏊 SWIMMERS (club membership)
+       // ------------------------------------------------------------
+       match /swimmers/{swimmerId} {
+
+         // Coaches & admins can read all swimmers
+         allow get, list: if isCoach(clubId) || isClubAdmin(clubId) || isCoachByUserProfile(clubId);
+
+         // Coach creates swimmer
+         allow create: if isCoach(clubId)
+           && request.resource.data.clubId == clubId;
+
+         // Coach updates swimmer
+         allow update: if isCoach(clubId);
+
+         // Optional: allow delete only for admins
+         allow delete: if isClubAdmin(clubId);
+       }
+
+     }
+
+    // ==============================================================
+    // Swim Sets
+    // ==============================================================
+
+    match /swimSets/{setId} {
+
+      function isSetOwner() {
+        return request.auth != null
+          && request.auth.uid == resource.data.createdByCoachId;
+      }
+
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isSetOwner();
+    }
+
+    // ==============================================================
+    // Users
+    // ==============================================================
+
+    match /users/{userId} {
+      allow create, read, update: if true;
+      allow delete: if false;
+    }
+
+    // ==================================================
+    // Completed Swim Sessions
+    // Path: /completedSwimSessions/{sessionId}
+    // ==================================================
+    match /completedSwimSessions/{sessionId} {
+      // Coaches can read logs for sessions in their own club.
+      allow get: if request.auth != null && (
+        isCoachInOwnClub()
+        && (
+          (resource.data.clubId is string && resource.data.clubId == userClubId())
+          || (
+            resource.data.swimSessionId is string
+            && isSessionInCoachClub(resource.data.swimSessionId)
+          )
+        )
+      );
+
+      // Coaches can list logs for sessions that belong to their club.
+      allow list: if request.auth != null && (
+        isCoachInOwnClub()
+        && resource.data.swimSessionId is string
+        && isSessionInCoachClub(resource.data.swimSessionId)
+      );
+
+      // Coaches can create logs for swimmers in their club.
+      // Prefer clubId scoping when provided; fallback to strict membership checks.
+      allow create: if request.auth != null
+        && request.resource.data.swimSessionId is string
+        && request.resource.data.swimmerId is string
+        && isCoachInOwnClub()
+        && (
+          request.resource.data.clubId == null
+          || (
+            request.resource.data.clubId is string
+            && request.resource.data.clubId == userClubId()
+          )
+        )
+        && (
+          (
+            request.resource.data.clubId is string
+            && request.resource.data.clubId == userClubId()
+          )
+          || (
+            isSessionInCoachClub(request.resource.data.swimSessionId)
+            && isSwimmerInCoachClub(request.resource.data.swimmerId)
+          )
+        );
+
+      allow update, delete: if request.auth != null
+        && isCoachInOwnClub()
+        && (
+          (resource.data.clubId is string && resource.data.clubId == userClubId())
+          || (
+            resource.data.swimSessionId is string
+            && isSessionInCoachClub(resource.data.swimSessionId)
+          )
+        );
+    }

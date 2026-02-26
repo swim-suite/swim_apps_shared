@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "dev": "swim-coach-support-dev",
+    "stage": "swim-coach-support-dev",
+    "prod": "swim-coach-support",
+    "default": "swim-coach-support-dev"
+  }
+}

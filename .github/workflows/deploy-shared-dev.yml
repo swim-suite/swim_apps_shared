@@ -1,0 +1,104 @@
+name: Deploy Shared Firebase Infra (DEV)
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "firebase_infra/**"
+      - "firebase.json"
+      - ".firebaserc"
+      - ".github/workflows/deploy-shared-dev.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-shared-dev:
+    runs-on: ubuntu-latest
+    environment: stage
+    env:
+      PROJECT_ID: swim-coach-support-dev
+      FIREBASE_TOOLS_VERSION: 13.35.1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate and compose shared artifacts
+        run: python3 firebase_infra/tools/manage_infra.py all
+
+      - name: Authenticate to Google Cloud (DEV)
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/681375756336/locations/global/workloadIdentityPools/github-pool/providers/github
+          service_account: github-ci-dev@swim-coach-support-dev.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@$FIREBASE_TOOLS_VERSION --prefer-offline --no-audit
+
+      - name: Deploy Firestore + Storage rules/indexes (DEV)
+        run: |
+          firebase deploy \
+            --project "$PROJECT_ID" \
+            --only firestore:rules,firestore:indexes,storage \
+            --non-interactive
+
+      - name: Publish shared-infra/deployed-dev status to source commit
+        if: ${{ secrets.SHARED_INFRA_STATUS_TOKEN != '' }}
+        env:
+          STATUS_TOKEN: ${{ secrets.SHARED_INFRA_STATUS_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          CHANGED_METADATA_FILES="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^firebase_infra/apps/.*/source_metadata\.json$' || true)"
+
+          if [ -z "$CHANGED_METADATA_FILES" ]; then
+            echo "No source metadata updates in this commit. Skipping status publication."
+            exit 0
+          fi
+
+          for metadata_file in $CHANGED_METADATA_FILES; do
+            repo="$(jq -r '.source_repo // empty' "$metadata_file")"
+            sha="$(jq -r '.source_sha // empty' "$metadata_file")"
+
+            if [ -z "$repo" ] || [ -z "$sha" ]; then
+              echo "Skipping $metadata_file: missing source_repo/source_sha"
+              continue
+            fi
+
+            payload="$(jq -nc \
+              --arg state "success" \
+              --arg context "shared-infra/deployed-dev" \
+              --arg description "Shared Firebase infra deployed to dev" \
+              --arg target_url "$RUN_URL" \
+              '{state: $state, context: $context, description: $description, target_url: $target_url}')"
+
+            curl -sS -X POST \
+              -H "Authorization: Bearer $STATUS_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/statuses/$sha" \
+              -d "$payload" >/dev/null
+
+            echo "Published shared-infra/deployed-dev for $repo@$sha"
+          done
