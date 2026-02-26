@@ -21,6 +21,7 @@ jobs:
     env:
       PROJECT_ID: swim-coach-support-dev
       FIREBASE_TOOLS_VERSION: 13.35.1
+      FIREBASE_CLI_EXPERIMENTS: googleAuth
       STATUS_TOKEN: ${{ secrets.SHARED_INFRA_STATUS_TOKEN }}
 
     steps:
@@ -46,8 +47,23 @@ jobs:
           create_credentials_file: true
           export_environment_variables: true
 
+      - name: Export Google credentials for Firebase
+        run: |
+          CREDS="${{ steps.gcp-auth.outputs.credentials_file_path }}"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDS" >> "$GITHUB_ENV"
+          echo "GOOGLE_GHA_CREDS_PATH=$CREDS" >> "$GITHUB_ENV"
+          echo "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=$CREDS" >> "$GITHUB_ENV"
+          test -f "$CREDS"
+
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify GCP auth
+        run: |
+          gcloud auth list
+          gcloud auth print-access-token >/dev/null
+          gcloud config set project "$PROJECT_ID"
+          gcloud config get-value project
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -56,6 +72,11 @@ jobs:
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@$FIREBASE_TOOLS_VERSION --prefer-offline --no-audit
+
+      - name: Verify Firebase auth context
+        run: |
+          firebase --version
+          firebase projects:list --project "$PROJECT_ID" --non-interactive
 
       - name: Deploy Firestore + Storage rules/indexes (DEV)
         run: |
