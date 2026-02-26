@@ -1,4 +1,3 @@
-    function isSignedIn() {
       return request.auth != null;
     }
 
