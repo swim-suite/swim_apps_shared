@@ -11,7 +11,7 @@ class InviteRepository {
   static const String _collectionPath = 'invites';
 
   InviteRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get collection =>
       _firestore.collection(_collectionPath);
@@ -62,11 +62,15 @@ class InviteRepository {
   // --------------------------------------------------------------------------
 
   /// 🔍 Get all invites sent by a user (optionally filtered by accepted).
-  Future<List<AppInvite>> getInvitesByInviter(String inviterId,
-      {bool? accepted}) async {
+  Future<List<AppInvite>> getInvitesByInviter(
+    String inviterId, {
+    bool? accepted,
+  }) async {
     try {
-      Query<Map<String, dynamic>> query =
-          collection.where('inviterId', isEqualTo: inviterId);
+      Query<Map<String, dynamic>> query = collection.where(
+        'inviterId',
+        isEqualTo: inviterId,
+      );
       if (accepted != null) {
         query = query.where('accepted', isEqualTo: accepted);
       }
@@ -82,12 +86,16 @@ class InviteRepository {
   }
 
   /// 🔍 Get all invites received by a specific email (optionally filtered by accepted).
-  Future<List<AppInvite>> getInvitesByInviteeEmail(String email,
-      {bool? isAccepted}) async {
+  Future<List<AppInvite>> getInvitesByInviteeEmail(
+    String email, {
+    bool? isAccepted,
+  }) async {
     try {
       final normalized = email.trim().toLowerCase();
-      Query<Map<String, dynamic>> query =
-          collection.where('receiverEmail', isEqualTo: normalized);
+      Query<Map<String, dynamic>> query = collection.where(
+        'receiverEmail',
+        isEqualTo: normalized,
+      );
       if (isAccepted != null) {
         query = query.where('accepted', isEqualTo: isAccepted);
       }
@@ -130,30 +138,30 @@ class InviteRepository {
         .snapshots();
 
     // Combine both streams into a single stream
-    return Rx.combineLatest2(
-      incoming,
-      outgoing,
-      (QuerySnapshot<Map<String, dynamic>> inc,
-          QuerySnapshot<Map<String, dynamic>> out) {
-        final allDocs = [...inc.docs, ...out.docs];
+    return Rx.combineLatest2(incoming, outgoing, (
+      QuerySnapshot<Map<String, dynamic>> inc,
+      QuerySnapshot<Map<String, dynamic>> out,
+    ) {
+      final allDocs = [...inc.docs, ...out.docs];
 
-        // Convert to model
-        return allDocs
-            .map((doc) => AppInvite.fromJson(doc.id, doc.data()))
-            .toList();
-      },
-    );
+      // Convert to model
+      return allDocs
+          .map((doc) => AppInvite.fromJson(doc.id, doc.data()))
+          .toList();
+    });
   }
 
   /// 🔍 Fetch all invites where the receiverEmail matches this email.
   /// Works for invites/{inviteId}
-  Future<List<AppInvite>> getInviteByReceiverEmail(
-      {required String email}) async {
+  Future<List<AppInvite>> getInviteByReceiverEmail({
+    required String email,
+  }) async {
     try {
       final normalized = email.trim().toLowerCase();
 
-      final snapshot =
-          await collection.where('receiverEmail', isEqualTo: normalized).get();
+      final snapshot = await collection
+          .where('receiverEmail', isEqualTo: normalized)
+          .get();
 
       return snapshot.docs
           .map((doc) => AppInvite.fromJson(doc.id, doc.data()))
@@ -167,30 +175,57 @@ class InviteRepository {
 
   /// 🔍 Alias for convenience used by InviteService.getInviteByEmail()
   Future<List<AppInvite>> getInvitesByEmail(String email) async {
-    return getInvitesByInviteeEmail(email);
+    try {
+      final normalized = email.trim().toLowerCase();
+
+      final byInviteeFuture = collection
+          .where('inviteeEmail', isEqualTo: normalized)
+          .get();
+      final byReceiverFuture = collection
+          .where('receiverEmail', isEqualTo: normalized)
+          .get();
+
+      final snapshots = await Future.wait([byInviteeFuture, byReceiverFuture]);
+      final mergedById = <String, AppInvite>{};
+      for (final snapshot in snapshots) {
+        for (final doc in snapshot.docs) {
+          mergedById[doc.id] = AppInvite.fromJson(doc.id, doc.data());
+        }
+      }
+
+      return mergedById.values.toList();
+    } catch (e, st) {
+      debugPrint('❌ Failed to get invites by email: $e');
+      debugPrint('Stack trace:\n$st');
+      rethrow;
+    }
   }
 
   /// 🔍 Get all accepted swimmers for a given coach.
   Future<List<AppInvite>> getAcceptedSwimmersForCoach(String coachId) async {
     try {
       // 1️⃣ Get ALL accepted coach↔swimmer invites
-      final snapshot =
-          await collection.where('accepted', isEqualTo: true).where(
-        'type',
-        whereIn: [
-          InviteType.coachToSwimmer.name,
-          InviteType.swimmerToCoach.name,
-        ],
-      ).get();
+      final snapshot = await collection
+          .where('accepted', isEqualTo: true)
+          .where(
+            'type',
+            whereIn: [
+              InviteType.coachToSwimmer.name,
+              InviteType.swimmerToCoach.name,
+            ],
+          )
+          .get();
 
       // 2️⃣ Filter in memory for this coach
       return snapshot.docs
           .map((d) => AppInvite.fromJson(d.id, d.data()))
-          .where((AppInvite invite) =>
-              // Coach invited swimmer
-              invite.inviterId == coachId ||
-              // Swimmer invited coach (and coach accepted)
-              invite.acceptedUserId == coachId)
+          .where(
+            (AppInvite invite) =>
+                // Coach invited swimmer
+                invite.inviterId == coachId ||
+                // Swimmer invited coach (and coach accepted)
+                invite.acceptedUserId == coachId,
+          )
           .toList();
     } catch (e, st) {
       debugPrint('❌ Failed to get accepted swimmers for coach: $e\n$st');
@@ -242,8 +277,10 @@ class InviteRepository {
         .where('inviterId', isEqualTo: coachId)
         .where('accepted', isEqualTo: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList(),
+        );
   }
 
   // --------------------------------------------------------------------------

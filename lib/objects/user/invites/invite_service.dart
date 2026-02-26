@@ -29,11 +29,7 @@ class InviteMembershipContext {
   });
 
   Map<String, dynamic> toAliasContextJson() {
-    return {
-      'type': contextType,
-      'id': contextId,
-      'role': role,
-    };
+    return {'type': contextType, 'id': contextId, 'role': role};
   }
 }
 
@@ -67,16 +63,17 @@ class InviteService {
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
     UserRepository? userRepository,
-  })  : _inviteRepository = inviteRepository ?? InviteRepository(),
-        _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
-        userRepository = userRepository ??
-            UserRepository(
-              firestore ?? FirebaseFirestore.instance,
-              authService: AuthService(firebaseAuth: auth),
-            );
+  }) : _inviteRepository = inviteRepository ?? InviteRepository(),
+       _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions =
+           functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
+       userRepository =
+           userRepository ??
+           UserRepository(
+             firestore ?? FirebaseFirestore.instance,
+             authService: AuthService(firebaseAuth: auth),
+           );
 
   // --------------------------------------------------------------------------
   // HELPERS
@@ -104,8 +101,9 @@ class InviteService {
     String? aliasId,
     String? userId,
   }) {
-    final principal =
-        aliasId != null ? 'alias:$aliasId' : 'user:${userId ?? 'unknown'}';
+    final principal = aliasId != null
+        ? 'alias:$aliasId'
+        : 'user:${userId ?? 'unknown'}';
     return _stableDocId(
       'membership:${context.collection}:${context.contextType}:${context.contextId}:${context.role}:$principal',
     );
@@ -190,9 +188,7 @@ class InviteService {
   // 🙋 REQUEST TO JOIN CLUB (user → club admin)
   // --------------------------------------------------------------------------
 
-  Future<void> requestToJoinClub({
-    required String clubId,
-  }) async {
+  Future<void> requestToJoinClub({required String clubId}) async {
     final newUser = _auth.currentUser;
     if (newUser == null) {
       throw Exception('No logged-in newUser.');
@@ -221,7 +217,8 @@ class InviteService {
     await _inviteRepository.sendInvite(invite);
 
     debugPrint(
-        '🙋 Join request created for club=$clubId by user=${newUser.uid}');
+      '🙋 Join request created for club=$clubId by user=${newUser.uid}',
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -275,8 +272,8 @@ class InviteService {
 
     final membershipCollection =
         _membershipCollections.contains(context.collection)
-            ? context.collection
-            : 'memberships';
+        ? context.collection
+        : 'memberships';
     final normalizedContext = InviteMembershipContext(
       contextType: context.contextType,
       contextId: context.contextId,
@@ -313,13 +310,15 @@ class InviteService {
       final aliasRef = isAliasPrincipal
           ? _firestore.collection('aliases').doc(aliasId)
           : null;
-      final membershipRef =
-          _firestore.collection(membershipCollection).doc(membershipId);
+      final membershipRef = _firestore
+          .collection(membershipCollection)
+          .doc(membershipId);
       final inviteRef = _firestore.collection('invites').doc(inviteId);
 
       // Firestore transactions require reads before writes.
-      final aliasSnap =
-          aliasRef != null ? await transaction.get(aliasRef) : null;
+      final aliasSnap = aliasRef != null
+          ? await transaction.get(aliasRef)
+          : null;
       final membershipSnap = await transaction.get(membershipRef);
       final inviteSnap = await transaction.get(inviteRef);
 
@@ -333,16 +332,13 @@ class InviteService {
             resolvedUserId = aliasUserId;
           }
 
-          transaction.set(
-              aliasRef!,
-              {
-                'email': normalizedEmail,
-                if (name.trim().isNotEmpty) 'name': name.trim(),
-                'invitedBy': inviter.uid,
-                'inviteContexts': FieldValue.arrayUnion([aliasContext]),
-                'updatedAt': now,
-              },
-              SetOptions(merge: true));
+          transaction.set(aliasRef!, {
+            'email': normalizedEmail,
+            if (name.trim().isNotEmpty) 'name': name.trim(),
+            'invitedBy': inviter.uid,
+            'inviteContexts': FieldValue.arrayUnion([aliasContext]),
+            'updatedAt': now,
+          }, SetOptions(merge: true));
         } else {
           transaction.set(aliasRef!, {
             'email': normalizedEmail,
@@ -369,10 +365,7 @@ class InviteService {
       if (membershipSnap.exists) {
         transaction.set(membershipRef, membershipData, SetOptions(merge: true));
       } else {
-        transaction.set(membershipRef, {
-          ...membershipData,
-          'createdAt': now,
-        });
+        transaction.set(membershipRef, {...membershipData, 'createdAt': now});
       }
 
       final inviteData = <String, dynamic>{
@@ -532,10 +525,10 @@ class InviteService {
         .limit(1)
         .snapshots()
         .map((snapshot) {
-      if (snapshot.docs.isEmpty) return null;
-      final doc = snapshot.docs.first;
-      return AppInvite.fromJson(doc.id, doc.data());
-    });
+          if (snapshot.docs.isEmpty) return null;
+          final doc = snapshot.docs.first;
+          return AppInvite.fromJson(doc.id, doc.data());
+        });
   }
 
   Stream<AppInvite?> streamPendingReceivedInvites({
@@ -560,10 +553,10 @@ class InviteService {
         .limit(1)
         .snapshots()
         .map((snap) {
-      if (snap.docs.isEmpty) return null;
-      final doc = snap.docs.first;
-      return AppInvite.fromJson(doc.id, doc.data());
-    });
+          if (snap.docs.isEmpty) return null;
+          final doc = snap.docs.first;
+          return AppInvite.fromJson(doc.id, doc.data());
+        });
   }
 
   Stream<List<AppInvite>> streamActiveLinksForUser({
@@ -579,14 +572,16 @@ class InviteService {
         .where('app', isEqualTo: app.name)
         .snapshots()
         .map((snap) {
-      return snap.docs
-          .map((d) => AppInvite.fromJson(d.id, d.data()))
-          .where((invite) =>
-              _normalizeEmail(invite.inviteeEmail) == email ||
-              invite.inviterId == userId ||
-              invite.acceptedUserId == userId)
-          .toList();
-    });
+          return snap.docs
+              .map((d) => AppInvite.fromJson(d.id, d.data()))
+              .where(
+                (invite) =>
+                    _normalizeEmail(invite.inviteeEmail) == email ||
+                    invite.inviterId == userId ||
+                    invite.acceptedUserId == userId,
+              )
+              .toList();
+        });
   }
 
   Stream<List<AppInvite>> streamPendingSentInvites({
@@ -601,8 +596,10 @@ class InviteService {
         .where('app', isEqualTo: App.swimAnalyzer.name)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => AppInvite.fromJson(d.id, d.data())).toList(),
+        );
   }
 
   // --------------------------------------------------------------------------
@@ -696,8 +693,9 @@ class InviteService {
         final aliasRef = (aliasId != null && aliasId.isNotEmpty)
             ? _firestore.collection('aliases').doc(aliasId)
             : null;
-        final aliasSnap =
-            aliasRef != null ? await transaction.get(aliasRef) : null;
+        final aliasSnap = aliasRef != null
+            ? await transaction.get(aliasRef)
+            : null;
 
         if (isAlreadyAccepted) {
           if (existingAcceptedUserId == userId) {
@@ -711,17 +709,14 @@ class InviteService {
         if (aliasRef != null) {
           if (aliasSnap == null || !aliasSnap.exists) {
             // Defensive recovery for bad state: recreate missing alias document.
-            transaction.set(
-                aliasRef,
-                {
-                  'email': _normalizeEmail(inviteeEmail),
-                  'userId': userId,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'updatedAt': FieldValue.serverTimestamp(),
-                  'migratedAt': FieldValue.serverTimestamp(),
-                  'migratedBy': 'invite_accept',
-                },
-                SetOptions(merge: true));
+            transaction.set(aliasRef, {
+              'email': _normalizeEmail(inviteeEmail),
+              'userId': userId,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'migratedAt': FieldValue.serverTimestamp(),
+              'migratedBy': 'invite_accept',
+            }, SetOptions(merge: true));
           } else {
             final aliasData = aliasSnap.data() ?? <String, dynamic>{};
             final aliasUserId = aliasData['userId'] as String?;
@@ -733,27 +728,21 @@ class InviteService {
               );
             }
 
-            transaction.set(
-                aliasRef,
-                {
-                  'userId': userId,
-                  'migratedAt': FieldValue.serverTimestamp(),
-                  'migratedBy': 'invite_accept',
-                  'updatedAt': FieldValue.serverTimestamp(),
-                },
-                SetOptions(merge: true));
+            transaction.set(aliasRef, {
+              'userId': userId,
+              'migratedAt': FieldValue.serverTimestamp(),
+              'migratedBy': 'invite_accept',
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
           }
         }
 
-        transaction.set(
-            inviteRef,
-            {
-              'accepted': true,
-              'acceptedUserId': userId,
-              'acceptedAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true));
+        transaction.set(inviteRef, {
+          'accepted': true,
+          'acceptedUserId': userId,
+          'acceptedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       });
 
       if (acceptedAliasId != null && acceptedAliasId!.isNotEmpty) {
@@ -764,7 +753,8 @@ class InviteService {
       }
 
       debugPrint(
-          '✅ Invite $targetInviteId accepted successfully by ${user.uid}');
+        '✅ Invite $targetInviteId accepted successfully by ${user.uid}',
+      );
     } on FirebaseFunctionsException catch (e) {
       debugPrint('❌ FirebaseFunctionsException: ${e.code} - ${e.message}');
       rethrow;
@@ -821,19 +811,22 @@ class InviteService {
       final snapshot = await _inviteRepository.collection
           .where('accepted', isEqualTo: true)
           .where(
-        'type',
-        whereIn: [
-          InviteType.coachToSwimmer.name,
-          InviteType.swimmerToCoach.name,
-        ],
-      ).get();
+            'type',
+            whereIn: [
+              InviteType.coachToSwimmer.name,
+              InviteType.swimmerToCoach.name,
+            ],
+          )
+          .get();
 
       final Set<String> swimmerIds = {};
 
       for (final doc in snapshot.docs) {
         final invite = AppInvite.fromJson(doc.id, doc.data());
-        final swimmerId =
-            _resolveSwimmerIdForCoach(invite: invite, coachId: coachId);
+        final swimmerId = _resolveSwimmerIdForCoach(
+          invite: invite,
+          coachId: coachId,
+        );
         if (swimmerId != null) swimmerIds.add(swimmerId);
       }
 
@@ -873,9 +866,7 @@ class InviteService {
     if (swimmerIds.isEmpty) return [];
 
     // 2️⃣ Hydrate into AppUser objects
-    final users = await userRepository.getUsersByIds(
-      swimmerIds.toList(),
-    );
+    final users = await userRepository.getUsersByIds(swimmerIds.toList());
 
     // 3️⃣ Extra safety: only swimmers, never coach
     return users
@@ -898,27 +889,49 @@ class InviteService {
 
   Future<AppInvite?> getInviteByEmail(String email) async {
     try {
-      final normalized = _normalizeEmail(email);
-      final invites = await _inviteRepository.getInvitesByEmail(normalized);
-
+      final invites = await getInvitesByEmailAll(email);
       if (invites.isEmpty) return null;
-
-      invites.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-      final pending = invites.where((i) => i.accepted == null);
-      if (pending.isNotEmpty) return pending.first;
-
-      final accepted = invites.where((i) => i.accepted == true);
-      if (accepted.isNotEmpty) return accepted.first;
-
-      final denied = invites.where((i) => i.accepted == false);
-      if (denied.isNotEmpty) return denied.first;
-
-      return null;
+      return invites.first;
     } catch (e, st) {
       debugPrint('❌ Failed to fetch invite by email: $e\n$st');
       rethrow;
     }
+  }
+
+  Future<List<AppInvite>> getInvitesByEmailAll(String email) async {
+    try {
+      final normalized = _normalizeEmail(email);
+      final invites = await _inviteRepository.getInvitesByEmail(normalized);
+      if (invites.isEmpty) return const <AppInvite>[];
+
+      final ranked = invites.toList()
+        ..sort((a, b) {
+          final rankComparison = _inviteRank(a).compareTo(_inviteRank(b));
+          if (rankComparison != 0) {
+            return rankComparison;
+          }
+          return b.createdAt.compareTo(a.createdAt);
+        });
+      return ranked;
+    } catch (e, st) {
+      debugPrint('❌ Failed to fetch invites by email: $e\n$st');
+      rethrow;
+    }
+  }
+
+  int _inviteRank(AppInvite invite) {
+    final status = _normalizeStatus(invite);
+    final declinedOrRevoked = status == 'declined' || status == 'revoked';
+    if (!declinedOrRevoked) {
+      if (invite.accepted == null) return 0;
+      if (invite.accepted == false) return 1;
+    }
+    if (invite.accepted == true) return 2;
+    return 3;
+  }
+
+  String _normalizeStatus(AppInvite invite) {
+    return invite.status?.trim().toLowerCase() ?? '';
   }
 
   Future<String?> getAppForInviteEmail({required String email}) async {
@@ -942,10 +955,12 @@ class InviteService {
     for (final doc in snap.docs) {
       final invite = AppInvite.fromJson(doc.id, doc.data());
 
-      final caseA = invite.inviterId == userId &&
+      final caseA =
+          invite.inviterId == userId &&
           _normalizeEmail(invite.inviteeEmail) == normalized;
 
-      final caseB = _normalizeEmail(invite.inviterEmail) == normalized &&
+      final caseB =
+          _normalizeEmail(invite.inviterEmail) == normalized &&
           invite.acceptedUserId == userId;
 
       if (caseA || caseB) return true;
@@ -981,19 +996,19 @@ class InviteService {
         .where('app', isEqualTo: app.name)
         .snapshots()
         .map((snap) {
-      for (final doc in snap.docs) {
-        final invite = AppInvite.fromJson(doc.id, doc.data());
+          for (final doc in snap.docs) {
+            final invite = AppInvite.fromJson(doc.id, doc.data());
 
-        final resolvedSwimmerId = _resolveSwimmerIdForCoach(
-          invite: invite,
-          coachId: coachId,
-        );
+            final resolvedSwimmerId = _resolveSwimmerIdForCoach(
+              invite: invite,
+              coachId: coachId,
+            );
 
-        if (resolvedSwimmerId == swimmerId) {
-          return invite;
-        }
-      }
-      return null;
-    });
+            if (resolvedSwimmerId == swimmerId) {
+              return invite;
+            }
+          }
+          return null;
+        });
   }
 }

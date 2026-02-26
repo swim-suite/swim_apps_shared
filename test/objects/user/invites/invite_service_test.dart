@@ -31,10 +31,12 @@ void main() {
     inviteDoc = MockDocumentReference();
 
     when(firestore.collection('invites')).thenReturn(
-        invitesCollection as CollectionReference<Map<String, dynamic>>);
+      invitesCollection as CollectionReference<Map<String, dynamic>>,
+    );
 
-    when(invitesCollection.doc(any))
-        .thenReturn(inviteDoc as DocumentReference<Map<String, dynamic>>);
+    when(
+      invitesCollection.doc(any),
+    ).thenReturn(inviteDoc as DocumentReference<Map<String, dynamic>>);
 
     when(inviteDoc.update(any)).thenAnswer((_) async {});
 
@@ -50,6 +52,7 @@ void main() {
     required String id,
     bool? accepted,
     DateTime? createdAt,
+    String? status,
   }) {
     return AppInvite(
       id: id,
@@ -62,6 +65,7 @@ void main() {
       accepted: accepted,
       acceptedUserId: accepted == true ? 'user123' : null,
       acceptedAt: accepted != null ? DateTime.now() : null,
+      status: status,
     );
   }
 
@@ -168,7 +172,7 @@ void main() {
       expect(result.id, '2');
     });
 
-    test('returns accepted if no pending exists', () async {
+    test('returns non-declined pending before accepted', () async {
       final invites = [
         invite0(id: '1', accepted: false),
         invite0(id: '2', accepted: true),
@@ -178,14 +182,12 @@ void main() {
 
       final result = await service.getInviteByEmail('swimmer@test.com');
 
-      expect(result!.accepted, true);
-      expect(result.id, '2');
+      expect(result!.accepted, false);
+      expect(result.id, '1');
     });
 
     test('returns denied if only denied exists', () async {
-      final invites = [
-        invite0(id: '1', accepted: false),
-      ];
+      final invites = [invite0(id: '1', accepted: false)];
 
       when(inviteRepo.getInvitesByEmail(any)).thenAnswer((_) async => invites);
 
@@ -201,6 +203,69 @@ void main() {
       final result = await service.getInviteByEmail('swimmer@test.com');
 
       expect(result, isNull);
+    });
+  });
+
+  group('getInvitesByEmailAll', () {
+    test('ranks pending before accepted and declined/revoked', () async {
+      final invites = [
+        invite0(
+          id: 'declined',
+          accepted: false,
+          status: 'declined',
+          createdAt: DateTime(2026, 2, 1),
+        ),
+        invite0(
+          id: 'accepted',
+          accepted: true,
+          createdAt: DateTime(2026, 2, 2),
+        ),
+        invite0(
+          id: 'pending_false',
+          accepted: false,
+          createdAt: DateTime(2026, 2, 3),
+        ),
+        invite0(
+          id: 'pending_null',
+          accepted: null,
+          createdAt: DateTime(2026, 2, 4),
+        ),
+      ];
+
+      when(inviteRepo.getInvitesByEmail(any)).thenAnswer((_) async => invites);
+
+      final ranked = await service.getInvitesByEmailAll('swimmer@test.com');
+
+      expect(ranked.map((invite) => invite.id).toList(), [
+        'pending_null',
+        'pending_false',
+        'accepted',
+        'declined',
+      ]);
+    });
+
+    test('sorts newest first within the same rank', () async {
+      final invites = [
+        invite0(
+          id: 'older_pending',
+          accepted: null,
+          createdAt: DateTime(2026, 2, 1),
+        ),
+        invite0(
+          id: 'newer_pending',
+          accepted: null,
+          createdAt: DateTime(2026, 2, 2),
+        ),
+      ];
+
+      when(inviteRepo.getInvitesByEmail(any)).thenAnswer((_) async => invites);
+
+      final ranked = await service.getInvitesByEmailAll('swimmer@test.com');
+
+      expect(ranked.map((invite) => invite.id).toList(), [
+        'newer_pending',
+        'older_pending',
+      ]);
     });
   });
 
@@ -240,17 +305,20 @@ void main() {
         ),
       );
 
-      await localService.acceptInvite(
-        appInvite: invite,
-        userId: 'user123',
-      );
+      await localService.acceptInvite(appInvite: invite, userId: 'user123');
 
-      final updatedInvite =
-          await fakeDb.collection('invites').doc(invite.id).get();
-      final alias =
-          await fakeDb.collection('aliases').doc('alias_swimmer').get();
-      final membership =
-          await fakeDb.collection('memberships').doc('membership_1').get();
+      final updatedInvite = await fakeDb
+          .collection('invites')
+          .doc(invite.id)
+          .get();
+      final alias = await fakeDb
+          .collection('aliases')
+          .doc('alias_swimmer')
+          .get();
+      final membership = await fakeDb
+          .collection('memberships')
+          .doc('membership_1')
+          .get();
 
       expect(updatedInvite.data()?['accepted'], isTrue);
       expect(updatedInvite.data()?['acceptedUserId'], 'user123');
@@ -275,13 +343,19 @@ void main() {
       when(inviteRepo.collection).thenReturn(invitesCollection);
 
       // allow chaining where(...).where(...).get()
-      when(invitesCollection.where(any,
-              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
-          .thenReturn(invitesCollection);
+      when(
+        invitesCollection.where(
+          any,
+          isEqualTo: anyNamed('isEqualTo'),
+          whereIn: anyNamed('whereIn'),
+        ),
+      ).thenReturn(invitesCollection);
 
-      when(invitesCollection.get()).thenAnswer((_) async =>
-          mockInviteQuerySnapshot(invites)
-              as QuerySnapshot<Map<String, dynamic>>);
+      when(invitesCollection.get()).thenAnswer(
+        (_) async =>
+            mockInviteQuerySnapshot(invites)
+                as QuerySnapshot<Map<String, dynamic>>,
+      );
 
       final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
 
@@ -301,13 +375,19 @@ void main() {
       ];
 
       when(inviteRepo.collection).thenReturn(invitesCollection);
-      when(invitesCollection.where(any,
-              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
-          .thenReturn(invitesCollection);
+      when(
+        invitesCollection.where(
+          any,
+          isEqualTo: anyNamed('isEqualTo'),
+          whereIn: anyNamed('whereIn'),
+        ),
+      ).thenReturn(invitesCollection);
 
-      when(invitesCollection.get()).thenAnswer((_) async =>
-          mockInviteQuerySnapshot(invites)
-              as QuerySnapshot<Map<String, dynamic>>);
+      when(invitesCollection.get()).thenAnswer(
+        (_) async =>
+            mockInviteQuerySnapshot(invites)
+                as QuerySnapshot<Map<String, dynamic>>,
+      );
 
       final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
 
@@ -333,13 +413,19 @@ void main() {
       ];
 
       when(inviteRepo.collection).thenReturn(invitesCollection);
-      when(invitesCollection.where(any,
-              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
-          .thenReturn(invitesCollection);
+      when(
+        invitesCollection.where(
+          any,
+          isEqualTo: anyNamed('isEqualTo'),
+          whereIn: anyNamed('whereIn'),
+        ),
+      ).thenReturn(invitesCollection);
 
-      when(invitesCollection.get()).thenAnswer((_) async =>
-          mockInviteQuerySnapshot(invites)
-              as QuerySnapshot<Map<String, dynamic>>);
+      when(invitesCollection.get()).thenAnswer(
+        (_) async =>
+            mockInviteQuerySnapshot(invites)
+                as QuerySnapshot<Map<String, dynamic>>,
+      );
 
       final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
 
@@ -348,12 +434,18 @@ void main() {
 
     test('returns empty set when no accepted invites exist', () async {
       when(inviteRepo.collection).thenReturn(invitesCollection);
-      when(invitesCollection.where(any,
-              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
-          .thenReturn(invitesCollection);
+      when(
+        invitesCollection.where(
+          any,
+          isEqualTo: anyNamed('isEqualTo'),
+          whereIn: anyNamed('whereIn'),
+        ),
+      ).thenReturn(invitesCollection);
 
-      when(invitesCollection.get()).thenAnswer((_) async =>
-          mockInviteQuerySnapshot([]) as QuerySnapshot<Map<String, dynamic>>);
+      when(invitesCollection.get()).thenAnswer(
+        (_) async =>
+            mockInviteQuerySnapshot([]) as QuerySnapshot<Map<String, dynamic>>,
+      );
 
       final result = await service.getAcceptedSwimmerIdsForCoach('coach1');
 
@@ -364,12 +456,18 @@ void main() {
       final coachId = 'coach1';
 
       when(inviteRepo.collection).thenReturn(invitesCollection);
-      when(invitesCollection.where(any,
-              isEqualTo: anyNamed('isEqualTo'), whereIn: anyNamed('whereIn')))
-          .thenReturn(invitesCollection);
+      when(
+        invitesCollection.where(
+          any,
+          isEqualTo: anyNamed('isEqualTo'),
+          whereIn: anyNamed('whereIn'),
+        ),
+      ).thenReturn(invitesCollection);
 
-      when(invitesCollection.get()).thenAnswer((_) async =>
-          mockInviteQuerySnapshot([]) as QuerySnapshot<Map<String, dynamic>>);
+      when(invitesCollection.get()).thenAnswer(
+        (_) async =>
+            mockInviteQuerySnapshot([]) as QuerySnapshot<Map<String, dynamic>>,
+      );
 
       final result = await service.getAcceptedSwimmerIdsForCoach(coachId);
 
