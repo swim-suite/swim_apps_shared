@@ -51,7 +51,6 @@ service firebase.storage {
       allow read, write: if request.time < timestamp.date(2026, 12, 31)
         && !allPaths.matches('clubs/[^/]+/branding/logo\\.png');
     }
-      }
     // END swimify
 
     // BEGIN swim_analyzer
