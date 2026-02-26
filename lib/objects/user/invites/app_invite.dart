@@ -20,6 +20,7 @@ class AppInvite {
   final String? clubId;
   final String? relatedEntityId;
   final DateTime? acceptedAt;
+  final String? status;
 
   const AppInvite({
     required this.id,
@@ -34,6 +35,7 @@ class AppInvite {
     this.clubId,
     this.relatedEntityId,
     this.acceptedAt,
+    this.status,
   });
 
   factory AppInvite.fromJson(String id, Map<String, dynamic> json) {
@@ -57,9 +59,15 @@ class AppInvite {
 
     return AppInvite(
       id: id,
-      inviterId: json['inviterId'] as String,
-      inviterEmail: json['inviterEmail'] as String? ?? '',
-      inviteeEmail: json['inviteeEmail'] as String,
+      inviterId: (json['inviterId'] ?? json['senderId'] ?? '')
+          .toString()
+          .trim(),
+      inviterEmail: (json['inviterEmail'] ?? json['senderEmail'] ?? '')
+          .toString(),
+      inviteeEmail: (json['inviteeEmail'] ?? json['receiverEmail'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase(),
       type: InviteType.values.firstWhere(
         (e) => e.name == json['type'],
         orElse: () => InviteType.coachToSwimmer,
@@ -74,6 +82,7 @@ class AppInvite {
       clubId: json['clubId'] as String?,
       relatedEntityId: json['relatedEntityId'] as String?,
       acceptedAt: parseDateNullable(json['acceptedAt']),
+      status: (json['status'] as String?)?.trim(),
     );
   }
 
@@ -90,6 +99,7 @@ class AppInvite {
       'clubId': clubId,
       'relatedEntityId': relatedEntityId,
       'acceptedAt': acceptedAt,
+      'status': status,
     };
   }
 
@@ -105,6 +115,7 @@ class AppInvite {
     String? clubId,
     String? relatedEntityId,
     DateTime? acceptedAt,
+    String? status,
   }) {
     return AppInvite(
       id: id,
@@ -119,6 +130,7 @@ class AppInvite {
       clubId: clubId ?? this.clubId,
       relatedEntityId: relatedEntityId ?? this.relatedEntityId,
       acceptedAt: acceptedAt ?? this.acceptedAt,
+      status: status ?? this.status,
     );
   }
 }
