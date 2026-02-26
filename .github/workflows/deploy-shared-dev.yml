@@ -1,6 +1,12 @@
 name: Deploy Shared Firebase Infra (DEV)
 
 on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy"
+        required: false
+        default: "master"
   push:
     branches:
       - master
@@ -28,6 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
           fetch-depth: 0
 
       - name: Setup Python
