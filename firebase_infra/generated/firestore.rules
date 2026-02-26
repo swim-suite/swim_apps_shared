@@ -825,6 +825,7 @@ service cloud.firestore {
     // END swim_analyzer
 
     // BEGIN aquis
+    function isSignedIn() {
       return request.auth != null;
     }
 
