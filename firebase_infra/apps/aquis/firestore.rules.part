@@ -1,0 +1,90 @@
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isCoachNoteParticipant(note) {
+      return isSignedIn() && (
+        (note.coachId is string && request.auth.uid == note.coachId) ||
+        (note.swimmerId is string && request.auth.uid == note.swimmerId)
+      );
+    }
+
+
+    match /dailyTrainingRecords/{id} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.dateKey is string
+        && request.resource.data.executedSets is list;
+      allow update: if isSignedIn()
+        && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
+    }
+
+    match /attendanceResponses/{id} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+
+    match /coachNotes/{id} {
+      allow read: if isCoachNoteParticipant(resource.data);
+      allow write: if false;
+    }
+
+    match /aiSubscriptions/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    match /healthDailyMetrics/{id} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+
+    match /healthWorkoutMetrics/{id} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+
+    match /healthSyncState/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    match /healthCoachDailyAggregates/{id} {
+      allow read: if isSignedIn()
+        && resource.data.allowedCoachIds is list
+        && request.auth.uid in resource.data.allowedCoachIds;
+      allow write: if false;
+    }
+
+
+    // Completed session logging: exactly one completion per swimmer/session doc id,
+    // swimmer can create their own completion, and swimmer/coach can read.
+    match /completedSessions/{id} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.swimmerId ||
+        (resource.data.coachId is string && request.auth.uid == resource.data.coachId)
+      );
+
+      allow create: if isSignedIn()
+        && request.resource.data.sessionId is string
+        && request.resource.data.swimmerId is string
+        && request.resource.data.status in ['asPrescribed', 'adjusted', 'notCompleted']
+        && request.resource.data.loggedBy in ['swimmer', 'coach']
+        && (
+          // Swimmer self-log
+          (request.resource.data.loggedBy == 'swimmer' &&
+            request.auth.uid == request.resource.data.swimmerId) ||
+          // Coach-log for swimmer
+          (request.resource.data.loggedBy == 'coach' &&
+            request.resource.data.coachId is string &&
+            request.auth.uid == request.resource.data.coachId)
+        );
+
+      allow update, delete: if false;
+    }

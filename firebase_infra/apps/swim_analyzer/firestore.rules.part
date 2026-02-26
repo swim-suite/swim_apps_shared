@@ -1,0 +1,144 @@
+    match /swimmer_overall_summaries/{swimmerId} {
+
+      function isSelf() {
+        return request.auth.uid == swimmerId;
+      }
+
+      function isLinkedCoach() {
+        return exists(
+          /databases/$(database)/documents/coach_swimmer_links/$(request.auth.uid + "_" + swimmerId)
+        );
+      }
+
+      allow get: if isLoggedIn() && (isSelf() || isLinkedCoach());
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    // ==============================================================
+    // Stripe / Payments
+    // ==============================================================
+
+    match /stripe_configs/{id} {
+      allow read: if true;
+    }
+
+    match /checkout_tokens/{token} {
+      allow read, write: if false;
+    }
+
+    match /swimAnalyzerSubscriptions/{id} {
+      allow read: if request.auth != null
+        && (request.auth.uid in resource.data.memberUids
+            || request.auth.uid == resource.data.owner);
+      allow write: if false;
+    }
+
+    // ==============================================================
+    // Requests / Invites / Links
+    // ==============================================================
+
+    match /analysis_requests/{id} {
+      allow create, read, update: if true;
+    }
+    match /entitlements_swim_analyzer/{planId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+  // ==============================================================
+   // Race Analyses
+   // Path: /racesAnalyzes/{raceId}
+   // ==============================================================
+
+  match /racesAnalyzes/{raceId} {
+
+    // -----------------------------
+    // READ (get + list)
+    // -----------------------------
+    allow read: if true;
+
+    // -----------------------------
+    // CREATE
+    // -----------------------------
+    allow create: if true;
+
+    // -----------------------------
+    // UPDATE
+    // -----------------------------
+    allow update: if true;
+
+    // -----------------------------
+    // DELETE
+    // -----------------------------
+    allow delete: if true;
+  }
+  match /offTheBlockAnalyzes/{raceId} {
+
+      // -----------------------------
+      // READ (get + list)
+      // -----------------------------
+      allow read: if true;
+
+      // -----------------------------
+      // CREATE
+      // -----------------------------
+      allow create: if true;
+
+      // -----------------------------
+      // UPDATE
+      // -----------------------------
+      allow update: if true;
+
+      // -----------------------------
+      // DELETE
+      // -----------------------------
+      allow delete: if true;
+    }
+    match /strokeAnalyzes/{raceId} {
+
+      // -----------------------------
+      // READ (get + list)
+      // -----------------------------
+      allow read: if true;
+
+      // -----------------------------
+      // CREATE
+      // -----------------------------
+      allow create: if true;
+
+      // -----------------------------
+      // UPDATE
+      // -----------------------------
+      allow update: if true;
+
+      // -----------------------------
+      // DELETE
+      // -----------------------------
+      allow delete: if true;
+    }
+    match /strokeAnalyzeGroups/{raceId} {
+
+      // -----------------------------
+      // READ (get + list)
+      // -----------------------------
+      allow read: if true;
+
+      // -----------------------------
+      // CREATE
+      // -----------------------------
+      allow create: if true;
+
+      // -----------------------------
+      // UPDATE
+      // -----------------------------
+      allow update: if true;
+
+      // -----------------------------
+      // DELETE
+      // -----------------------------
+      allow delete: if true;
+    }
+
+    match /swimmer_overall_summaries/{docId} {
+      allow read: if true;
+    }

@@ -1,0 +1,49 @@
+name: Validate Shared Firebase Infra
+
+on:
+  pull_request:
+    paths:
+      - "firebase_infra/**"
+      - "firebase.json"
+      - ".firebaserc"
+      - ".github/workflows/validate-shared-infra.yml"
+
+jobs:
+  validate-shared-infra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate ownership and generated artifacts
+        run: python3 firebase_infra/tools/manage_infra.py all --check
+
+      - name: Run infra unit tests
+        run: python3 -m unittest discover -s firebase_infra/tests -p 'test_*.py'
+
+      - name: Setup Java for Firebase emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@13.35.1 --prefer-offline --no-audit
+
+      - name: Compile Firestore rules with emulator
+        run: |
+          firebase emulators:exec \
+            --project swimsuite-rules-test \
+            --only firestore \
+            "echo firestore-rules-ok"
