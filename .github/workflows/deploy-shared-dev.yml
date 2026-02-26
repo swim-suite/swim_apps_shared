@@ -21,6 +21,7 @@ jobs:
     env:
       PROJECT_ID: swim-coach-support-dev
       FIREBASE_TOOLS_VERSION: 13.35.1
+      STATUS_TOKEN: ${{ secrets.SHARED_INFRA_STATUS_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -64,9 +65,8 @@ jobs:
             --non-interactive
 
       - name: Publish shared-infra/deployed-dev status to source commit
-        if: ${{ secrets.SHARED_INFRA_STATUS_TOKEN != '' }}
+        if: ${{ env.STATUS_TOKEN != '' }}
         env:
-          STATUS_TOKEN: ${{ secrets.SHARED_INFRA_STATUS_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
