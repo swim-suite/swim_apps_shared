@@ -78,11 +78,32 @@ jobs:
           firebase --version
           firebase projects:list --project "$PROJECT_ID" --non-interactive
 
-      - name: Deploy Firestore + Storage rules/indexes (DEV)
+      - name: Deploy Firestore indexes (DEV)
+        run: |
+          set +e
+          OUTPUT="$(firebase deploy \
+            --project "$PROJECT_ID" \
+            --only firestore:indexes \
+            --force \
+            --non-interactive 2>&1)"
+          STATUS=$?
+          set -e
+
+          printf '%s\n' "$OUTPUT"
+
+          if [ "$STATUS" -ne 0 ]; then
+            if printf '%s\n' "$OUTPUT" | grep -Fq "HTTP Error: 409, index already exists"; then
+              echo "Firestore reported an existing index (409). Continuing."
+              exit 0
+            fi
+            exit "$STATUS"
+          fi
+
+      - name: Deploy Firestore rules + Storage (DEV)
         run: |
           firebase deploy \
             --project "$PROJECT_ID" \
-            --only firestore:rules,firestore:indexes,storage \
+            --only firestore:rules,storage \
             --non-interactive
 
       - name: Publish shared-infra/deployed-dev status to source commit

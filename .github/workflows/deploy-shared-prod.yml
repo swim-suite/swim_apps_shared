@@ -19,6 +19,7 @@ jobs:
     env:
       PROJECT_ID: swim-coach-support
       FIREBASE_TOOLS_VERSION: 13.35.1
+      FIREBASE_CLI_EXPERIMENTS: googleAuth
 
     steps:
       - name: Checkout repository
@@ -35,12 +36,30 @@ jobs:
         run: python3 firebase_infra/tools/manage_infra.py all
 
       - name: Authenticate to Google Cloud (PROD)
+        id: gcp-auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Export Google credentials for Firebase
+        run: |
+          CREDS="${{ steps.gcp-auth.outputs.credentials_file_path }}"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDS" >> "$GITHUB_ENV"
+          echo "GOOGLE_GHA_CREDS_PATH=$CREDS" >> "$GITHUB_ENV"
+          echo "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=$CREDS" >> "$GITHUB_ENV"
+          test -f "$CREDS"
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify GCP auth
+        run: |
+          gcloud auth list
+          gcloud auth print-access-token >/dev/null
+          gcloud config set project "$PROJECT_ID"
+          gcloud config get-value project
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -50,9 +69,35 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@$FIREBASE_TOOLS_VERSION --prefer-offline --no-audit
 
-      - name: Deploy Firestore + Storage rules/indexes (PROD)
+      - name: Verify Firebase auth context
+        run: |
+          firebase --version
+          firebase projects:list --project "$PROJECT_ID" --non-interactive
+
+      - name: Deploy Firestore indexes (PROD)
+        run: |
+          set +e
+          OUTPUT="$(firebase deploy \
+            --project "$PROJECT_ID" \
+            --only firestore:indexes \
+            --force \
+            --non-interactive 2>&1)"
+          STATUS=$?
+          set -e
+
+          printf '%s\n' "$OUTPUT"
+
+          if [ "$STATUS" -ne 0 ]; then
+            if printf '%s\n' "$OUTPUT" | grep -Fq "HTTP Error: 409, index already exists"; then
+              echo "Firestore reported an existing index (409). Continuing."
+              exit 0
+            fi
+            exit "$STATUS"
+          fi
+
+      - name: Deploy Firestore + Storage rules (PROD)
         run: |
           firebase deploy \
             --project "$PROJECT_ID" \
-            --only firestore:rules,firestore:indexes,storage \
+            --only firestore:rules,storage \
             --non-interactive
