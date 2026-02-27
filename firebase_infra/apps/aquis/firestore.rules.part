@@ -6,7 +6,7 @@
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    function userClubId() {
+    function aquisUserClubId() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId
@@ -72,8 +72,8 @@
 
     match /swimClubs/{clubId}/swimmerFocusProfile/{profileId} {
       allow read: if isSignedIn()
-        && userClubId() is string
-        && userClubId() == clubId;
+        && aquisUserClubId() is string
+        && aquisUserClubId() == clubId;
       allow write: if false;
     }
 
