@@ -203,6 +203,25 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "dailyTrainingRecords",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "direct_join_requests",
       "queryScope": "COLLECTION",
       "fields": [

@@ -23,6 +23,16 @@
         { "fieldPath": "clubId", "order": "ASCENDING" },
         { "fieldPath": "dateKey", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "dailyTrainingRecords",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "dateKey", "order": "ASCENDING" },
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ],
+      "density": "SPARSE_ALL"
     }
   ],
   "fieldOverrides": []
