@@ -833,6 +833,13 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function userClubId() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId
+        : null;
+    }
+
     function isCoachNoteParticipant(note) {
       return isSignedIn() && (
         (note.coachId is string && request.auth.uid == note.coachId) ||
@@ -887,6 +894,13 @@ service cloud.firestore {
       allow read: if isSignedIn()
         && resource.data.allowedCoachIds is list
         && request.auth.uid in resource.data.allowedCoachIds;
+      allow write: if false;
+    }
+
+    match /swimClubs/{clubId}/swimmerFocusProfile/{profileId} {
+      allow read: if isSignedIn()
+        && userClubId() is string
+        && userClubId() == clubId;
       allow write: if false;
     }
 
