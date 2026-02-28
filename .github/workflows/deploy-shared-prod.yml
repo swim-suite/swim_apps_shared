@@ -77,23 +77,31 @@ jobs:
       - name: Deploy Firestore indexes (PROD)
         run: |
           set +e
-          OUTPUT="$(firebase deploy \
+          FORCE_OUTPUT="$(firebase deploy \
             --project "$PROJECT_ID" \
             --only firestore:indexes \
             --force \
             --non-interactive 2>&1)"
-          STATUS=$?
+          FORCE_STATUS=$?
           set -e
 
-          printf '%s\n' "$OUTPUT"
+          printf '%s\n' "$FORCE_OUTPUT"
 
-          if [ "$STATUS" -ne 0 ]; then
-            if printf '%s\n' "$OUTPUT" | grep -Fq "HTTP Error: 409, index already exists"; then
-              echo "Firestore reported an existing index (409). Continuing."
-              exit 0
-            fi
-            exit "$STATUS"
+          if [ "$FORCE_STATUS" -eq 0 ]; then
+            exit 0
           fi
+
+          if printf '%s\n' "$FORCE_OUTPUT" | grep -Fq "HTTP Error: 409, index already exists"; then
+            echo "Firestore index sync hit a 409 during --force deploy."
+            echo "Falling back to additive deploy so missing indexes are still created."
+            firebase deploy \
+              --project "$PROJECT_ID" \
+              --only firestore:indexes \
+              --non-interactive
+            exit 0
+          fi
+
+          exit "$FORCE_STATUS"
 
       - name: Deploy Firestore + Storage rules (PROD)
         run: |
