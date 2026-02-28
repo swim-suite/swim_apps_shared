@@ -193,6 +193,44 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "offTheBlockAnalyzes",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "clubId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "offTheBlockAnalyzes",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "swimmerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
     }
   ],
   "fieldOverrides": [

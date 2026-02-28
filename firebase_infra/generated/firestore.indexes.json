@@ -77,6 +77,25 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "checkPoints",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
       "collectionGroup": "club_memberships",
       "queryScope": "COLLECTION",
       "fields": [
@@ -147,6 +166,29 @@
     },
     {
       "collectionGroup": "competitions",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "competitions",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -163,6 +205,25 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "competitions",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
     },
     {
       "collectionGroup": "completedSwimSessions",
@@ -423,6 +484,29 @@
     },
     {
       "collectionGroup": "macroCycle",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "macroCycle",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -462,6 +546,48 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "macroCycle",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "macroCycle",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
     },
     {
       "collectionGroup": "memberships",
@@ -530,6 +656,25 @@
     },
     {
       "collectionGroup": "offTheBlockAnalyzes",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "clubId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "offTheBlockAnalyzes",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -546,6 +691,25 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "offTheBlockAnalyzes",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "swimmerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
     },
     {
       "collectionGroup": "plans",
@@ -924,6 +1088,63 @@
     },
     {
       "collectionGroup": "sessions",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "arrayConfig": "CONTAINS",
+          "fieldPath": "assignedGroupIds"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "sessions",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "arrayConfig": "CONTAINS",
+          "fieldPath": "assignedSwimmerIds"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "sessions",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "clubId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "sessions",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
@@ -959,6 +1180,25 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "sessions",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION_GROUP"
     },
     {
       "collectionGroup": "strokeAnalyzeGroups",
@@ -1061,6 +1301,29 @@
     },
     {
       "collectionGroup": "swimCamps",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
+    },
+    {
+      "collectionGroup": "swimCamps",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -1077,6 +1340,25 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "swimCamps",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
     },
     {
       "collectionGroup": "swimGroups",
@@ -1275,6 +1557,25 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "timeTrial",
+      "density": "SPARSE_ALL",
+      "fields": [
+        {
+          "fieldPath": "coachId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "queryScope": "COLLECTION"
     },
     {
       "collectionGroup": "users",
