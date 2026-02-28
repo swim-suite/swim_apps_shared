@@ -104,11 +104,11 @@ jobs:
 
           if printf '%s\n' "$FORCE_OUTPUT" | grep -Fq "HTTP Error: 409, index already exists"; then
             echo "Firestore index sync hit a 409 during --force deploy."
-            echo "Falling back to additive deploy so missing indexes are still created."
-            firebase deploy \
-              --project "$PROJECT_ID" \
-              --only firestore:indexes \
-              --non-interactive
+            echo "Falling back to API-based index sync (create missing + delete extra)."
+            python3 firebase_infra/tools/sync_firestore_indexes.py \
+              --project-id "$PROJECT_ID" \
+              --indexes-file firebase_infra/generated/firestore.indexes.json \
+              --allow-delete
             exit 0
           fi
 
