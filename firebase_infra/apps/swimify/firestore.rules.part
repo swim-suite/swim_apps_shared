@@ -713,33 +713,158 @@
         return request.auth != null && request.auth.uid == userId;
       }
 
-      function hasValidUserPayload() {
+      // Accept both legacy and current app user payload keys.
+      function hasAllowedSelfCreateKeys() {
         return request.resource.data.keys().hasOnly([
-          'displayName',
+          'id',
+          'name',
+          'lastName',
           'email',
+          'emailNormalized',
+          'photoUrl',
+          'profilePicturePath',
+          'displayName',
           'photoURL',
+          'userType',
+          'registerDate',
           'createdAt',
+          'updatedAt',
           'roles',
-          'updatedAt'
+          'role',
+          'clubId',
+          'creatorId',
+          'coachCreatorId',
+          'memberOfTeams',
+          'ownerOfTeams',
+          'isAccountHolder',
+          'secondCoachId',
+          'thirdCoachId',
+          'mainEventIds',
+          'primaryStroke',
+          'isSwimCoachSupportUser',
+          'isSwimAnalyzerProUser',
+          'isBetaUser',
+          'isReviewer'
         ]);
       }
 
-      function rolesUnchanged() {
-        return !('roles' in request.resource.data)
-          || request.resource.data.roles == resource.data.roles;
+      function hasSafeSelfCreatePayload() {
+        return (!('id' in request.resource.data) || request.resource.data.id == userId)
+          && (!('userType' in request.resource.data) || request.resource.data.userType == 'swimmer')
+          && !('clubId' in request.resource.data)
+          && !('creatorId' in request.resource.data)
+          && !('coachCreatorId' in request.resource.data)
+          && !('memberOfTeams' in request.resource.data)
+          && !('ownerOfTeams' in request.resource.data)
+          && !('isAccountHolder' in request.resource.data)
+          && !('secondCoachId' in request.resource.data)
+          && !('thirdCoachId' in request.resource.data)
+          && !('mainEventIds' in request.resource.data)
+          && !('primaryStroke' in request.resource.data)
+          && (!('roles' in request.resource.data)
+            || (request.resource.data.roles is list && request.resource.data.roles.size() == 0))
+          && !('role' in request.resource.data)
+          && (!('isSwimCoachSupportUser' in request.resource.data)
+            || request.resource.data.isSwimCoachSupportUser == false)
+          && (!('isSwimAnalyzerProUser' in request.resource.data)
+            || request.resource.data.isSwimAnalyzerProUser == false)
+          && (!('isBetaUser' in request.resource.data)
+            || request.resource.data.isBetaUser == false)
+          && (!('isReviewer' in request.resource.data)
+            || request.resource.data.isReviewer == false);
+      }
+
+      function hasAllowedSelfUpdateKeys() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'id',
+          'name',
+          'lastName',
+          'email',
+          'emailNormalized',
+          'photoUrl',
+          'profilePicturePath',
+          'displayName',
+          'photoURL',
+          'userType',
+          'registerDate',
+          'createdAt',
+          'updatedAt',
+          'roles',
+          'role',
+          'clubId',
+          'creatorId',
+          'coachCreatorId',
+          'memberOfTeams',
+          'ownerOfTeams',
+          'isAccountHolder',
+          'secondCoachId',
+          'thirdCoachId',
+          'mainEventIds',
+          'primaryStroke',
+          'isSwimCoachSupportUser',
+          'isSwimAnalyzerProUser',
+          'isBetaUser',
+          'isReviewer'
+        ]);
+      }
+
+      function protectedFieldsUnchanged() {
+        return (!('id' in request.resource.data)
+            || request.resource.data.id == userId
+            || request.resource.data.id == resource.data.id)
+          && (!('userType' in request.resource.data)
+            || request.resource.data.userType == resource.data.userType
+            || (resource.data.userType == null && request.resource.data.userType == 'swimmer'))
+          && (!('clubId' in request.resource.data)
+            || request.resource.data.clubId == resource.data.clubId)
+          && (!('creatorId' in request.resource.data)
+            || request.resource.data.creatorId == resource.data.creatorId)
+          && (!('coachCreatorId' in request.resource.data)
+            || request.resource.data.coachCreatorId == resource.data.coachCreatorId)
+          && (!('memberOfTeams' in request.resource.data)
+            || request.resource.data.memberOfTeams == resource.data.memberOfTeams)
+          && (!('ownerOfTeams' in request.resource.data)
+            || request.resource.data.ownerOfTeams == resource.data.ownerOfTeams)
+          && (!('isAccountHolder' in request.resource.data)
+            || request.resource.data.isAccountHolder == resource.data.isAccountHolder)
+          && (!('secondCoachId' in request.resource.data)
+            || request.resource.data.secondCoachId == resource.data.secondCoachId)
+          && (!('thirdCoachId' in request.resource.data)
+            || request.resource.data.thirdCoachId == resource.data.thirdCoachId)
+          && (!('mainEventIds' in request.resource.data)
+            || request.resource.data.mainEventIds == resource.data.mainEventIds)
+          && (!('primaryStroke' in request.resource.data)
+            || request.resource.data.primaryStroke == resource.data.primaryStroke)
+          && (!('roles' in request.resource.data)
+            || request.resource.data.roles == resource.data.roles)
+          && (!('role' in request.resource.data)
+            || request.resource.data.role == resource.data.role)
+          && (!('isSwimCoachSupportUser' in request.resource.data)
+            || request.resource.data.isSwimCoachSupportUser == resource.data.isSwimCoachSupportUser
+            || (resource.data.isSwimCoachSupportUser == null
+              && request.resource.data.isSwimCoachSupportUser == false))
+          && (!('isSwimAnalyzerProUser' in request.resource.data)
+            || request.resource.data.isSwimAnalyzerProUser == resource.data.isSwimAnalyzerProUser
+            || (resource.data.isSwimAnalyzerProUser == null
+              && request.resource.data.isSwimAnalyzerProUser == false))
+          && (!('isBetaUser' in request.resource.data)
+            || request.resource.data.isBetaUser == resource.data.isBetaUser
+            || (resource.data.isBetaUser == null
+              && request.resource.data.isBetaUser == false))
+          && (!('isReviewer' in request.resource.data)
+            || request.resource.data.isReviewer == resource.data.isReviewer
+            || (resource.data.isReviewer == null
+              && request.resource.data.isReviewer == false));
       }
 
       allow get: if isSelf();
       allow list: if false;
       allow create: if isSelf()
-        && hasValidUserPayload()
-        && (
-          !('roles' in request.resource.data)
-          || (request.resource.data.roles is list && request.resource.data.roles.size() == 0)
-        );
+        && hasAllowedSelfCreateKeys()
+        && hasSafeSelfCreatePayload();
       allow update: if isSelf()
-        && hasValidUserPayload()
-        && rolesUnchanged();
+        && hasAllowedSelfUpdateKeys()
+        && protectedFieldsUnchanged();
       allow delete: if false;
     }
 
