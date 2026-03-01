@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-no-alias-paths
+        name: check-no-alias-paths
+        entry: python3 scripts/check_no_alias_paths.py
+        language: system
+        pass_filenames: false

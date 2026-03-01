@@ -2,6 +2,7 @@ app: swimify
 rules_paths:
   - "/clubSubscriptions/{clubId}"
   - "/clubSapSeats/{clubId}"
+  - "/clubs/{clubId}"
   - "/support_requests/{id}"
   - "/invites/{id}"
   - "/coach_swimmer_links/{id}"

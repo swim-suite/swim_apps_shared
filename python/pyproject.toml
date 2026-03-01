@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swim-apps-shared"
+version = "0.1.0"
+description = "Shared Python primitives for SwimSuite Firestore access"
+requires-python = ">=3.11"
+dependencies = [
+  "google-cloud-firestore>=2.16.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["swim_apps_shared*"]
