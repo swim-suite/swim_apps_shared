@@ -20,6 +20,11 @@
       );
     }
 
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow create, update: if isSelf(uid);
+      allow delete: if false;
+    }
     match /users/{uid}/health_raw/{dateKey} {
       allow read: if isSelf(uid);
       allow write: if false;
@@ -90,6 +95,16 @@
       allow write: if false;
     }
 
+    match /swimClubs/{clubId}/sessions/{sessionId}/attendanceConfirmations/{swimmerId} {
+      allow read: if isSignedIn()
+        && request.auth.uid == swimmerId;
+      allow create, update: if isSignedIn()
+        && request.auth.uid == swimmerId
+        && request.resource.data.swimmerId == swimmerId
+        && request.resource.data.confirmed == true;
+      allow delete: if isSignedIn() && request.auth.uid == swimmerId;
+    }
+
     match /swimClubs/{clubId}/swimmerFocusProfile/{profileId} {
       allow read: if isSignedIn()
         && aquisUserClubId() is string
@@ -114,7 +129,10 @@
         && (
           // Swimmer self-log
           (request.resource.data.loggedBy == 'swimmer' &&
-            request.auth.uid == request.resource.data.swimmerId) ||
+            request.auth.uid == request.resource.data.swimmerId &&
+            request.resource.data.tirednessScore is int &&
+            request.resource.data.tirednessScore >= 1 &&
+            request.resource.data.tirednessScore <= 5) ||
           // Coach-log for swimmer
           (request.resource.data.loggedBy == 'coach' &&
             request.resource.data.coachId is string &&
