@@ -25,7 +25,6 @@
       allow create, update: if isSelf(uid);
       allow delete: if false;
     }
-
     match /users/{uid}/health_raw/{dateKey} {
       allow read: if isSelf(uid);
       allow write: if false;
