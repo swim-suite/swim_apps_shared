@@ -979,6 +979,26 @@ service cloud.firestore {
       );
     }
 
+    match /users/{uid}/health_raw/{dateKey} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    match /users/{uid}/health_derived/{dateKey} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    match /users/{uid}/readiness/{dateKey} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    match /users/{uid}/readiness_overrides/{dateKey} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
 
     match /dailyTrainingRecords/{id} {
       allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
