@@ -1,5 +1,9 @@
 app: aquis
 rules_paths:
+  - "/users/{uid}/health_raw/{dateKey}"
+  - "/users/{uid}/health_derived/{dateKey}"
+  - "/users/{uid}/readiness/{dateKey}"
+  - "/users/{uid}/readiness_overrides/{dateKey}"
   - "/dailyTrainingRecords/{id}"
   - "/attendanceResponses/{id}"
   - "/coachNotes/{id}"
