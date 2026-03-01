@@ -178,6 +178,39 @@
       return isClubAdmin(clubId) || canCoachManageGroup(clubId, groupId, groupCoachId);
     }
 
+    function isValidMembershipRole(role) {
+      return role == 'swimmer' || role == 'coach' || role == 'admin';
+    }
+
+    function isValidMembershipStatus(status) {
+      return status == 'active' || status == 'inactive';
+    }
+
+    function isV2ClubMemberActive(clubId, uid) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/clubs/$(clubId)/members/$(uid))
+        && get(/databases/$(database)/documents/clubs/$(clubId)/members/$(uid)).data.status == 'active';
+    }
+
+    function v2ClubMemberRole(clubId, uid) {
+      return isV2ClubMemberActive(clubId, uid)
+        ? get(/databases/$(database)/documents/clubs/$(clubId)/members/$(uid)).data.role
+        : null;
+    }
+
+    function isV2ClubMember(clubId) {
+      return request.auth != null && isV2ClubMemberActive(clubId, request.auth.uid);
+    }
+
+    function isV2ClubCoachOrAdmin(clubId) {
+      let role = v2ClubMemberRole(clubId, request.auth.uid);
+      return role == 'coach' || role == 'admin';
+    }
+
+    function isV2ClubAdmin(clubId) {
+      return v2ClubMemberRole(clubId, request.auth.uid) == 'admin';
+    }
+
     match /clubSubscriptions/{clubId} {
           // Allows any logged-in user to check if a club is active.
           // This unblocks your app gate logic.
@@ -603,11 +636,110 @@
     }
 
     // ==============================================================
+    // Clubs V2 (Identity/Membership model)
+    // ==============================================================
+
+    match /clubs/{clubId} {
+      allow get, list: if isV2ClubMember(clubId);
+      allow create, update, delete: if false;
+
+      match /members/{uid} {
+        function isSelfMembership() {
+          return request.auth != null && request.auth.uid == uid;
+        }
+
+        function hasValidMemberPayload() {
+          return request.resource.data.keys().hasOnly([
+              'uid',
+              'role',
+              'groupId',
+              'status',
+              'joinedAt',
+              'updatedAt'
+            ])
+            && request.resource.data.uid == uid
+            && isValidMembershipRole(request.resource.data.role)
+            && isValidMembershipStatus(request.resource.data.status)
+            && (!('groupId' in request.resource.data)
+              || request.resource.data.groupId == null
+              || request.resource.data.groupId is string);
+        }
+
+        function isSelfCreate() {
+          return isSelfMembership()
+            && hasValidMemberPayload()
+            && request.resource.data.role == 'swimmer'
+            && request.resource.data.status == 'active';
+        }
+
+        function isAdminWrite() {
+          return isV2ClubAdmin(clubId) && hasValidMemberPayload();
+        }
+
+        function isCoachOrAdminGroupAssignment() {
+          return isV2ClubCoachOrAdmin(clubId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'groupId',
+              'updatedAt'
+            ])
+            && (!('groupId' in request.resource.data)
+              || request.resource.data.groupId == null
+              || request.resource.data.groupId is string);
+        }
+
+        allow get: if isSelfMembership() || isV2ClubCoachOrAdmin(clubId);
+        allow list: if isV2ClubCoachOrAdmin(clubId);
+        allow create: if isSelfCreate() || isAdminWrite();
+        allow update: if isAdminWrite() || isCoachOrAdminGroupAssignment();
+        allow delete: if isSelfMembership() || isV2ClubAdmin(clubId);
+      }
+
+      match /groups/{groupId} {
+        allow get, list: if isV2ClubMember(clubId);
+        allow create, update: if isV2ClubAdmin(clubId)
+          && request.resource.data.keys().hasOnly(['name', 'coachIds', 'createdAt', 'updatedAt'])
+          && request.resource.data.name is string
+          && request.resource.data.coachIds is list;
+        allow delete: if isV2ClubAdmin(clubId);
+      }
+    }
+
+    // ==============================================================
     // Users
     // ==============================================================
 
     match /users/{userId} {
-      allow create, read, update: if true;
+      function isSelf() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function hasValidUserPayload() {
+        return request.resource.data.keys().hasOnly([
+          'displayName',
+          'email',
+          'photoURL',
+          'createdAt',
+          'roles',
+          'updatedAt'
+        ]);
+      }
+
+      function rolesUnchanged() {
+        return !('roles' in request.resource.data)
+          || request.resource.data.roles == resource.data.roles;
+      }
+
+      allow get: if isSelf();
+      allow list: if false;
+      allow create: if isSelf()
+        && hasValidUserPayload()
+        && (
+          !('roles' in request.resource.data)
+          || (request.resource.data.roles is list && request.resource.data.roles.size() == 0)
+        );
+      allow update: if isSelf()
+        && hasValidUserPayload()
+        && rolesUnchanged();
       allow delete: if false;
     }
 
