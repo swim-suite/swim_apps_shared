@@ -86,9 +86,11 @@ class AppInvite {
               ? InviteType.seatInvite
               : InviteType.swimmerToCoach;
         default:
-          throw FormatException(
-            'Unsupported invite type "$raw" for invite $id',
+          debugPrint(
+            'Unsupported invite type "$raw" for invite $id. '
+            'Defaulting to ${InviteType.coachToSwimmer.name}.',
           );
+          return InviteType.coachToSwimmer;
       }
     }
 
@@ -98,7 +100,11 @@ class AppInvite {
         case '':
           final sourceAppRaw = (json['sourceApp'] ?? '').toString().trim();
           if (sourceAppRaw.isEmpty) {
-            throw FormatException('Missing app/sourceApp for invite $id');
+            debugPrint(
+              'Missing app/sourceApp for invite $id. '
+              'Defaulting to ${App.swimAnalyzer.name}.',
+            );
+            return App.swimAnalyzer;
           }
           return parseApp(sourceAppRaw);
         case 'swimanalyzer':
@@ -112,7 +118,11 @@ class AppInvite {
         case 'aquis':
           return App.swimForge;
         default:
-          throw FormatException('Unsupported app "$raw" for invite $id');
+          debugPrint(
+            'Unsupported app "$raw" for invite $id. '
+            'Defaulting to ${App.swimAnalyzer.name}.',
+          );
+          return App.swimAnalyzer;
       }
     }
 
