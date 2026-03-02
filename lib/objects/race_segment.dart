@@ -51,59 +51,138 @@ class RaceSegment {
   // --------------------------------------------------------------------------
 
   Map<String, dynamic> toJson() => {
-        'sequence': sequence,
-        'checkPoint': checkPoint.name,
-        'accumulatedDistance': accumulatedDistance,
-        'segmentDistance': segmentDistance,
-        'splitTimeMillis': splitTimeMillis,
-        'totalTimeMillis': totalTimeMillis,
-        'underwaterDistance': underwaterDistance,
-        'strokes': strokes,
-        'dolphinKicks': dolphinKicks,
-        'breaths': breaths,
-        'avgSpeed': avgSpeed,
-        'strokeFreq': strokeFreq,
-        'strokeLength': strokeLength,
-        'strokeIndex': strokeIndex,
-        'breakoutTime': breakoutTime?.inMilliseconds,
-      };
+    'sequence': sequence,
+    'checkPoint': checkPoint.name,
+    'accumulatedDistance': accumulatedDistance,
+    'segmentDistance': segmentDistance,
+    'splitTimeMillis': splitTimeMillis,
+    'totalTimeMillis': totalTimeMillis,
+    'underwaterDistance': underwaterDistance,
+    'strokes': strokes,
+    'dolphinKicks': dolphinKicks,
+    'breaths': breaths,
+    'avgSpeed': avgSpeed,
+    'strokeFreq': strokeFreq,
+    'strokeLength': strokeLength,
+    'strokeIndex': strokeIndex,
+    'breakoutTime': breakoutTime?.inMilliseconds,
+  };
+
+  static num? _parseNum(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw;
+    if (raw is Duration) return raw.inMilliseconds;
+
+    if (raw is String) {
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty) return null;
+
+      final direct = num.tryParse(trimmed);
+      if (direct != null) return direct;
+
+      final match = RegExp(r'-?\d+(?:\.\d+)?').firstMatch(trimmed);
+      if (match == null) return null;
+      return num.tryParse(match.group(0)!);
+    }
+
+    if (raw is Map) {
+      const preferredKeys = [
+        'value',
+        'distance',
+        'meters',
+        'meter',
+        'm',
+        'count',
+        'total',
+        'milliseconds',
+        'millis',
+        'ms',
+        'time',
+      ];
+
+      for (final key in preferredKeys) {
+        final parsed = _parseNum(raw[key]);
+        if (parsed != null) return parsed;
+      }
+
+      for (final value in raw.values) {
+        final parsed = _parseNum(value);
+        if (parsed != null) return parsed;
+      }
+    }
+
+    return null;
+  }
+
+  static double _parseDouble(dynamic raw, {double fallback = 0.0}) =>
+      _parseNum(raw)?.toDouble() ?? fallback;
+
+  static double? _parseNullableDouble(dynamic raw) =>
+      _parseNum(raw)?.toDouble();
+
+  static int? _parseInt(dynamic raw) => _parseNum(raw)?.toInt();
+
+  static CheckPoint _parseCheckPoint(dynamic raw) {
+    String? checkPointName;
+
+    if (raw is String) {
+      checkPointName = raw;
+    } else if (raw is Map) {
+      const keys = ['checkPoint', 'name', 'value', 'type'];
+      for (final key in keys) {
+        final candidate = raw[key];
+        if (candidate is String && candidate.isNotEmpty) {
+          checkPointName = candidate;
+          break;
+        }
+      }
+    }
+
+    if (checkPointName == null || checkPointName.isEmpty) {
+      return CheckPoint.finish;
+    }
+
+    for (final cp in CheckPoint.values) {
+      if (cp.name == checkPointName) return cp;
+    }
+
+    final lower = checkPointName.toLowerCase();
+    for (final cp in CheckPoint.values) {
+      if (lower.contains(cp.name.toLowerCase())) return cp;
+    }
+
+    return CheckPoint.finish;
+  }
 
   factory RaceSegment.fromMap(Map<String, dynamic> map) {
-    // Renamed helpers (no shadowing of built-in types)
-    double parseDouble(dynamic v) => v == null ? 0.0 : (v as num).toDouble();
-
-    int? parseInt(dynamic v) => v == null ? null : (v as num).toInt();
-
-    // Safe checkpoint handling
-    final String? cpName = map['checkPoint'];
-    final checkPoint = CheckPoint.values.firstWhere(
-      (e) => e.name == cpName,
-      orElse: () => CheckPoint.finish, //TODO check
-    );
+    final checkPoint = _parseCheckPoint(map['checkPoint']);
+    final strokeFreqValue = map['strokeFreq'] ?? map['strokeFrequency'];
+    final strokeLengthValue = map['strokeLength'] ?? map['strokeLengthMeters'];
+    final segmentDistanceValue =
+        map['segmentDistance'] ?? map['distanceMeters'];
+    final accumulatedDistanceValue =
+        map['accumulatedDistance'] ?? segmentDistanceValue;
 
     return RaceSegment(
-      sequence: parseInt(map['sequence']) ?? 0,
+      sequence: _parseInt(map['sequence']) ?? 0,
       checkPoint: checkPoint,
-      accumulatedDistance: parseDouble(map['accumulatedDistance']),
-      segmentDistance: parseDouble(map['segmentDistance']),
+      accumulatedDistance: _parseDouble(accumulatedDistanceValue),
+      segmentDistance: _parseDouble(segmentDistanceValue),
       underwaterDistance: map['underwaterDistance'] == null
           ? null
-          : parseDouble(map['underwaterDistance']),
-      splitTimeMillis: parseInt(map['splitTimeMillis']) ?? 0,
-      totalTimeMillis: parseInt(map['totalTimeMillis']) ?? 0,
-      strokes: parseInt(map['strokes']),
-      dolphinKicks: parseInt(map['dolphinKicks']),
-      breaths: parseInt(map['breaths']),
-      avgSpeed: map['avgSpeed'] == null ? null : parseDouble(map['avgSpeed']),
-      strokeFreq:
-          map['strokeFreq'] == null ? null : parseDouble(map['strokeFreq']),
-      strokeLength:
-          map['strokeLength'] == null ? null : parseDouble(map['strokeLength']),
-      strokeIndex:
-          map['strokeIndex'] == null ? null : parseDouble(map['strokeIndex']),
+          : _parseDouble(map['underwaterDistance']),
+      splitTimeMillis: _parseInt(map['splitTimeMillis']) ?? 0,
+      totalTimeMillis: _parseInt(map['totalTimeMillis']) ?? 0,
+      strokes: _parseInt(map['strokes']),
+      dolphinKicks: _parseInt(map['dolphinKicks']),
+      breaths: _parseInt(map['breaths']),
+      avgSpeed: _parseNullableDouble(map['avgSpeed']),
+      strokeFreq: _parseNullableDouble(strokeFreqValue),
+      strokeLength: _parseNullableDouble(strokeLengthValue),
+      strokeIndex: _parseNullableDouble(map['strokeIndex']),
       breakoutTime: map['breakoutTime'] == null
           ? null
-          : Duration(milliseconds: parseInt(map['breakoutTime']) ?? 0),
+          : Duration(milliseconds: _parseInt(map['breakoutTime']) ?? 0),
     );
   }
 
