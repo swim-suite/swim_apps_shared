@@ -140,7 +140,9 @@ class AppInvite {
       type: parseInviteType(json['type']),
       app: parseApp(json['app']),
       createdAt: parseDate(json['createdAt']),
-      accepted: json['accepted'] as bool?,
+      accepted: json.containsKey('accepted')
+          ? json['accepted'] as bool?
+          : false,
       acceptedUserId: json['acceptedUserId'] as String?,
       clubId: json['clubId'] as String?,
       relatedEntityId: json['relatedEntityId'] as String?,
