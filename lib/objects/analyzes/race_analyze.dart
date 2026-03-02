@@ -88,17 +88,24 @@ class RaceAnalyze with AnalyzableBase {
     required List<RaceSegment> segments,
   }) {
     // Summary stats from RaceSegment directly
-    final finalTime =
-        segments.fold<int>(0, (int sum, s) => sum + s.splitTimeMillis);
+    final finalTime = segments.fold<int>(
+      0,
+      (int sum, s) => sum + s.splitTimeMillis,
+    );
 
-    final totalDistance =
-        segments.fold<double>(0.0, (double sum, s) => sum + s.segmentDistance);
+    final totalDistance = segments.fold<double>(
+      0.0,
+      (double sum, s) => sum + s.segmentDistance,
+    );
 
-    final totalStrokes =
-        segments.fold<int>(0, (int sum, s) => sum + (s.strokes ?? 0));
+    final totalStrokes = segments.fold<int>(
+      0,
+      (int sum, s) => sum + (s.strokes ?? 0),
+    );
 
-    final averageSpeed =
-    finalTime > 0 ? totalDistance / (finalTime / 1000.0) : 0.0;
+    final averageSpeed = finalTime > 0
+        ? totalDistance / (finalTime / 1000.0)
+        : 0.0;
 
     // Weighted metrics (time-weighted freq, distance-weighted stroke length)
     double weightedFreq = 0;
@@ -119,8 +126,9 @@ class RaceAnalyze with AnalyzableBase {
     }
 
     final avgFreq = freqTime > 0 ? weightedFreq / freqTime : 0.0;
-    final avgLength =
-    totalLengthDist > 0 ? weightedLength / totalLengthDist : 0.0;
+    final avgLength = totalLengthDist > 0
+        ? weightedLength / totalLengthDist
+        : 0.0;
 
     // Standardized metrics
     final splits25m = _calculateStandardizedSplits(segments, 25);
@@ -218,8 +226,10 @@ class RaceAnalyze with AnalyzableBase {
   // ---------------------------------------------------------------------------
   // 📊 STANDARDIZED SPLIT CALCULATION
   // ---------------------------------------------------------------------------
-  static List<int> _calculateStandardizedSplits(List<RaceSegment> segments,
-      int intervalDistance,) {
+  static List<int> _calculateStandardizedSplits(
+    List<RaceSegment> segments,
+    int intervalDistance,
+  ) {
     if (segments.isEmpty) return [];
 
     final splits = <int>[];
@@ -305,6 +315,162 @@ class RaceAnalyze with AnalyzableBase {
   // ---------------------------------------------------------------------------
   // 🔥 FIRESTORE DESERIALIZATION
   // ---------------------------------------------------------------------------
+  static num? _parseNum(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw;
+    if (raw is Duration) return raw.inMilliseconds;
+
+    if (raw is String) {
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty) return null;
+
+      final direct = num.tryParse(trimmed);
+      if (direct != null) return direct;
+
+      final match = RegExp(r'-?\d+(?:\.\d+)?').firstMatch(trimmed);
+      if (match == null) return null;
+      return num.tryParse(match.group(0)!);
+    }
+
+    if (raw is Map) {
+      const preferredKeys = [
+        'distance',
+        'value',
+        'meters',
+        'meter',
+        'm',
+        'count',
+        'total',
+        'milliseconds',
+        'millis',
+        'ms',
+        'time',
+        'seconds',
+        'sec',
+        's',
+      ];
+      for (final key in preferredKeys) {
+        final parsed = _parseNum(raw[key]);
+        if (parsed != null) return parsed;
+      }
+
+      for (final value in raw.values) {
+        final parsed = _parseNum(value);
+        if (parsed != null) return parsed;
+      }
+    }
+
+    return null;
+  }
+
+  static int? _parseInt(dynamic raw) => _parseNum(raw)?.round();
+
+  static double? _parseDouble(dynamic raw) => _parseNum(raw)?.toDouble();
+
+  static double _parseDoubleOrZero(dynamic raw) => _parseDouble(raw) ?? 0.0;
+
+  static int? _parseDistance(dynamic raw) => _parseInt(raw);
+
+  static String? _parseString(
+    dynamic raw, {
+    List<String> preferredKeys = const ['name', 'value', 'type'],
+  }) {
+    if (raw == null) return null;
+    if (raw is String) {
+      final trimmed = raw.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+
+    if (raw is num || raw is bool) return raw.toString();
+
+    if (raw is Map) {
+      for (final key in preferredKeys) {
+        final parsed = _parseString(raw[key], preferredKeys: preferredKeys);
+        if (parsed != null) return parsed;
+      }
+      for (final value in raw.values) {
+        final parsed = _parseString(value, preferredKeys: preferredKeys);
+        if (parsed != null) return parsed;
+      }
+    }
+
+    return null;
+  }
+
+  static DateTime? _parseDate(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is DateTime) return raw;
+    if (raw is String) return DateTime.tryParse(raw);
+    if (raw is Map) {
+      final seconds = _parseInt(raw['_seconds'] ?? raw['seconds']);
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
+      }
+      final millis = _parseInt(
+        raw['milliseconds'] ?? raw['millis'] ?? raw['ms'] ?? raw['value'],
+      );
+      if (millis != null) {
+        return DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
+      }
+    }
+    return null;
+  }
+
+  static PoolLength _parsePoolLength(dynamic raw) {
+    final candidate = _parseString(
+      raw,
+      preferredKeys: const ['poolLength', 'name', 'value', 'type'],
+    );
+    if (candidate == null) return PoolLength.unknown;
+
+    for (final value in PoolLength.values) {
+      if (value.name == candidate) return value;
+    }
+    return PoolLength.unknown;
+  }
+
+  static Stroke _parseStroke(dynamic raw) {
+    final candidate = _parseString(
+      raw,
+      preferredKeys: const ['stroke', 'name', 'value', 'type'],
+    );
+    if (candidate == null) return Stroke.unknown;
+
+    for (final value in Stroke.values) {
+      if (value.name == candidate) return value;
+    }
+    return Stroke.unknown;
+  }
+
+  static List<dynamic> _rawList(dynamic raw) {
+    if (raw is List) return raw;
+    if (raw is Map) {
+      final values = raw['values'] ?? raw['items'] ?? raw['list'];
+      if (values is List) return values;
+      return raw.values.toList();
+    }
+    return const [];
+  }
+
+  static List<int> _parseIntList(dynamic raw) =>
+      _rawList(raw).map(_parseInt).whereType<int>().toList();
+
+  static List<double> _parseDoubleList(dynamic raw) =>
+      _rawList(raw).map(_parseDouble).whereType<double>().toList();
+
+  static List<RaceSegment> _parseSegments(dynamic raw) {
+    final parsed = <RaceSegment>[];
+    for (final item in _rawList(raw)) {
+      if (item is Map<String, dynamic>) {
+        parsed.add(RaceSegment.fromMap(item));
+      } else if (item is Map) {
+        parsed.add(RaceSegment.fromMap(Map<String, dynamic>.from(item)));
+      }
+    }
+    return parsed;
+  }
+
   factory RaceAnalyze.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
@@ -312,34 +478,33 @@ class RaceAnalyze with AnalyzableBase {
 
     final race = RaceAnalyze(
       id: doc.id,
-      raceAnalyzeRequestId: data['raceAnalyzeRequestId'],
-      eventName: data['eventName'],
-      raceName: data['raceName'],
-      aiInterpretation: data['aiInterpretation'],
-      raceDate: data['raceDate'] != null
-          ? (data['raceDate'] as Timestamp).toDate()
-          : null,
-      poolLength: PoolLength.values.byName(data['poolLength'] ?? 'unknown'),
-      stroke: Stroke.values.byName(data['stroke'] ?? 'unknown'),
-      distance: data['distance'],
-      segments: (data['segments'] as List<dynamic>)
-          .map((e) => RaceSegment.fromMap(e as Map<String, dynamic>))
-          .toList(),
-      finalTime: data['finalTime'],
-      totalDistance: (data['totalDistance'] as num).toDouble(),
-      totalStrokes: data['totalStrokes'],
-      averageSpeedMetersPerSecond:
-          (data['averageSpeedMetersPerSecond'] as num).toDouble(),
-      averageStrokeFrequency:
-          (data['averageStrokeFrequency'] as num).toDouble(),
-      averageStrokeLengthMeters:
-          (data['averageStrokeLengthMeters'] as num).toDouble(),
-      splits25m: List<int>.from(data['splits25m']),
-      splits50m: List<int>.from(data['splits50m']),
-      speedPer25m: List<double>.from(data['speedPer25m']),
-      strokesPer25m: List<int>.from(data['strokesPer25m']),
-      frequencyPer25m: List<double>.from(data['frequencyPer25m']),
-      strokeLengthPer25m: List<double>.from(data['strokeLengthPer25m']),
+      raceAnalyzeRequestId: _parseString(data['raceAnalyzeRequestId']),
+      eventName: _parseString(data['eventName']),
+      raceName: _parseString(data['raceName']),
+      aiInterpretation: _parseString(data['aiInterpretation']),
+      raceDate: _parseDate(data['raceDate']),
+      poolLength: _parsePoolLength(data['poolLength']),
+      stroke: _parseStroke(data['stroke']),
+      distance: _parseDistance(data['distance']),
+      segments: _parseSegments(data['segments']),
+      finalTime: _parseInt(data['finalTime']) ?? 0,
+      totalDistance: _parseDoubleOrZero(data['totalDistance']),
+      totalStrokes: _parseInt(data['totalStrokes']) ?? 0,
+      averageSpeedMetersPerSecond: _parseDoubleOrZero(
+        data['averageSpeedMetersPerSecond'],
+      ),
+      averageStrokeFrequency: _parseDoubleOrZero(
+        data['averageStrokeFrequency'],
+      ),
+      averageStrokeLengthMeters: _parseDoubleOrZero(
+        data['averageStrokeLengthMeters'],
+      ),
+      splits25m: _parseIntList(data['splits25m']),
+      splits50m: _parseIntList(data['splits50m']),
+      speedPer25m: _parseDoubleList(data['speedPer25m']),
+      strokesPer25m: _parseIntList(data['strokesPer25m']),
+      frequencyPer25m: _parseDoubleList(data['frequencyPer25m']),
+      strokeLengthPer25m: _parseDoubleList(data['strokeLengthPer25m']),
     );
 
     race.loadAnalyzableBase(data, doc.id);
