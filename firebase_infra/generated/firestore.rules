@@ -1104,11 +1104,18 @@ service cloud.firestore {
       );
     }
 
+    function aquisCanReadAssignedSession(sessionData) {
+      return isSignedIn()
+        && sessionData.assignedSwimmerIds is list
+        && request.auth.uid in sessionData.assignedSwimmerIds;
+    }
+
     match /users/{uid} {
       allow read: if isSelf(uid);
       allow create, update: if isSelf(uid);
       allow delete: if false;
     }
+
     match /users/{uid}/health_raw/{dateKey} {
       allow read: if isSelf(uid);
       allow write: if false;
@@ -1177,6 +1184,18 @@ service cloud.firestore {
         && resource.data.allowedCoachIds is list
         && request.auth.uid in resource.data.allowedCoachIds;
       allow write: if false;
+    }
+
+    match /swimSessions/{sessionId} {
+      allow get, list: if aquisCanReadAssignedSession(resource.data);
+    }
+
+    match /swimClubs/{clubId}/sessions/{sessionId} {
+      allow get, list: if aquisCanReadAssignedSession(resource.data);
+    }
+
+    match /swimClubs/{clubId}/swimSessions/{sessionId} {
+      allow get, list: if aquisCanReadAssignedSession(resource.data);
     }
 
     match /swimClubs/{clubId}/sessions/{sessionId}/attendanceConfirmations/{swimmerId} {
