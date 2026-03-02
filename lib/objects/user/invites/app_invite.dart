@@ -57,6 +57,61 @@ class AppInvite {
       return null;
     }
 
+    InviteType parseInviteType(dynamic raw) {
+      final normalized = (raw ?? '').toString().trim().toLowerCase();
+      switch (normalized) {
+        case 'coachtoswimmer':
+        case 'coach_invite':
+        case 'coachinvite':
+          return InviteType.coachToSwimmer;
+        case 'swimmertocoach':
+        case 'swimmer_invite':
+        case 'swimmerinvite':
+          return InviteType.swimmerToCoach;
+        case 'clubinvite':
+        case 'club_invite':
+        case 'club_member':
+          return InviteType.clubInvite;
+        case 'seatinvite':
+        case 'seat_invite':
+        case 'seat':
+          return InviteType.seatInvite;
+        case 'generic_invite':
+        case 'genericinvite':
+          final hasClubScope =
+              (json['clubId'] ?? '').toString().trim().isNotEmpty;
+          return hasClubScope
+              ? InviteType.seatInvite
+              : InviteType.swimmerToCoach;
+        default:
+          throw FormatException('Unsupported invite type "$raw" for invite $id');
+      }
+    }
+
+    App parseApp(dynamic raw) {
+      final normalized = (raw ?? '').toString().trim().toLowerCase();
+      switch (normalized) {
+        case '':
+          final sourceAppRaw = (json['sourceApp'] ?? '').toString().trim();
+          if (sourceAppRaw.isEmpty) {
+            throw FormatException('Missing app/sourceApp for invite $id');
+          }
+          return parseApp(sourceAppRaw);
+        case 'swimanalyzer':
+        case 'swim_analyzer':
+          return App.swimAnalyzer;
+        case 'swimsuite':
+        case 'swim_suite':
+          return App.swimSuite;
+        case 'swimforge':
+        case 'swim_forge':
+        case 'aquis':
+          return App.swimForge;
+        default:
+          throw FormatException('Unsupported app "$raw" for invite $id');
+      }
+    }
+
     return AppInvite(
       id: id,
       inviterId: (json['inviterId'] ?? json['senderId'] ?? '')
@@ -68,16 +123,10 @@ class AppInvite {
           .toString()
           .trim()
           .toLowerCase(),
-      type: InviteType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => InviteType.coachToSwimmer,
-      ),
-      app: App.values.firstWhere(
-        (e) => e.name == json['app'],
-        orElse: () => App.swimAnalyzer,
-      ),
+      type: parseInviteType(json['type']),
+      app: parseApp(json['app']),
       createdAt: parseDate(json['createdAt']),
-      accepted: json['accepted'] as bool? ?? false,
+      accepted: json['accepted'] as bool?,
       acceptedUserId: json['acceptedUserId'] as String?,
       clubId: json['clubId'] as String?,
       relatedEntityId: json['relatedEntityId'] as String?,

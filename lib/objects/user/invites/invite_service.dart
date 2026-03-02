@@ -50,6 +50,25 @@ class InviteResult {
   });
 }
 
+@immutable
+class MembershipCommandResult {
+  final String status;
+  final int entityVersion;
+  final String eventId;
+  final String? errorCode;
+  final Map<String, dynamic> data;
+
+  const MembershipCommandResult({
+    required this.status,
+    required this.entityVersion,
+    required this.eventId,
+    required this.errorCode,
+    required this.data,
+  });
+
+  bool get isSuccess => status == 'applied' || status == 'no_op';
+}
+
 class InviteService {
   final InviteRepository _inviteRepository;
   final UserRepository userRepository;
@@ -255,6 +274,216 @@ class InviteService {
     }
   }
 
+  String _canonicalSourceApp(App app) {
+    switch (app) {
+      case App.swimSuite:
+        return 'swim_suite';
+      case App.swimAnalyzer:
+        return 'swim_analyzer';
+      case App.swimForge:
+        return 'swim_forge';
+    }
+  }
+
+  String _canonicalInviteTypeFor(InviteType type) {
+    if (type == InviteType.seatInvite) {
+      return 'seat';
+    }
+    return 'club_member';
+  }
+
+  String _canonicalRoleFromRaw(String rawRole) {
+    final normalized = rawRole.trim().toLowerCase();
+    if (normalized == 'clubadmin' || normalized == 'admin') return 'admin';
+    if (normalized == 'swimmer') return 'swimmer';
+    return 'coach';
+  }
+
+  String _defaultRoleForInviteType(InviteType type) {
+    switch (type) {
+      case InviteType.coachToSwimmer:
+        return 'swimmer';
+      case InviteType.swimmerToCoach:
+        return 'coach';
+      case InviteType.clubInvite:
+        return 'coach';
+      case InviteType.seatInvite:
+        return 'coach';
+    }
+  }
+
+  String _newRequestId(String prefix) {
+    final userId = _auth.currentUser?.uid ?? 'anonymous';
+    return '${prefix}_${userId}_${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  MembershipCommandResult _parseMembershipCommandResult(dynamic raw) {
+    final payload = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    return MembershipCommandResult(
+      status: (payload['status'] ?? 'error').toString(),
+      entityVersion: (payload['entityVersion'] as num?)?.toInt() ?? 0,
+      eventId: (payload['eventId'] ?? '').toString(),
+      errorCode: payload['errorCode'] as String?,
+      data: payload,
+    );
+  }
+
+  Future<MembershipCommandResult> _callMembershipCommand({
+    required String callableName,
+    required Map<String, dynamic> payload,
+  }) async {
+    final callable = _functions.httpsCallable(callableName);
+    final result = await callable.call(payload);
+    return _parseMembershipCommandResult(result.data);
+  }
+
+  Future<MembershipCommandResult> inviteMember({
+    required String email,
+    required InviteType type,
+    required App app,
+    required String clubId,
+    String? relatedEntityId,
+    String? role,
+    String? name,
+    String? clubName,
+    App sourceApp = App.swimSuite,
+    bool sendEmail = true,
+    String? requestId,
+  }) async {
+    final inviter = _auth.currentUser;
+    if (inviter == null) throw Exception('No logged-in user.');
+
+    final normalizedEmail = _normalizeEmail(email);
+    if (normalizedEmail.isEmpty) {
+      throw Exception('Email cannot be empty.');
+    }
+    final normalizedClubId = clubId.trim();
+    if (normalizedClubId.isEmpty) {
+      throw Exception('clubId is required for inviteMember.');
+    }
+
+    final normalizedRole = role == null || role.trim().isEmpty
+        ? _defaultRoleForInviteType(type)
+        : _canonicalRoleFromRaw(role);
+
+    final commandResult = await _callMembershipCommand(
+      callableName: 'membership_invite_member',
+      payload: {
+        'requestId': requestId ?? _newRequestId('invite_member'),
+        'inviterId': inviter.uid,
+        'inviterEmail': _normalizeEmail(inviter.email ?? ''),
+        'inviterName': inviter.displayName ?? inviter.email ?? '',
+        'inviteeEmail': normalizedEmail,
+        'inviteType': _canonicalInviteTypeFor(type),
+        'targetRole': normalizedRole,
+        'sourceApp': _canonicalSourceApp(sourceApp),
+        'app': app.name,
+        'clubId': normalizedClubId,
+        if (relatedEntityId != null && relatedEntityId.trim().isNotEmpty)
+          'relatedEntityId': relatedEntityId.trim(),
+      },
+    );
+
+    if (sendEmail && commandResult.isSuccess) {
+      try {
+        final inviteId = commandResult.data['inviteId']?.toString();
+        final callable = _functions.httpsCallable('sendInviteEmail');
+        await callable.call({
+          'email': normalizedEmail,
+          'senderId': inviter.uid,
+          'senderEmail': _normalizeEmail(inviter.email ?? ''),
+          'senderName': inviter.displayName ?? inviter.email ?? 'A Swim-Suite coach',
+          'inviteId': inviteId,
+          'type': type.name,
+          'inviteType': _canonicalInviteTypeFor(type),
+          'targetRole': normalizedRole,
+          'sourceApp': _canonicalSourceApp(sourceApp),
+          'clubId': normalizedClubId,
+          if (relatedEntityId != null && relatedEntityId.trim().isNotEmpty)
+            'relatedEntityId': relatedEntityId.trim(),
+          'app': app.name,
+          if (clubName != null && clubName.trim().isNotEmpty)
+            'clubName': clubName.trim(),
+          if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+        });
+      } catch (e, st) {
+        debugPrint('⚠️ Invite email send failed after canonical upsert: $e\n$st');
+      }
+    }
+
+    return commandResult;
+  }
+
+  Future<MembershipCommandResult> assignSwimmerToGroup({
+    required String clubId,
+    required String swimmerId,
+    required String groupId,
+    String? requestId,
+    App sourceApp = App.swimSuite,
+  }) {
+    return _callMembershipCommand(
+      callableName: 'membership_assign_swimmer_to_group',
+      payload: {
+        'requestId': requestId ?? _newRequestId('assign_group'),
+        'clubId': clubId.trim(),
+        'swimmerId': swimmerId.trim(),
+        'groupId': groupId.trim(),
+        'sourceApp': _canonicalSourceApp(sourceApp),
+      },
+    );
+  }
+
+  Future<MembershipCommandResult> removeSwimmerFromGroup({
+    required String clubId,
+    required String swimmerId,
+    String? requestId,
+    App sourceApp = App.swimSuite,
+  }) {
+    return _callMembershipCommand(
+      callableName: 'membership_remove_swimmer_from_group',
+      payload: {
+        'requestId': requestId ?? _newRequestId('remove_group'),
+        'clubId': clubId.trim(),
+        'swimmerId': swimmerId.trim(),
+        'sourceApp': _canonicalSourceApp(sourceApp),
+      },
+    );
+  }
+
+  Future<MembershipCommandResult> grantSeat({
+    required String clubId,
+    required String userId,
+    String? requestId,
+    App sourceApp = App.swimSuite,
+  }) {
+    return _callMembershipCommand(
+      callableName: 'membership_grant_seat',
+      payload: {
+        'requestId': requestId ?? _newRequestId('grant_seat'),
+        'clubId': clubId.trim(),
+        'userId': userId.trim(),
+        'sourceApp': _canonicalSourceApp(sourceApp),
+      },
+    );
+  }
+
+  Future<MembershipCommandResult> revokeSeat({
+    required String clubId,
+    required String userId,
+    String? requestId,
+    App sourceApp = App.swimSuite,
+  }) {
+    return _callMembershipCommand(
+      callableName: 'membership_revoke_seat',
+      payload: {
+        'requestId': requestId ?? _newRequestId('revoke_seat'),
+        'clubId': clubId.trim(),
+        'userId': userId.trim(),
+        'sourceApp': _canonicalSourceApp(sourceApp),
+      },
+    );
+  }
+
   Future<InviteResult> invite({
     required String email,
     required String name,
@@ -451,6 +680,32 @@ class InviteService {
     if (inviter == null) throw Exception('No logged-in user.');
 
     final normalizedEmail = _normalizeEmail(email);
+    final normalizedClubId = clubId?.trim();
+    final canUseCanonicalCommand =
+        normalizedClubId != null &&
+        normalizedClubId.isNotEmpty &&
+        (type == InviteType.clubInvite || type == InviteType.seatInvite);
+
+    if (canUseCanonicalCommand) {
+      final result = await inviteMember(
+        email: normalizedEmail,
+        type: type,
+        app: app,
+        clubId: normalizedClubId,
+        relatedEntityId: groupId,
+        role: _defaultRoleForInviteType(type),
+        clubName: clubName,
+        sourceApp: App.swimSuite,
+        sendEmail: true,
+        requestId: _newRequestId('send_invite'),
+      );
+      if (!result.isSuccess) {
+        throw Exception(
+          'Invite command failed: ${result.errorCode ?? result.status}',
+        );
+      }
+      return;
+    }
 
     String inviteTypeKey;
     switch (type) {
@@ -615,29 +870,22 @@ class InviteService {
     String? groupId,
   }) async {
     final normalizedEmail = _normalizeEmail(email);
-
-    // Best-effort email via callable function name
     try {
-      final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-      final sendInvite = functions.httpsCallable('sendInviteEmail');
-
       final currentUser = FirebaseAuth.instance.currentUser;
-      final inviterEmail = currentUser?.email ?? '';
-      final inviterName = currentUser?.displayName ?? '';
-
-      final result = await sendInvite.call({
-        'email': normalizedEmail,
-        'senderId': inviterId,
-        'senderEmail': inviterEmail,
-        'senderName': inviterName,
-        'type': type.name,
-        'app': app.name,
-        'clubId': clubId,
-        'groupId': groupId,
-      });
-      debugPrint('📨 sendInviteEmail response: ${result.data}');
+      await inviteMember(
+        email: normalizedEmail,
+        type: type,
+        app: app,
+        clubId: clubId,
+        relatedEntityId: groupId,
+        role: _defaultRoleForInviteType(type),
+        sourceApp: App.swimSuite,
+        sendEmail: true,
+        requestId: _newRequestId('send_invite_pending_user'),
+        name: currentUser?.displayName,
+      );
     } catch (e, st) {
-      debugPrint('❌ Error calling sendInviteEmail: $e\n$st');
+      debugPrint('❌ Error calling inviteMember command: $e\n$st');
     }
 
     // Pre-create pending user

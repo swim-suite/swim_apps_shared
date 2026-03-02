@@ -1,1 +1,1 @@
-enum App { swimAnalyzer, swimSuite }
+enum App { swimAnalyzer, swimSuite, swimForge }

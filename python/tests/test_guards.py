@@ -8,12 +8,12 @@ from swim_apps_shared.firestore.guards import assert_no_alias_paths, scan_repo_f
 
 
 def test_assert_no_alias_paths_accepts_safe_path():
-    assert_no_alias_paths("clubs/club1/members/user1")
+    assert_no_alias_paths("swimClubs/club1/members/user1")
 
 
 def test_assert_no_alias_paths_rejects_alias_path():
     with pytest.raises(ValueError):
-        assert_no_alias_paths("clubs/club1/users/alias")
+        assert_no_alias_paths("swimClubs/club1/users/alias")
 
 
 def test_assert_no_alias_paths_rejects_builder_alias_path():
@@ -33,8 +33,8 @@ def test_scan_repo_for_alias_paths(tmp_path: pathlib.Path):
     unsafe = tmp_path / "unsafe.py"
     unsafe_builder = tmp_path / "unsafe_builder.py"
 
-    safe.write_text('print("clubs/club1/members/user1")\n', encoding="utf-8")
-    unsafe.write_text('path = "clubs/club1/users/alias"\n', encoding="utf-8")
+    safe.write_text('print("swimClubs/club1/members/user1")\n', encoding="utf-8")
+    unsafe.write_text('path = "swimClubs/club1/users/alias"\n', encoding="utf-8")
     unsafe_builder.write_text(
         (
             "query = (\n"
