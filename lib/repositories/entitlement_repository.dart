@@ -18,17 +18,16 @@ class EntitlementRepository {
         .collection('plans')
         .get();
 
-    final plans = {
-      for (var doc in snapshot.docs) doc.id: doc.data(),
-    };
+    final plans = {for (var doc in snapshot.docs) doc.id: doc.data()};
 
     _cache[product] = plans;
     return plans;
   }
 
   /// Load all plans for a product (club, analyzer, etc)
-  Future<Map<String, Map<String, dynamic>>> getPlansForService(
-      {required App app}) async {
+  Future<Map<String, Map<String, dynamic>>> getPlansForService({
+    required App app,
+  }) async {
     String appName = '';
     switch (app) {
       case App.swimAnalyzer:
@@ -45,26 +44,18 @@ class EntitlementRepository {
         .collection('plans')
         .get();
 
-    final plans = {
-      for (var doc in snapshot.docs) doc.id: doc.data(),
-    };
+    final plans = {for (var doc in snapshot.docs) doc.id: doc.data()};
     return plans;
   }
 
   /// Get one plan
-  Future<Map<String, dynamic>?> getPlan(
-      String product,
-      String planId,
-      ) async {
+  Future<Map<String, dynamic>?> getPlan(String product, String planId) async {
     final plans = await getPlans(product);
     return plans[planId];
   }
 
   /// Listen to updates (future-proofing if RC updates automatically)
-  Stream<Map<String, dynamic>?> watchPlan(
-      String product,
-      String planId,
-      ) {
+  Stream<Map<String, dynamic>?> watchPlan(String product, String planId) {
     return _db
         .collection('entitlements')
         .doc(product)

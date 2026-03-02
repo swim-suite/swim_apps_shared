@@ -7,9 +7,9 @@ class ResultService {
   ResultService(this._db);
 
   CollectionReference<Map<String, dynamic>> _resultsCol(
-      String clubId,
-      String sessionId,
-      ) {
+    String clubId,
+    String sessionId,
+  ) {
     return _db
         .collection('swimClubs')
         .doc(clubId)
@@ -23,7 +23,9 @@ class ResultService {
     required SetItemResult result,
   }) async {
     final col = _resultsCol(clubId, result.sessionId);
-    await col.doc(result.resultId).set(result.toJson(), SetOptions(merge: true));
+    await col
+        .doc(result.resultId)
+        .set(result.toJson(), SetOptions(merge: true));
   }
 
   Future<List<SetItemResult>> getResultsForSetItem({
@@ -32,17 +34,17 @@ class ResultService {
     required String setItemId,
     String? swimmerId,
   }) async {
-    var q = _resultsCol(clubId, sessionId)
-        .where('setItemId', isEqualTo: setItemId);
+    var q = _resultsCol(
+      clubId,
+      sessionId,
+    ).where('setItemId', isEqualTo: setItemId);
 
     if (swimmerId != null) {
       q = q.where('swimmerId', isEqualTo: swimmerId);
     }
 
     final snap = await q.get();
-    return snap.docs
-        .map((d) => SetItemResult.fromJson(d.data()))
-        .toList();
+    return snap.docs.map((d) => SetItemResult.fromJson(d.data())).toList();
   }
 
   Future<List<SetItemResult>> getResultsForTestKey({
@@ -62,9 +64,7 @@ class ResultService {
     }
 
     final snap = await q.get();
-    return snap.docs
-        .map((d) => SetItemResult.fromJson(d.data()))
-        .toList();
+    return snap.docs.map((d) => SetItemResult.fromJson(d.data())).toList();
   }
 
   /// Basic stats for a single test key & swimmer.
@@ -107,9 +107,8 @@ class ResultService {
       return b;
     });
 
-    final avgMs = valid
-        .map((r) => r.time!.inMilliseconds)
-        .reduce((a, b) => a + b) ~/
+    final avgMs =
+        valid.map((r) => r.time!.inMilliseconds).reduce((a, b) => a + b) ~/
         valid.length;
 
     return {

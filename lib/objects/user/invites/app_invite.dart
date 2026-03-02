@@ -78,13 +78,17 @@ class AppInvite {
           return InviteType.seatInvite;
         case 'generic_invite':
         case 'genericinvite':
-          final hasClubScope =
-              (json['clubId'] ?? '').toString().trim().isNotEmpty;
+          final hasClubScope = (json['clubId'] ?? '')
+              .toString()
+              .trim()
+              .isNotEmpty;
           return hasClubScope
               ? InviteType.seatInvite
               : InviteType.swimmerToCoach;
         default:
-          throw FormatException('Unsupported invite type "$raw" for invite $id');
+          throw FormatException(
+            'Unsupported invite type "$raw" for invite $id',
+          );
       }
     }
 

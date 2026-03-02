@@ -318,7 +318,9 @@ class InviteService {
   }
 
   MembershipCommandResult _parseMembershipCommandResult(dynamic raw) {
-    final payload = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    final payload = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : <String, dynamic>{};
     return MembershipCommandResult(
       status: (payload['status'] ?? 'error').toString(),
       entityVersion: (payload['entityVersion'] as num?)?.toInt() ?? 0,
@@ -392,7 +394,8 @@ class InviteService {
           'email': normalizedEmail,
           'senderId': inviter.uid,
           'senderEmail': _normalizeEmail(inviter.email ?? ''),
-          'senderName': inviter.displayName ?? inviter.email ?? 'A Swim-Suite coach',
+          'senderName':
+              inviter.displayName ?? inviter.email ?? 'A Swim-Suite coach',
           'inviteId': inviteId,
           'type': type.name,
           'inviteType': _canonicalInviteTypeFor(type),
@@ -407,7 +410,9 @@ class InviteService {
           if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
         });
       } catch (e, st) {
-        debugPrint('⚠️ Invite email send failed after canonical upsert: $e\n$st');
+        debugPrint(
+          '⚠️ Invite email send failed after canonical upsert: $e\n$st',
+        );
       }
     }
 
