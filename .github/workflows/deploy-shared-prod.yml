@@ -20,6 +20,7 @@ jobs:
       PROJECT_ID: swim-coach-support
       FIREBASE_TOOLS_VERSION: 13.35.1
       FIREBASE_CLI_EXPERIMENTS: googleAuth
+      STATUS_TOKEN: ${{ secrets.SHARED_INFRA_STATUS_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -109,3 +110,42 @@ jobs:
             --project "$PROJECT_ID" \
             --only firestore:rules,storage \
             --non-interactive
+
+      - name: Publish shared-infra/deployed-prod status to source commit
+        if: ${{ env.STATUS_TOKEN != '' }}
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          CHANGED_METADATA_FILES="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^firebase_infra/apps/.*/source_metadata\.json$' || true)"
+
+          if [ -z "$CHANGED_METADATA_FILES" ]; then
+            echo "No source metadata updates in this commit. Skipping status publication."
+            exit 0
+          fi
+
+          for metadata_file in $CHANGED_METADATA_FILES; do
+            repo="$(jq -r '.source_repo // empty' "$metadata_file")"
+            sha="$(jq -r '.source_sha // empty' "$metadata_file")"
+
+            if [ -z "$repo" ] || [ -z "$sha" ]; then
+              echo "Skipping $metadata_file: missing source_repo/source_sha"
+              continue
+            fi
+
+            payload="$(jq -nc \
+              --arg state "success" \
+              --arg context "shared-infra/deployed-prod" \
+              --arg description "Shared Firebase infra deployed to prod" \
+              --arg target_url "$RUN_URL" \
+              '{state: $state, context: $context, description: $description, target_url: $target_url}')"
+
+            curl -sS -X POST \
+              -H "Authorization: Bearer $STATUS_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/statuses/$sha" \
+              -d "$payload" >/dev/null
+
+            echo "Published shared-infra/deployed-prod for $repo@$sha"
+          done
