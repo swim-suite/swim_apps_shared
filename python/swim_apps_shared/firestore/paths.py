@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 USERS_COLLECTION = "users"
-CLUBS_COLLECTION = "clubs"
+CLUBS_COLLECTION = "swimClubs"
 MEMBERS_SUBCOLLECTION = "members"
 GROUPS_SUBCOLLECTION = "groups"
 

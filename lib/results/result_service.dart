@@ -11,7 +11,7 @@ class ResultService {
       String sessionId,
       ) {
     return _db
-        .collection('clubs')
+        .collection('swimClubs')
         .doc(clubId)
         .collection('sessions')
         .doc(sessionId)

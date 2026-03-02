@@ -135,10 +135,13 @@ class ClubMember:
     def from_firestore_dict(data: dict[str, Any]) -> "ClubMember":
         payload = dict(data or {})
         uid = _as_non_empty_str(payload.get("uid") or payload.get("userId"), default="")
+        resolved_group_id = _as_optional_str(payload.get("activeGroupId")) or _as_optional_str(
+            payload.get("groupId")
+        )
         return ClubMember(
             uid=uid,
             role=_normalize_member_role(payload.get("role") or payload.get("userType")),
-            group_id=_as_optional_str(payload.get("groupId")),
+            group_id=resolved_group_id,
             status=_normalize_member_status(payload.get("status") or payload.get("membershipStatus")),
             joined_at=_to_utc_datetime(payload.get("joinedAt") or payload.get("registerDate") or payload.get("createdAt")),
         )
@@ -147,6 +150,7 @@ class ClubMember:
         return {
             "uid": self.uid,
             "role": self.role,
+            "activeGroupId": self.group_id,
             "groupId": self.group_id,
             "status": self.status,
             "joinedAt": self.joined_at,

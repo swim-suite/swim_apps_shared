@@ -35,11 +35,11 @@ class _FakeDB:
 
 def test_path_builders():
     assert user_doc("u1") == "users/u1"
-    assert club_doc("c1") == "clubs/c1"
-    assert club_members_col("c1") == "clubs/c1/members"
-    assert club_member_doc("c1", "u1") == "clubs/c1/members/u1"
-    assert groups_col("c1") == "clubs/c1/groups"
-    assert group_doc("c1", "g1") == "clubs/c1/groups/g1"
+    assert club_doc("c1") == "swimClubs/c1"
+    assert club_members_col("c1") == "swimClubs/c1/members"
+    assert club_member_doc("c1", "u1") == "swimClubs/c1/members/u1"
+    assert groups_col("c1") == "swimClubs/c1/groups"
+    assert group_doc("c1", "g1") == "swimClubs/c1/groups/g1"
 
 
 def test_empty_id_raises():
@@ -61,7 +61,7 @@ def test_ref_builders():
 
     db = _FakeDB()
     assert user_ref(db, "u1").path == "users/u1"
-    assert club_members_ref(db, "c1").path == "clubs/c1/members"
-    assert club_member_ref(db, "c1", "u1").path == "clubs/c1/members/u1"
-    assert groups_ref(db, "c1").path == "clubs/c1/groups"
-    assert group_ref(db, "c1", "g1").path == "clubs/c1/groups/g1"
+    assert club_members_ref(db, "c1").path == "swimClubs/c1/members"
+    assert club_member_ref(db, "c1", "u1").path == "swimClubs/c1/members/u1"
+    assert groups_ref(db, "c1").path == "swimClubs/c1/groups"
+    assert group_ref(db, "c1", "g1").path == "swimClubs/c1/groups/g1"

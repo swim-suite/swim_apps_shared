@@ -1,6 +1,6 @@
 """Deprecated compatibility helpers for legacy alias membership shape.
 
-Deprecated: use /clubs/{clubId}/members as canonical membership source.
+Deprecated: use /swimClubs/{clubId}/members as canonical membership source.
 This module exists only for temporary dual-read support during migration.
 """
 
@@ -65,7 +65,7 @@ def get_club_members(db: Any, club_id: str) -> list[ClubMember]:
 
     if alias_docs:
         _LOGGER.warning(
-            "Compat fallback to legacy alias membership path /clubs/{clubId}/users",
+            "Compat fallback to legacy alias membership path /swimClubs/{clubId}/users",
             extra={"club_id": club_id, "remove_after": DEPRECATION_REMOVE_AFTER},
         )
 

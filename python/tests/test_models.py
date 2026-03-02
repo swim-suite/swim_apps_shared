@@ -50,6 +50,25 @@ def test_club_member_normalizes_role_and_status():
     assert member.status == "inactive"
     assert member.group_id == "g1"
 
+    payload = member.to_firestore_dict()
+    assert payload["groupId"] == "g1"
+    assert payload["activeGroupId"] == "g1"
+
+
+def test_club_member_prefers_active_group_id_over_legacy_group_id():
+    member = ClubMember.from_firestore_dict(
+        {
+            "uid": "u1",
+            "role": "swimmer",
+            "status": "active",
+            "joinedAt": "2026-02-01T10:00:00Z",
+            "activeGroupId": "g_active",
+            "groupId": "g_legacy",
+        }
+    )
+
+    assert member.group_id == "g_active"
+
 
 def test_group_from_and_to_firestore_dict_roundtrip():
     group = Group.from_firestore_dict(

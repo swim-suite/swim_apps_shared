@@ -5,10 +5,10 @@ import re
 from typing import Iterable
 
 _ALIAS_PATTERNS = [
-    re.compile(r"/clubs/[^\s'\"`]+/users(?:/|$)"),
-    re.compile(r"clubs/\{[^}]+\}/users(?:/|$)"),
+    re.compile(r"(?:swimClubs|clubs)/[^\s'\"`]+/users(?:/|$)"),
+    re.compile(r"(?:swimClubs|clubs)/\{[^}]+\}/users(?:/|$)"),
     re.compile(
-        r"collection\(\s*(?:(['\"])clubs\1|CLUBS_COLLECTION)\s*\)\s*"
+        r"collection\(\s*(?:(['\"])(?:swimClubs|clubs)\1|CLUBS_COLLECTION)\s*\)\s*"
         r"\.\s*document\([^)]*\)\s*"
         r"\.\s*collection\(\s*(['\"])users\2\s*\)",
         re.DOTALL,

@@ -35,6 +35,8 @@ class EntitlementRepository {
         appName = 'swim_analyzer';
       case App.swimSuite:
         appName = 'swim_coach_support';
+      case App.swimForge:
+        appName = 'swim_forge';
     }
 
     final snapshot = await _db

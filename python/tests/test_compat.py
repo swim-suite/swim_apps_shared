@@ -49,17 +49,20 @@ class _FakeDB:
     def collection(self, name: str):
         return _FakeCollection(self._store, name)
 
+    def document(self, path: str):
+        return _FakeDocument(self._store, path)
+
 
 def test_get_club_members_prefers_members_collection(caplog):
     db = _FakeDB(
         {
-            "clubs/club1/members/user1": {
+            "swimClubs/club1/members/user1": {
                 "uid": "user1",
                 "role": "coach",
                 "status": "active",
                 "joinedAt": datetime(2026, 1, 1, tzinfo=timezone.utc),
             },
-            "clubs/club1/users/legacy": {
+            "swimClubs/club1/users/legacy": {
                 "uid": "legacy",
                 "role": "swimmer",
                 "status": "active",
@@ -77,7 +80,7 @@ def test_get_club_members_prefers_members_collection(caplog):
 def test_get_club_members_falls_back_to_alias_users(caplog):
     db = _FakeDB(
         {
-            "clubs/club1/users/legacy1": {
+            "swimClubs/club1/users/legacy1": {
                 "uid": "legacy1",
                 "role": "clubadmin",
                 "status": "pending",
