@@ -1,39 +1,53 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# swim_apps_shared
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+Shared package and central Firebase infra repository for:
+- `swimify`
+- `swim_analyzer`
+- `aquis`
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+See [SHARED_FIREBASE_OWNERSHIP.md](SHARED_FIREBASE_OWNERSHIP.md) for ownership and deploy flow.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Local Firebase Emulators
 
-## Features
+Emulator startup enforces shared artifact freshness. If generated artifacts are stale,
+the launcher exits and tells you to re-compose.
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+You can still compose manually first:
 
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+```bash
+cd /Users/johannes/company/swim_suite/swim_apps_shared
+python3 firebase_infra/tools/manage_infra.py compose
 ```
 
-## Additional information
+Start emulators:
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```bash
+./scripts/local-emulators.sh start
+```
+
+Useful commands:
+
+```bash
+# Firestore only (no auto-seed)
+./scripts/local-emulators.sh firestore
+
+# Force deterministic reseed
+./scripts/local-emulators.sh seed
+
+# Delete local emulator data
+./scripts/local-emulators.sh clean
+```
+
+Behavior notes:
+- Emulators use shared generated rules/indexes/storage from this repo.
+- Both `swimify` and `swim_analyzer` functions codebases are loaded.
+- Mock data auto-seeds once when the selected data dir has no export metadata.
+- Seeded demo users: `stage_owner_demo`, `stage_swimmer_01`, `stage_staff_demo`.
+
+Optional overrides:
+
+```bash
+FIREBASE_PROJECT_ID=swim-coach-support-dev ./scripts/local-emulators.sh start
+FIREBASE_EMULATOR_DATA_DIR=/tmp/swim-apps-shared-emulators ./scripts/local-emulators.sh start
+LOCAL_EMULATOR_DEMO_PASSWORD='LocalDemoPassword#123' ./scripts/local-emulators.sh seed
+```
