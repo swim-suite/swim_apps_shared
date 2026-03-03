@@ -1110,6 +1110,12 @@ service cloud.firestore {
         && request.auth.uid in sessionData.assignedSwimmerIds;
     }
 
+    function aquisCanListClubSessions(clubId) {
+      return isSignedIn()
+        && aquisUserClubId() is string
+        && aquisUserClubId() == clubId;
+    }
+
     match /users/{uid} {
       allow read: if isSelf(uid);
       allow create, update: if isSelf(uid);
@@ -1191,11 +1197,15 @@ service cloud.firestore {
     }
 
     match /swimClubs/{clubId}/sessions/{sessionId} {
-      allow get, list: if aquisCanReadAssignedSession(resource.data);
+      allow get: if aquisCanReadAssignedSession(resource.data)
+        || aquisCanListClubSessions(clubId);
+      allow list: if aquisCanListClubSessions(clubId);
     }
 
     match /swimClubs/{clubId}/swimSessions/{sessionId} {
-      allow get, list: if aquisCanReadAssignedSession(resource.data);
+      allow get: if aquisCanReadAssignedSession(resource.data)
+        || aquisCanListClubSessions(clubId);
+      allow list: if aquisCanListClubSessions(clubId);
     }
 
     match /swimClubs/{clubId}/sessions/{sessionId}/attendanceConfirmations/{swimmerId} {
