@@ -75,35 +75,6 @@ jobs:
           firebase --version
           firebase projects:list --project "$PROJECT_ID" --non-interactive
 
-      - name: Deploy Firestore indexes (PROD)
-        run: |
-          set +e
-          FORCE_OUTPUT="$(firebase deploy \
-            --project "$PROJECT_ID" \
-            --only firestore:indexes \
-            --force \
-            --non-interactive 2>&1)"
-          FORCE_STATUS=$?
-          set -e
-
-          printf '%s\n' "$FORCE_OUTPUT"
-
-          if [ "$FORCE_STATUS" -eq 0 ]; then
-            exit 0
-          fi
-
-          if printf '%s\n' "$FORCE_OUTPUT" | grep -Fq "HTTP Error: 409, index already exists"; then
-            echo "Firestore index sync hit a 409 during --force deploy."
-            echo "Falling back to API-based index sync (create missing + delete extra)."
-            python3 firebase_infra/tools/sync_firestore_indexes.py \
-              --project-id "$PROJECT_ID" \
-              --indexes-file firebase_infra/generated/firestore.indexes.json \
-              --allow-delete
-            exit 0
-          fi
-
-          exit "$FORCE_STATUS"
-
       - name: Deploy Firestore + Storage rules (PROD)
         run: |
           firebase deploy \

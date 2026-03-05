@@ -1,4 +1,3 @@
-import json
 import sys
 import tempfile
 import unittest
@@ -19,7 +18,6 @@ class ManageInfraTests(unittest.TestCase):
         index_groups: list[str],
         storage_paths: list[str],
         rules_part: str,
-        indexes_part: dict,
         storage_part: str,
     ) -> None:
         app_dir = root / "apps" / app
@@ -37,9 +35,6 @@ class ManageInfraTests(unittest.TestCase):
         ]
         (app_dir / "ownership.yaml").write_text("\n".join(manifest_lines), encoding="utf-8")
         (app_dir / "firestore.rules.part").write_text(rules_part, encoding="utf-8")
-        (app_dir / "firestore.indexes.part.json").write_text(
-            json.dumps(indexes_part, indent=2) + "\n", encoding="utf-8"
-        )
         (app_dir / "storage.rules.part").write_text(storage_part, encoding="utf-8")
 
     def test_validate_detects_rules_ownership_conflict(self):
@@ -55,7 +50,6 @@ class ManageInfraTests(unittest.TestCase):
                 index_groups=["users"],
                 storage_paths=["/clubs/{clubId}/branding/logo.png"],
                 rules_part='    match /users/{userId} {\\n      allow read: if true;\\n    }\\n',
-                indexes_part={"indexes": [{"collectionGroup": "users", "queryScope": "COLLECTION", "fields": [{"fieldPath": "clubId", "order": "ASCENDING"}]}], "fieldOverrides": []},
                 storage_part='    match /clubs/{clubId}/branding/logo.png {\\n      allow read: if true;\\n    }\\n',
             )
             self._create_app(
@@ -65,7 +59,6 @@ class ManageInfraTests(unittest.TestCase):
                 index_groups=["analysis_requests"],
                 storage_paths=[],
                 rules_part='    match /users/{userId} {\\n      allow read: if false;\\n    }\\n',
-                indexes_part={"indexes": [{"collectionGroup": "analysis_requests", "queryScope": "COLLECTION", "fields": [{"fieldPath": "createdAt", "order": "DESCENDING"}]}], "fieldOverrides": []},
                 storage_part="",
             )
 
@@ -78,12 +71,6 @@ class ManageInfraTests(unittest.TestCase):
             (root / "apps").mkdir(parents=True, exist_ok=True)
             (root / "generated").mkdir(parents=True, exist_ok=True)
 
-            shared_index = {
-                "collectionGroup": "analysis_requests",
-                "queryScope": "COLLECTION",
-                "fields": [{"fieldPath": "createdAt", "order": "DESCENDING"}],
-            }
-
             self._create_app(
                 root,
                 app="swimify",
@@ -91,7 +78,6 @@ class ManageInfraTests(unittest.TestCase):
                 index_groups=["analysis_requests"],
                 storage_paths=[],
                 rules_part='    match /support_requests/{id} {\\n      allow read: if true;\\n    }\\n',
-                indexes_part={"indexes": [shared_index], "fieldOverrides": []},
                 storage_part="",
             )
             self._create_app(
@@ -101,7 +87,6 @@ class ManageInfraTests(unittest.TestCase):
                 index_groups=["analysis_requests"],
                 storage_paths=[],
                 rules_part='    match /analysis_requests/{id} {\\n      allow read: if true;\\n    }\\n',
-                indexes_part={"indexes": [shared_index], "fieldOverrides": []},
                 storage_part="",
             )
 
@@ -123,7 +108,6 @@ class ManageInfraTests(unittest.TestCase):
                 index_groups=["users"],
                 storage_paths=["/clubs/{clubId}/branding/logo.png"],
                 rules_part='    match /users/{userId} {\\n      allow read: if true;\\n    }\\n',
-                indexes_part={"indexes": [{"collectionGroup": "users", "queryScope": "COLLECTION", "fields": [{"fieldPath": "clubId", "order": "ASCENDING"}]}], "fieldOverrides": []},
                 storage_part='    match /clubs/{clubId}/branding/logo.png {\\n      allow read: if true;\\n    }\\n',
             )
             self._create_app(
@@ -133,7 +117,6 @@ class ManageInfraTests(unittest.TestCase):
                 index_groups=["dailyTrainingRecords"],
                 storage_paths=[],
                 rules_part='    match /dailyTrainingRecords/{id} {\\n      allow read: if true;\\n    }\\n',
-                indexes_part={"indexes": [{"collectionGroup": "dailyTrainingRecords", "queryScope": "COLLECTION", "fields": [{"fieldPath": "userId", "order": "ASCENDING"}]}], "fieldOverrides": []},
                 storage_part="",
             )
 
@@ -146,10 +129,7 @@ class ManageInfraTests(unittest.TestCase):
             firestore_rules = (root / "generated" / "firestore.rules").read_text(encoding="utf-8")
             self.assertIn("match /users/{userId}", firestore_rules)
             self.assertIn("match /dailyTrainingRecords/{id}", firestore_rules)
-
-            indexes = json.loads((root / "generated" / "firestore.indexes.json").read_text(encoding="utf-8"))
-            groups = {index["collectionGroup"] for index in indexes["indexes"]}
-            self.assertEqual({"users", "dailyTrainingRecords"}, groups)
+            self.assertFalse((root / "generated" / "firestore.indexes.json").exists())
 
 
 if __name__ == "__main__":

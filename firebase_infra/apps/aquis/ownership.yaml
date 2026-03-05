@@ -14,6 +14,8 @@ rules_paths:
   - "/healthCoachDailyAggregates/{id}"
   - "/completedSessions/{id}"
 index_collection_groups:
+  - "completedSessions"
+  - "dailyTrainingRecords"
   - "healthCoachDailyAggregates"
   - "healthDailyMetrics"
   - "healthWorkoutMetrics"
