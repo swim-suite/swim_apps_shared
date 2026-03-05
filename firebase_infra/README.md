@@ -1,15 +1,16 @@
 # Shared Firebase Infra
 
-This directory is the central source of truth for shared Firebase resources used by:
+This directory is the central source of truth for shared Firebase rules/storage resources used by:
 - Swim Suite (`swimify`)
 - Swim Analyzer (`swim_analyzer`)
 - Aquis (`aquis`)
+
+Firestore composite indexes are intentionally out of scope for this repo. Stage Firestore is canonical for indexes, and app repos promote stage indexes to prod.
 
 ## Layout
 
 - `apps/<app>/ownership.yaml` declares ownership boundaries.
 - `apps/<app>/firestore.rules.part` contains app-owned Firestore rules fragments.
-- `apps/<app>/firestore.indexes.part.json` contains app-owned Firestore index fragments.
 - `apps/<app>/storage.rules.part` contains app-owned Storage rules fragments.
 - `generated/` contains deploy-ready composed artifacts.
 - `tools/manage_infra.py` validates ownership and composes artifacts.
@@ -26,7 +27,7 @@ python3 firebase_infra/tools/manage_infra.py all --check
 ## Ownership rules
 
 - One app may own a Firestore match path.
-- One app may own a Firestore `collectionGroup`.
+- One app may own a Firestore `collectionGroup` metadata entry.
 - One app may own a Storage match path.
 
 Validation fails on ownership collisions.

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 from pathlib import Path
@@ -12,7 +11,6 @@ from typing import Any
 
 MANIFEST_FILE = "ownership.yaml"
 RULES_PART_FILE = "firestore.rules.part"
-INDEXES_PART_FILE = "firestore.indexes.part.json"
 STORAGE_PART_FILE = "storage.rules.part"
 
 LIST_KEYS = ("rules_paths", "index_collection_groups", "storage_paths")
@@ -118,21 +116,6 @@ def validate_unique_manifest_ownership(manifests: dict[str, dict[str, Any]]) -> 
     return errors
 
 
-def load_json_part(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {"indexes": [], "fieldOverrides": []}
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"{path}: part file must be a JSON object")
-    payload.setdefault("indexes", [])
-    payload.setdefault("fieldOverrides", [])
-    if not isinstance(payload["indexes"], list):
-        raise ValueError(f"{path}: 'indexes' must be an array")
-    if not isinstance(payload["fieldOverrides"], list):
-        raise ValueError(f"{path}: 'fieldOverrides' must be an array")
-    return payload
-
-
 def find_match_paths(fragment_text: str) -> set[str]:
     paths: set[str] = set()
     for line in fragment_text.splitlines():
@@ -198,45 +181,6 @@ def validate_storage_parts(apps_dir: Path, manifests: dict[str, dict[str, Any]])
     return errors
 
 
-def validate_index_parts(apps_dir: Path, manifests: dict[str, dict[str, Any]]) -> list[str]:
-    errors: list[str] = []
-    owners: dict[str, str] = {}
-
-    for app in manifests:
-        part_path = apps_dir / app / INDEXES_PART_FILE
-        if not part_path.exists():
-            errors.append(f"Missing indexes part: {part_path}")
-            continue
-
-        try:
-            payload = load_json_part(part_path)
-        except ValueError as exc:
-            errors.append(str(exc))
-            continue
-
-        part_groups: set[str] = set()
-        for index in payload["indexes"]:
-            group = str(index.get("collectionGroup", "")).strip()
-            if not group:
-                errors.append(f"{part_path}: index missing non-empty collectionGroup")
-                continue
-
-            part_groups.add(group)
-            current = owners.get(group)
-            if current and current != app:
-                errors.append(f"Index collectionGroup '{group}' appears in both {current} and {app}")
-            owners[group] = app
-
-        declared_groups = set(manifests[app].get("index_collection_groups", []))
-        missing_groups = declared_groups.difference(part_groups)
-        if missing_groups:
-            errors.append(
-                f"{part_path}: declared collection groups missing in fragment: {sorted(missing_groups)}"
-            )
-
-    return errors
-
-
 def validate(root_dir: Path) -> list[str]:
     apps_dir = root_dir / "apps"
     if not apps_dir.exists():
@@ -246,7 +190,6 @@ def validate(root_dir: Path) -> list[str]:
     manifests, errors = load_manifests(apps_dir, app_names)
     errors.extend(validate_unique_manifest_ownership(manifests))
     errors.extend(validate_rules_parts(apps_dir, manifests))
-    errors.extend(validate_index_parts(apps_dir, manifests))
     errors.extend(validate_storage_parts(apps_dir, manifests))
     return errors
 
@@ -308,55 +251,6 @@ def compose_storage_rules(root_dir: Path, app_names: list[str]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def canonical_json(item: dict[str, Any]) -> str:
-    return json.dumps(item, sort_keys=True, separators=(",", ":"))
-
-
-def compose_indexes(root_dir: Path, app_names: list[str]) -> dict[str, Any]:
-    apps_dir = root_dir / "apps"
-    all_indexes: list[dict[str, Any]] = []
-    all_overrides: list[dict[str, Any]] = []
-
-    for app in app_names:
-        payload = load_json_part(apps_dir / app / INDEXES_PART_FILE)
-        for index in payload["indexes"]:
-            all_indexes.append(index)
-        for override in payload["fieldOverrides"]:
-            all_overrides.append(override)
-
-    dedup_indexes: dict[str, dict[str, Any]] = {}
-    dedup_overrides: dict[str, dict[str, Any]] = {}
-
-    for index in all_indexes:
-        dedup_indexes[canonical_json(index)] = index
-
-    for override in all_overrides:
-        dedup_overrides[canonical_json(override)] = override
-
-    indexes_sorted = sorted(
-        dedup_indexes.values(),
-        key=lambda item: (
-            str(item.get("collectionGroup", "")),
-            str(item.get("queryScope", "")),
-            canonical_json({"fields": item.get("fields", [])}),
-            canonical_json(item),
-        ),
-    )
-    overrides_sorted = sorted(
-        dedup_overrides.values(),
-        key=lambda item: (
-            str(item.get("collectionGroup", "")),
-            str(item.get("fieldPath", "")),
-            canonical_json(item),
-        ),
-    )
-
-    return {
-        "indexes": indexes_sorted,
-        "fieldOverrides": overrides_sorted,
-    }
-
-
 def check_or_write(path: Path, content: str, check: bool) -> list[str]:
     errors: list[str] = []
     current = path.read_text(encoding="utf-8") if path.exists() else None
@@ -379,15 +273,10 @@ def compose(root_dir: Path, check: bool = False) -> list[str]:
 
     firestore_rules = compose_firestore_rules(root_dir, app_names)
     storage_rules = compose_storage_rules(root_dir, app_names)
-    indexes_payload = compose_indexes(root_dir, app_names)
-    indexes_text = json.dumps(indexes_payload, indent=2) + "\n"
 
     errors: list[str] = []
     errors.extend(check_or_write(generated_dir / "firestore.rules", firestore_rules, check=check))
     errors.extend(check_or_write(generated_dir / "storage.rules", storage_rules, check=check))
-    errors.extend(
-        check_or_write(generated_dir / "firestore.indexes.json", indexes_text, check=check)
-    )
 
     return errors
 
