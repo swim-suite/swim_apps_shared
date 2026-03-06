@@ -20,3 +20,5 @@ index_collection_groups:
   - "strokeAnalyzeGroups"
   - "strokeAnalyzes"
 storage_paths:
+  - "/analysis_videos/{collection}/{analysisId}/{fileName}"
+  - "/race_videos/{videoId}/{filePath=**}"

@@ -42,6 +42,54 @@
         && hasActiveClubSeat(doc.clubId);
     }
 
+    function raceVideoDoc(videoId) {
+      return firestore.get(
+        /databases/(default)/documents/raceVideos/$(videoId)
+      ).data;
+    }
+
+    function raceVideoExists(videoId) {
+      return firestore.exists(
+        /databases/(default)/documents/raceVideos/$(videoId)
+      );
+    }
+
+    function requestHasClubMetadata() {
+      return request.resource != null
+        && request.resource.metadata is map
+        && request.resource.metadata.clubId is string;
+    }
+
+    function canWriteUnregisteredRaceVideo() {
+      return isSignedIn()
+        && (
+          !requestHasClubMetadata()
+          || hasActiveClubSeat(request.resource.metadata.clubId)
+        );
+    }
+
+    match /race_videos/{videoId}/{filePath=**} {
+      allow read: if isSignedIn()
+        && raceVideoExists(videoId)
+        && (
+          isSoloOwner(raceVideoDoc(videoId))
+          || isClubOwner(raceVideoDoc(videoId))
+        );
+
+      allow write: if (
+          isSignedIn()
+          && raceVideoExists(videoId)
+          && (
+            isSoloOwner(raceVideoDoc(videoId))
+            || isClubOwner(raceVideoDoc(videoId))
+            || raceVideoDoc(videoId).createdBy == request.auth.uid
+          )
+        ) || (
+          !raceVideoExists(videoId)
+          && canWriteUnregisteredRaceVideo()
+        );
+    }
+
     match /analysis_videos/{collection}/{analysisId}/{fileName} {
       allow read: if isSignedIn()
         && analysisExists(collection, analysisId)
