@@ -1,6 +1,7 @@
 app: swim_analyzer
 rules_paths:
   - "/swimmer_overall_summaries/{swimmerId}"
+  - "/swimAnalyses/{analysisId}"
   - "/stripe_configs/{id}"
   - "/checkout_tokens/{token}"
   - "/swimAnalyzerSubscriptions/{id}"
@@ -15,6 +16,7 @@ index_collection_groups:
   - "analysis_requests"
   - "offTheBlockAnalyzes"
   - "racesAnalyzes"
+  - "swimAnalyses"
   - "strokeAnalyzeGroups"
   - "strokeAnalyzes"
 storage_paths:
