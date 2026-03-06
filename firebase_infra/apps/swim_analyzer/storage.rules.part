@@ -1,1 +1,58 @@
-    // Swim Analyzer does not own shared Storage rules in phase 1.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSeatActive(seat) {
+      return seat.isActive == true
+        || seat.status == 'active'
+        || seat.status == 'trialing';
+    }
+
+    function hasActiveClubSeat(clubId) {
+      return isSignedIn()
+        && firestore.exists(
+          /databases/(default)/documents/clubSapSeats/$(clubId)/seats/$(request.auth.uid)
+        )
+        && isSeatActive(
+          firestore.get(
+            /databases/(default)/documents/clubSapSeats/$(clubId)/seats/$(request.auth.uid)
+          ).data
+        );
+    }
+
+    function analysisDoc(collection, analysisId) {
+      return firestore.get(
+        /databases/(default)/documents/$(collection)/$(analysisId)
+      ).data;
+    }
+
+    function analysisExists(collection, analysisId) {
+      return firestore.exists(
+        /databases/(default)/documents/$(collection)/$(analysisId)
+      );
+    }
+
+    function isSoloOwner(doc) {
+      return doc.ownerType == 'solo' && doc.ownerId == request.auth.uid;
+    }
+
+    function isClubOwner(doc) {
+      return doc.ownerType == 'club'
+        && doc.clubId is string
+        && hasActiveClubSeat(doc.clubId);
+    }
+
+    match /analysis_videos/{collection}/{analysisId}/{fileName} {
+      allow read: if isSignedIn()
+        && analysisExists(collection, analysisId)
+        && (isSoloOwner(analysisDoc(collection, analysisId))
+          || isClubOwner(analysisDoc(collection, analysisId)));
+
+      allow write: if isSignedIn()
+        && analysisExists(collection, analysisId)
+        && (
+          isSoloOwner(analysisDoc(collection, analysisId))
+          || isClubOwner(analysisDoc(collection, analysisId))
+          || analysisDoc(collection, analysisId).createdBy == request.auth.uid
+        );
+    }
