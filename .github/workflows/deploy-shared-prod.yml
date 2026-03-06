@@ -103,7 +103,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          CHANGED_METADATA_FILES="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^firebase_infra/apps/.*/source_metadata\.json$' || true)"
+          CHANGED_METADATA_FILES="$(
+            git diff-tree -m --no-commit-id --name-only -r "$GITHUB_SHA" \
+              | grep '^firebase_infra/apps/.*/source_metadata\.json$' \
+              | sort -u || true
+          )"
 
           if [ -z "$CHANGED_METADATA_FILES" ]; then
             echo "No source metadata updates in this commit. Skipping status publication."
