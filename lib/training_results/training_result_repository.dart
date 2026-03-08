@@ -11,6 +11,7 @@ abstract class TrainingResultRepository {
 
   Stream<List<TrainingResultSet>> queryResults({
     required String clubId,
+    String? sessionId,
     String? swimmerId,
     Stroke? stroke,
     int? distance,

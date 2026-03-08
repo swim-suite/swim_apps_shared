@@ -1,5 +1,47 @@
 import 'package:swim_apps_shared/objects/stroke.dart';
 
+enum TrainingResultSourceType { manual, voice }
+
+class TrainingResultVoiceCapture {
+  const TrainingResultVoiceCapture({
+    required this.transcript,
+    required this.model,
+    required this.capturedAt,
+  });
+
+  final String transcript;
+  final String model;
+  final DateTime capturedAt;
+
+  TrainingResultVoiceCapture copyWith({
+    String? transcript,
+    String? model,
+    DateTime? capturedAt,
+  }) {
+    return TrainingResultVoiceCapture(
+      transcript: transcript ?? this.transcript,
+      model: model ?? this.model,
+      capturedAt: capturedAt ?? this.capturedAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'transcript': transcript,
+      'model': model,
+      'capturedAt': capturedAt.toIso8601String(),
+    };
+  }
+
+  factory TrainingResultVoiceCapture.fromJson(Map<String, dynamic> json) {
+    return TrainingResultVoiceCapture(
+      transcript: _asString(json['transcript']),
+      model: _asString(json['model']),
+      capturedAt: _asDateTime(json['capturedAt']),
+    );
+  }
+}
+
 class TrainingResultSet {
   final String id;
   final String clubId;
@@ -13,6 +55,10 @@ class TrainingResultSet {
   final int intensity;
   final DateTime sessionDate;
   final List<TrainingResultEntry> entries;
+  final String? sessionId;
+  final String? sessionSetRefId;
+  final TrainingResultSourceType? sourceType;
+  final TrainingResultVoiceCapture? voiceCapture;
 
   const TrainingResultSet({
     required this.id,
@@ -27,6 +73,10 @@ class TrainingResultSet {
     required this.intensity,
     required this.sessionDate,
     required this.entries,
+    this.sessionId,
+    this.sessionSetRefId,
+    this.sourceType,
+    this.voiceCapture,
   });
 
   TrainingResultSet copyWith({
@@ -42,6 +92,10 @@ class TrainingResultSet {
     int? intensity,
     DateTime? sessionDate,
     List<TrainingResultEntry>? entries,
+    Object? sessionId = _unset,
+    Object? sessionSetRefId = _unset,
+    Object? sourceType = _unset,
+    Object? voiceCapture = _unset,
   }) {
     return TrainingResultSet(
       id: id ?? this.id,
@@ -56,6 +110,18 @@ class TrainingResultSet {
       intensity: intensity ?? this.intensity,
       sessionDate: sessionDate ?? this.sessionDate,
       entries: entries ?? this.entries,
+      sessionId: identical(sessionId, _unset)
+          ? this.sessionId
+          : sessionId as String?,
+      sessionSetRefId: identical(sessionSetRefId, _unset)
+          ? this.sessionSetRefId
+          : sessionSetRefId as String?,
+      sourceType: identical(sourceType, _unset)
+          ? this.sourceType
+          : sourceType as TrainingResultSourceType?,
+      voiceCapture: identical(voiceCapture, _unset)
+          ? this.voiceCapture
+          : voiceCapture as TrainingResultVoiceCapture?,
     );
   }
 
@@ -73,6 +139,10 @@ class TrainingResultSet {
       'intensity': intensity,
       'sessionDate': sessionDate.toIso8601String(),
       'entries': entries.map((entry) => entry.toJson()).toList(growable: false),
+      'sessionId': sessionId,
+      'sessionSetRefId': sessionSetRefId,
+      'sourceType': sourceType?.name,
+      'voiceCapture': voiceCapture?.toJson(),
     };
   }
 
@@ -108,6 +178,10 @@ class TrainingResultSet {
                 )
                 .toList(growable: false)
           : const <TrainingResultEntry>[],
+      sessionId: _optionalString(json['sessionId']),
+      sessionSetRefId: _optionalString(json['sessionSetRefId']),
+      sourceType: _parseSourceType(json['sourceType']),
+      voiceCapture: _parseVoiceCapture(json['voiceCapture']),
     );
   }
 }
@@ -184,3 +258,33 @@ DateTime _asDateTime(dynamic value) {
   }
   return DateTime.fromMillisecondsSinceEpoch(0);
 }
+
+String? _optionalString(dynamic value) {
+  if (value is! String) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
+TrainingResultSourceType? _parseSourceType(dynamic value) {
+  if (value is! String) return null;
+  final normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'manual':
+      return TrainingResultSourceType.manual;
+    case 'voice':
+      return TrainingResultSourceType.voice;
+    default:
+      return null;
+  }
+}
+
+TrainingResultVoiceCapture? _parseVoiceCapture(dynamic value) {
+  if (value is! Map) return null;
+  return TrainingResultVoiceCapture.fromJson(Map<String, dynamic>.from(value));
+}
+
+class _Unset {
+  const _Unset();
+}
+
+const _unset = _Unset();
