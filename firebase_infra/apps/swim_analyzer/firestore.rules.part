@@ -45,6 +45,26 @@
       allow read: if true;
       allow create, update, delete: if false;
     }
+
+    function isSwimAnalyzerSeatActive(clubId, uid) {
+      return exists(
+          /databases/$(database)/documents/clubSapSeats/$(clubId)/seats/$(uid)
+        )
+        && (
+          get(/databases/$(database)/documents/clubSapSeats/$(clubId)/seats/$(uid))
+            .data.isActive == true
+          || get(/databases/$(database)/documents/clubSapSeats/$(clubId)/seats/$(uid))
+            .data.status == "active"
+          || get(/databases/$(database)/documents/clubSapSeats/$(clubId)/seats/$(uid))
+            .data.status == "trialing"
+        );
+    }
+
+    function hasActiveSwimAnalyzerSeat(clubId) {
+      return request.auth != null
+        && clubId is string
+        && isSwimAnalyzerSeatActive(clubId, request.auth.uid);
+    }
   // ==============================================================
    // Race Analyses
    // Path: /racesAnalyzes/{raceId}
@@ -137,6 +157,184 @@
       // DELETE
       // -----------------------------
       allow delete: if true;
+    }
+
+    // ==============================================================
+    // Race Videos (Canonical Source)
+    // Path: /raceVideos/{videoId}
+    // ==============================================================
+    match /raceVideos/{videoId} {
+      function isSoloVideoOwner() {
+        return request.auth != null
+          && resource.data.ownerType == "solo"
+          && request.auth.uid == resource.data.ownerId;
+      }
+
+      function isClubVideoOwner() {
+        return request.auth != null
+          && resource.data.ownerType == "club"
+          && resource.data.clubId is string
+          && hasActiveSwimAnalyzerSeat(resource.data.clubId);
+      }
+
+      function isValidClubPayload() {
+        return request.resource.data.ownerType == "club"
+          && request.resource.data.clubId is string
+          && request.resource.data.ownerId == request.resource.data.clubId
+          && hasActiveSwimAnalyzerSeat(request.resource.data.clubId);
+      }
+
+      function isValidSoloPayload() {
+        return request.resource.data.ownerType == "solo"
+          && request.resource.data.ownerId == request.auth.uid
+          && !(request.resource.data.clubId is string);
+      }
+
+      allow read: if isSoloVideoOwner() || isClubVideoOwner();
+
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid
+        && (isValidSoloPayload() || isValidClubPayload());
+
+      allow update: if request.auth != null
+        && (
+          request.auth.uid == resource.data.createdBy
+          || (resource.data.clubId is string
+            && isClubAdmin(resource.data.clubId))
+        )
+        && (
+          resource.data.ownerType != "club"
+          || (
+            request.resource.data.ownerType == "club"
+            && request.resource.data.ownerId == resource.data.ownerId
+            && request.resource.data.clubId == resource.data.clubId
+          )
+        );
+
+      allow delete: if request.auth != null
+        && (
+          request.auth.uid == resource.data.createdBy
+          || (resource.data.clubId is string
+            && isClubAdmin(resource.data.clubId))
+        );
+    }
+
+    // ==============================================================
+    // Swim Analyses (Unified)
+    // Path: /swimAnalyses/{analysisId}
+    // ==============================================================
+    match /swimAnalyses/{analysisId} {
+      function isSoloOwner() {
+        return request.auth != null
+          && resource.data.ownerType == "solo"
+          && request.auth.uid == resource.data.ownerId;
+      }
+
+      function isClubOwner() {
+        return request.auth != null
+          && resource.data.ownerType == "club"
+          && resource.data.clubId is string
+          && hasActiveSwimAnalyzerSeat(resource.data.clubId);
+      }
+
+      function isValidClubPayload() {
+        return request.resource.data.ownerType == "club"
+          && request.resource.data.clubId is string
+          && request.resource.data.ownerId == request.resource.data.clubId
+          && hasActiveSwimAnalyzerSeat(request.resource.data.clubId);
+      }
+
+      function isValidSoloPayload() {
+        return request.resource.data.ownerType == "solo"
+          && request.resource.data.ownerId == request.auth.uid
+          && !(request.resource.data.clubId is string);
+      }
+
+      function isSelfAssigned() {
+        return request.resource.data.swimmerId == request.auth.uid;
+      }
+
+      function linkedRaceVideoExists() {
+        return request.resource.data.videoId is string
+          && exists(
+            /databases/$(database)/documents/raceVideos/$(request.resource.data.videoId)
+          );
+      }
+
+      function linkedRaceVideo() {
+        return get(
+          /databases/$(database)/documents/raceVideos/$(request.resource.data.videoId)
+        ).data;
+      }
+
+      function hasLinkedRaceVideoReadAccess() {
+        return linkedRaceVideoExists()
+          && (
+            (
+              linkedRaceVideo().ownerType == "solo"
+              && linkedRaceVideo().ownerId == request.auth.uid
+            )
+            || (
+              linkedRaceVideo().ownerType == "club"
+              && linkedRaceVideo().clubId is string
+              && hasActiveSwimAnalyzerSeat(linkedRaceVideo().clubId)
+            )
+          );
+      }
+
+      function linkedRaceVideoOwnershipMatches() {
+        return linkedRaceVideoExists()
+          && request.resource.data.ownerType == linkedRaceVideo().ownerType
+          && request.resource.data.ownerId == linkedRaceVideo().ownerId
+          && (
+            request.resource.data.ownerType != "club"
+            || request.resource.data.clubId == linkedRaceVideo().clubId
+          );
+      }
+
+      allow read: if isSoloOwner() || isClubOwner();
+
+      allow create: if request.auth != null
+        && linkedRaceVideoExists()
+        && hasLinkedRaceVideoReadAccess()
+        && linkedRaceVideoOwnershipMatches()
+        && (isValidSoloPayload() || isValidClubPayload())
+        && (
+          isSelfAssigned()
+          || (
+            request.resource.data.clubId is string
+            && hasActiveSwimAnalyzerSeat(request.resource.data.clubId)
+          )
+        );
+
+      allow update: if request.auth != null
+        && (
+          request.auth.uid == resource.data.createdBy
+          || (
+            resource.data.clubId is string
+            && isClubAdmin(resource.data.clubId)
+          )
+        )
+        && linkedRaceVideoExists()
+        && hasLinkedRaceVideoReadAccess()
+        && linkedRaceVideoOwnershipMatches()
+        && (
+          resource.data.ownerType != "club"
+          || (
+            request.resource.data.ownerType == "club"
+            && request.resource.data.ownerId == resource.data.ownerId
+            && request.resource.data.clubId == resource.data.ownerId
+          )
+        );
+
+      allow delete: if request.auth != null
+        && (
+          request.auth.uid == resource.data.createdBy
+          || (
+            resource.data.clubId is string
+            && isClubAdmin(resource.data.clubId)
+          )
+        );
     }
 
     match /swimmer_overall_summaries/{docId} {
