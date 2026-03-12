@@ -6,10 +6,10 @@ on:
       ref:
         description: "Git ref to deploy"
         required: false
-        default: "master"
+        default: "main"
   push:
     branches:
-      - master
+      - main
     paths:
       - "firebase_infra/**"
       - "firebase.json"
@@ -31,10 +31,28 @@ jobs:
       STATUS_TOKEN: ${{ secrets.SHARED_INFRA_STATUS_TOKEN }}
 
     steps:
+      - name: Resolve and validate deploy ref
+        run: |
+          set -euo pipefail
+          REF_INPUT="${{ github.event.inputs.ref }}"
+          if [ -z "$REF_INPUT" ]; then
+            REF_INPUT="${{ github.ref_name }}"
+          fi
+
+          case "$REF_INPUT" in
+            *"*"*|*"?"*|*"["*|*"]"*)
+              echo "Invalid ref '$REF_INPUT': wildcard patterns are not allowed."
+              exit 1
+              ;;
+          esac
+
+          echo "DEPLOY_REF=$REF_INPUT" >> "$GITHUB_ENV"
+          echo "Using deploy ref: $REF_INPUT"
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ env.DEPLOY_REF }}
           fetch-depth: 0
 
       - name: Setup Python
