@@ -4,6 +4,9 @@ export 'package:swim_apps_shared/objects/swim_analyzer_plan_type.dart';
 export 'package:swim_apps_shared/objects/swim_analyzer_subscription.dart';
 
 export 'design/brand_helper.dart';
+export 'legal/policy_gate.dart';
+export 'legal/policy_models.dart';
+export 'legal/policy_repository.dart';
 export 'objects/analyzes/analysis_requests/analysis_request.dart';
 export 'objects/analyzes/analysis_requests/analysis_request_repository.dart';
 export 'objects/analyzes/analysis_requests/analysis_request_type.dart';
