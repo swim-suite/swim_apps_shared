@@ -8,6 +8,7 @@ class PolicyDocumentRef {
     required this.version,
     required this.effectiveAt,
     required this.url,
+    required this.content,
     required this.contextKey,
     required this.updatedAt,
   });
@@ -16,11 +17,13 @@ class PolicyDocumentRef {
   final String version;
   final DateTime? effectiveAt;
   final String url;
+  final String content;
   final String contextKey;
   final DateTime? updatedAt;
 
   bool get hasRequiredFields =>
-      version.trim().isNotEmpty && url.trim().isNotEmpty;
+      version.trim().isNotEmpty &&
+      (url.trim().isNotEmpty || content.trim().isNotEmpty);
 
   factory PolicyDocumentRef.fromMap(
     Map<String, dynamic> map, {
@@ -32,6 +35,7 @@ class PolicyDocumentRef {
       version: (map['version'] as String? ?? '').trim(),
       effectiveAt: _toDateTime(map['effectiveAt']),
       url: (map['url'] as String? ?? '').trim(),
+      content: (map['content'] as String? ?? '').trim(),
       contextKey: contextKey.trim(),
       updatedAt: _toDateTime(map['updatedAt']),
     );
@@ -42,6 +46,7 @@ class PolicyDocumentRef {
       'version': version,
       'effectiveAt': effectiveAt,
       'url': url,
+      'content': content,
       'updatedAt': updatedAt,
     };
   }
